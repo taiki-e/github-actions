@@ -1,0 +1,6 @@
+name: Create a new GitHub release
+description: Create a new GitHub release
+
+runs:
+  using: node12
+  main: main.js

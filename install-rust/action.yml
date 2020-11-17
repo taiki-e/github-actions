@@ -1,0 +1,16 @@
+name: Install Rust toolchain
+description: Install Rust toolchain
+
+inputs:
+  toolchain:
+    description: 'Default toolchain to install'
+    required: false
+    default: 'nightly'
+  component:
+    description: 'Component to install'
+    required: false
+    default: ''
+
+runs:
+  using: node12
+  main: main.js

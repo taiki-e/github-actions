@@ -9,7 +9,7 @@ used in infra managed by us.
 ### Example workflow
 
 ```yaml
-name: Create Release
+name: Release
 
 on:
   push:

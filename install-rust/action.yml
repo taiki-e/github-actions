@@ -1,5 +1,5 @@
 name: Install Rust toolchain
-description: Install Rust toolchain
+description: GitHub Action for installing Rust toolchain
 
 inputs:
   toolchain:

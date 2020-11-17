@@ -1,5 +1,5 @@
-name: Create a new GitHub release
-description: Create a new GitHub release
+name: Create GitHub Release
+description: GitHub Action for creating GitHub Releases
 
 runs:
   using: node12

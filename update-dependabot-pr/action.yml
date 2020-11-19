@@ -1,5 +1,5 @@
-name: Replace Dependabot PR description with commit message
-description: GitHub Action for replacing Dependabot PR description with commit message
+name: Replace PR description with the message of the first commit
+description: GitHub Action for replacing PR description with the message of the first commit
 
 runs:
   using: node12

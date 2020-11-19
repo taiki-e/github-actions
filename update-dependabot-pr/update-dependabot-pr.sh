@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Replace Dependabot PR description with commit message.
+# Replace Dependabot PR description with the message of the first commit.
 
 set -euo pipefail
 IFS=$'\n\t'

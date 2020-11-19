@@ -34,6 +34,6 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   exit 1
 fi
 
-curl -X PATCH -H "${HEADER}" "$pr_url" \
+curl -sSf -X PATCH -H "${HEADER}" "$pr_url" \
   -H "Authorization: token ${GITHUB_TOKEN}" \
   -d "{ \"body\": \"${message}\" }" >/dev/null

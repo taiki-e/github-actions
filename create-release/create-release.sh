@@ -39,9 +39,9 @@ notes="See the [release notes](${changelog}) for a complete list of changes."
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   echo "GITHUB_TOKEN not set, skipping deploy"
   exit 1
-else
-  if gh release view "${tag}" &>/dev/null; then
-    gh release delete "${tag}" -y
-  fi
-  gh release create "${tag}" ${prerelease:-} --title "${title}" --notes "${notes}"
 fi
+
+if gh release view "${tag}" &>/dev/null; then
+  gh release delete "${tag}" -y
+fi
+gh release create "${tag}" ${prerelease:-} --title "${title}" --notes "${notes}"

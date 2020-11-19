@@ -2,7 +2,7 @@ const { execFileSync } = require('child_process');
 
 function main() {
   try {
-    execFileSync('bash', [ `${__dirname}/install-rust.sh` ],
+    execFileSync('bash', [ `${__dirname}/update-dependabot-pr.sh` ],
                  { stdio : 'inherit' });
   } catch (e) {
     console.log(`error: ${e.message}`);

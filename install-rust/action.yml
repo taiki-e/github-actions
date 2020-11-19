@@ -3,11 +3,11 @@ description: GitHub Action for installing Rust toolchain
 
 inputs:
   toolchain:
-    description: 'Default toolchain to install'
+    description: Default toolchain to install
     required: false
     default: 'nightly'
   component:
-    description: 'Component to install'
+    description: Component to install
     required: false
     default: ''
 

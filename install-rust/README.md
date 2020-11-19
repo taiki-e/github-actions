@@ -6,6 +6,8 @@ used in infra managed by us.
 
 ## Usage
 
+See [action.yml](action.yml)
+
 ```yaml
 - uses: taiki-e/github-actions/install-rust@main
   with:

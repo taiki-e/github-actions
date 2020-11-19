@@ -27,10 +27,8 @@ jobs:
     if: startsWith(github.head_ref, 'dependabot/')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
       - uses: taiki-e/github-actions/update-dependabot-pr@main
         env:
-          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 

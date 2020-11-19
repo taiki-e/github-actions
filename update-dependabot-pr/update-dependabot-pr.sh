@@ -19,8 +19,14 @@ fi
 pr_number="${GITHUB_REF#refs/pull/}"
 pr_number="${pr_number%/merge}"
 pr_url="https://api.github.com/repos/${GITHUB_REPOSITORY:?}/pulls/${pr_number}"
+pr_data=$(curl -sSf -H "${HEADER}" "$pr_url")
 
-commits_url=$(curl -sSf -H "${HEADER}" "$pr_url" | jq -r '.commits_url')
+if [[ $(echo "${pr_data}" | jq -r '.user.login') != "dependabot[bot]" ]]; then
+  echo "this PR created by a user other than 'dependabot[bot]'"
+  exit 1
+fi
+
+commits_url=$(echo "${pr_data}" | jq -r '.commits_url')
 message=$(
   curl -sSf "${commits_url}" |
     jq -r '.[0].commit.message' |

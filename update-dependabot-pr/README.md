@@ -16,19 +16,22 @@ See [action.yml](action.yml)
 ### Example workflow
 
 ```yaml
-name: Update Dependabot PR
+name: Dependabot PR
 
 on:
+  # This should not be pull_request_target because this action gets the PR number from GITHUB_REF.
   pull_request:
     types: [opened, reopened]
 
 jobs:
-  update-dependabot-pr:
+  # This only affects PRs created by Dependabot.
+  dependabot:
     if: startsWith(github.head_ref, 'dependabot/')
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/github-actions/update-dependabot-pr@main
         env:
+          # GITHUB_TOKEN is unavailable for PR from the fork, but Dependabot does not send PR from the fork, so this is fine.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 

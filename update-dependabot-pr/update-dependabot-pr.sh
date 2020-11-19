@@ -9,7 +9,12 @@ HEADER="Accept: application/vnd.github.v3+json"
 
 pr_url="https://api.github.com/repos/${GITHUB_REPOSITORY:?}/pulls/${GITHUB_PR_NUMBER:?}"
 commits_url=$(curl -sSf -H "${HEADER}" "$pr_url" | jq -r '.commits_url')
-message=$(curl -sSf "${commits_url}" | jq -r '.[0].commit.message' | sed '1,2d' | sed -z 's/\n/\\n/g')
+message=$(curl -sSf "${commits_url}" |
+  jq -r '.[0].commit.message' |
+  sed '1,2d' |
+  sed -z 's/\n/\\n/g' |
+  sed -e 's/\\n$//'
+)
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   echo "GITHUB_TOKEN not set"

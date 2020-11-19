@@ -21,13 +21,21 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-ref="${GITHUB_REF:?}"
-tag="${ref#*/tags/}"
+function error {
+  echo "$*" >&2
+}
+
+if [[ "${GITHUB_REF:?}" != "refs/tags/"* ]]; then
+  error "GITHUB_REF should start with 'refs/tags/'"
+  exit 1
+fi
+tag="${GITHUB_REF#refs/tags/}"
 
 if [[ ! "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z_0-9\.-]+)?(\+[a-zA-Z_0-9\.-]+)?$ ]]; then
-  echo "error: invalid tag format: ${tag}"
+  error "invalid tag format: ${tag}"
   exit 1
-elif [[ "${tag}" =~ ^v[0-9\.]+-[a-zA-Z_0-9\.-]+(\+[a-zA-Z_0-9\.-]+)?$ ]]; then
+fi
+if [[ "${tag}" =~ ^v[0-9\.]+-[a-zA-Z_0-9\.-]+(\+[a-zA-Z_0-9\.-]+)?$ ]]; then
   prerelease="--prerelease"
 fi
 version="${tag/v/}"
@@ -37,7 +45,7 @@ changelog="https://github.com/${GITHUB_REPOSITORY:?}/blob/HEAD/CHANGELOG.md#${ve
 notes="See the [release notes](${changelog}) for a complete list of changes."
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-  echo "GITHUB_TOKEN not set, skipping deploy"
+  error "GITHUB_TOKEN not set, skipping release"
   exit 1
 fi
 

@@ -5,7 +5,7 @@ function main() {
     execFileSync('bash', [ `${__dirname}/install-rust.sh` ],
                  { stdio : 'inherit' });
   } catch (e) {
-    console.log(`error: ${e.message}`);
+    console.error(`error: ${e.message}`);
     process.exit(1);
   }
 }

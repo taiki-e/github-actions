@@ -9,7 +9,6 @@ inputs:
   component:
     description: Component to install
     required: false
-    default: ''
 
 runs:
   using: node12

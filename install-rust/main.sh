@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Install Rust toolchain.
-#
-# If the toolchain is nightly (default) and the component is specified,
-# this script will install the latest nightly toolchain that the specified
-# component is available.
-
 set -euo pipefail
 IFS=$'\n\t'
 

@@ -1,6 +1,6 @@
 # update-dependabot-pr
 
-The `update-dependabot-pr` action replaces PR description with the message of the first commit.
+GitHub Action for replacing PR description with the message of the first commit.
 There is no stability guarantee for this action, since it's supposed to only be
 used in infra managed by us.
 
@@ -11,15 +11,12 @@ currently no way to configure this.
 
 ## Usage
 
-See [action.yml](action.yml)
-
 ### Example workflow
 
 ```yaml
-name: Dependabot PR
+name: PR
 
 on:
-  # This should not be pull_request_target because this action gets the PR number from GITHUB_REF.
   pull_request:
     types: [opened, reopened]
 
@@ -31,8 +28,12 @@ jobs:
     steps:
       - uses: taiki-e/github-actions/update-dependabot-pr@main
         env:
-          # GITHUB_TOKEN is unavailable for PR from the fork, but Dependabot does not send PR from the fork, so this is fine.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+- Workflows should be `on.pull_request`, not `on.pull_request_target` because
+  this action gets the PR number from `GITHUB_REF`.
+- `GITHUB_TOKEN` is unavailable for PR from forks, but Dependabot does not send
+  PR from forks, so this is fine.
 
 [Dependabot]: https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/keeping-your-dependencies-updated-automatically

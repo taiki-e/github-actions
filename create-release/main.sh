@@ -21,10 +21,11 @@ if [[ "${tag}" =~ ^v[0-9\.]+-[a-zA-Z_0-9\.-]+(\+[a-zA-Z_0-9\.-]+)?$ ]]; then
   prerelease="--prerelease"
 fi
 version="${tag#v}"
-date=$(date --utc '+%Y-%m-%d')
 title="${version}"
-changelog="https://github.com/${GITHUB_REPOSITORY:?}/blob/HEAD/CHANGELOG.md#${version//./}---${date}"
-notes="See the [release notes](${changelog}) for a complete list of changes."
+
+curl -LsSf https://github.com/taiki-e/parse-changelog/releases/latest/download/parse-changelog-x86_64-unknown-linux-gnu.tar.gz | tar xzf -
+notes=$(./parse-changelog CHANGELOG.md "${version}")
+rm -f ./parse-changelog
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   error "GITHUB_TOKEN not set, skipping release"

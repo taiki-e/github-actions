@@ -7,6 +7,8 @@ function error {
   echo "$*" >&2
 }
 
+changelog="${INPUT_CHANGELOG:-CHANGELOG.md}"
+
 if [[ "${GITHUB_REF:?}" != "refs/tags/"* ]]; then
   error "GITHUB_REF should start with 'refs/tags/'"
   exit 1
@@ -24,7 +26,7 @@ version="${tag#v}"
 title="${version}"
 
 curl -LsSf https://github.com/taiki-e/parse-changelog/releases/latest/download/parse-changelog-x86_64-unknown-linux-gnu.tar.gz | tar xzf -
-notes=$(./parse-changelog CHANGELOG.md "${version}")
+notes=$(./parse-changelog "${changelog}" "${version}")
 rm -f ./parse-changelog
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then

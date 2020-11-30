@@ -11,7 +11,7 @@ See [action.yml](action.yml)
 ```yaml
 - uses: taiki-e/github-actions/install-rust@main
   with:
-    # Default toolchain to install, default value is nightly
+    # Default toolchain to install, default is nightly
     toolchain: stable
     # Component to install
     component: rustfmt

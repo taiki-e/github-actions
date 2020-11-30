@@ -6,6 +6,8 @@ used in infra managed by us.
 
 ## Usage
 
+See [action.yml](action.yml)
+
 ### Example workflow
 
 ```yaml
@@ -22,11 +24,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: taiki-e/github-actions/create-release@main
+        with:
+          # Path to changelog, default is CHANGELOG.md.
+          changelog: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-- This script assumes that the format (file name and title of section) of
-  release notes is based on [Keep a Changelog](https://keepachangelog.com).
+- This script uses [parse-changelog] to parse changelog.
 - The valid tag format is `vMAJOR.MINOR.PATCH(-PRERELEASE)(+BUILD_METADATA)`
-  This is based on [Semantic Versioning](https://semver.org)
+  This is based on [Semantic Versioning][semver]
+
+[parse-changelog]: https://github.com/taiki-e/parse-changelog
+[semver]: https://semver.org

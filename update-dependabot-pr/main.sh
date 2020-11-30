@@ -20,7 +20,7 @@ pr_url="https://api.github.com/repos/${GITHUB_REPOSITORY:?}/pulls/${pr_number}"
 pr_data=$(curl -sSf -H "${HEADER}" "$pr_url")
 
 if [[ $(echo "${pr_data}" | jq -r '.user.login') != "dependabot[bot]" ]]; then
-  echo "this PR created by a user other than 'dependabot[bot]'"
+  error "this PR created by a user other than 'dependabot[bot]'"
   exit 1
 fi
 

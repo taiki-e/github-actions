@@ -14,7 +14,7 @@ function error {
 }
 
 # https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows#pull_request
-if [[ ! "${GITHUB_REF:?}" =~ refs/pull/[0-9]+/merge ]]; then
+if [[ ! "${GITHUB_REF:?}" =~ ^refs/pull/[0-9]+/merge$ ]]; then
   error "GITHUB_REF should be 'refs/pull/[0-9]+/merge'"
   exit 1
 fi

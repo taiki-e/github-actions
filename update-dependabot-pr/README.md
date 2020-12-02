@@ -4,7 +4,7 @@ GitHub Action for replacing PR description with the message of the first commit.
 There is no stability guarantee for this action, since it's supposed to only be
 used in infra managed by us.
 
-**Motivation**:
+## Motivation
 
 [Dependabot] creates a very verbose PR description by default. And there is
 currently no way to configure this.

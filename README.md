@@ -5,8 +5,8 @@ managed by @taiki-e.
 There are no stability guarantees for these actions, since they're supposed to
 only be used in infra managed by us.
 
-* [**create-release**](create-release): create a new GitHub release.
-* [**install-rust**](install-rust): install Rust toolchain and component.
+* [**create-release**](create-release): creates a new GitHub release based on changelog.
+* [**install-rust**](install-rust): installs Rust toolchain and component.
 * [**update-dependabot-pr**](update-dependabot-pr): replaces PR description with the message of the first commit.
 
 [actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions

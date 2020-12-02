@@ -1,5 +1,5 @@
-name: Create GitHub Release
-description: GitHub Action for creating GitHub Releases
+name: Create GitHub Release based on changelog
+description: GitHub Action for creating GitHub Releases based on changelog
 
 inputs:
   changelog:

@@ -32,7 +32,8 @@ jobs:
 ```
 
 - This script uses [parse-changelog] to parse changelog.
-- The valid tag format is `vMAJOR.MINOR.PATCH(-PRERELEASE)(+BUILD_METADATA)`
+- The valid tag format is `v?MAJOR.MINOR.PATCH(-PRERELEASE)?(+BUILD_METADATA)?`.
+  (leading "v", pre-release version, and build metadata are optional.)
   This is based on [Semantic Versioning][semver]
 
 [parse-changelog]: https://github.com/taiki-e/parse-changelog

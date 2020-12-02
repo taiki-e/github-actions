@@ -19,11 +19,11 @@ if [[ "${GITHUB_REF:?}" != "refs/tags/"* ]]; then
 fi
 tag="${GITHUB_REF#refs/tags/}"
 
-if [[ ! "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z_0-9\.-]+)?(\+[a-zA-Z_0-9\.-]+)?$ ]]; then
+if [[ ! "${tag}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z_0-9\.-]+)?(\+[a-zA-Z_0-9\.-]+)?$ ]]; then
   error "invalid tag format: ${tag}"
   exit 1
 fi
-if [[ "${tag}" =~ ^v[0-9\.]+-[a-zA-Z_0-9\.-]+(\+[a-zA-Z_0-9\.-]+)?$ ]]; then
+if [[ "${tag}" =~ ^v?[0-9\.]+-[a-zA-Z_0-9\.-]+(\+[a-zA-Z_0-9\.-]+)?$ ]]; then
   prerelease="--prerelease"
 fi
 version="${tag#v}"

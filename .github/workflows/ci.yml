@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: shellcheck **/*.sh
 
-  shfmt:
+  fmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -28,11 +28,4 @@ jobs:
           set -e
           GO111MODULE=on go get mvdan.cc/sh/v3/cmd/shfmt
           echo "${HOME}/go/bin" >>"${GITHUB_PATH}"
-      - run: shfmt -d **/*.sh
-
-  clang-format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run: clang-format -i */*.js
-      - run: git diff --exit-code
+      - run: scripts/fmt.sh

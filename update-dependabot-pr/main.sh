@@ -26,11 +26,11 @@ fi
 
 commits_url=$(echo "${pr_data}" | jq -r '.commits_url')
 message=$(
-  curl -sSf "${commits_url}" |
-    jq -r '.[0].commit.message' |
-    sed '1,2d' |
-    sed -z 's/\n/\\n/g' |
-    sed -e 's/\\n$//'
+  curl -sSf "${commits_url}" \
+    | jq -r '.[0].commit.message' \
+    | sed '1,2d' \
+    | sed -z 's/\n/\\n/g' \
+    | sed -e 's/\\n$//'
 )
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then

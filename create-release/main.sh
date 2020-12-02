@@ -4,7 +4,11 @@ set -euo pipefail
 IFS=$'\n\t'
 
 function error {
-  echo "$*" >&2
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    echo "::error::$*"
+  else
+    echo "error: $*" >&2
+  fi
 }
 
 changelog="${INPUT_CHANGELOG:-CHANGELOG.md}"

@@ -6,7 +6,11 @@ IFS=$'\n\t'
 HEADER="Accept: application/vnd.github.v3+json"
 
 function error {
-  echo "$*" >&2
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    echo "::error::$*"
+  else
+    echo "error: $*" >&2
+  fi
 }
 
 # https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows#pull_request

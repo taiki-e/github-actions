@@ -1,6 +1,6 @@
 # create-release
 
-GitHub Action for creating GitHub Releases.
+GitHub Action for creating GitHub Releases based on changelog.
 There is no stability guarantee for this action, since it's supposed to only be
 used in infra managed by us.
 

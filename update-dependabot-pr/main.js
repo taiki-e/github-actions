@@ -4,7 +4,7 @@ function main() {
   try {
     execFileSync('bash', [ `${__dirname}/main.sh` ], { stdio : 'inherit' });
   } catch (e) {
-    console.error(`error: ${e.message}`);
+    console.log(`::error::${e.message}`);
     process.exit(1);
   }
 }

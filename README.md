@@ -8,6 +8,7 @@ only be used in infra managed by us.
 * [**create-release**](create-release): creates a new GitHub release based on changelog.
 * [**install-rust**](install-rust): installs Rust toolchain and component.
 * [**update-dependabot-pr**](update-dependabot-pr): replaces PR description with the message of the first commit.
+* [**upload-rust-binary**](upload-rust-binary): builds and uploads Rust binary to GitHub Releases.
 
 [actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions
 

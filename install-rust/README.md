@@ -11,10 +11,10 @@ See [action.yml](action.yml)
 ```yaml
 - uses: taiki-e/github-actions/install-rust@main
   with:
-    # Default toolchain to install, default is nightly
+    # Default toolchain to install, default is nightly.
     toolchain: stable
-    # Components to add (comma-separated), default is empty
+    # Components to add (comma-separated), default is empty.
     component: rustfmt,clippy
-    # Targets to add (comma-separated), default is empty
-    target: 'x86_64-unknown-linux-musl'
+    # Targets to add (comma-separated), default is empty.
+    target: x86_64-unknown-linux-musl
 ```

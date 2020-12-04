@@ -6,14 +6,14 @@ inputs:
     description: Binary name to build and upload
     required: true
   target:
-    description: Target name (host target is selected by default)
+    description: Target name, default is host triple
     required: false
   tar:
-    description: On which platform to distribute the `.tar.gz` file (all, unix, windows, or none, default is all)
+    description: On which platform to distribute the `.tar.gz` file (all, unix, windows, or none)
     required: false
     default: 'all'
   zip:
-    description: On which platform to distribute the `.zip` file (all, unix, windows, or none, default is none)
+    description: On which platform to distribute the `.zip` file (all, unix, windows, or none)
     required: false
     default: 'none'
 

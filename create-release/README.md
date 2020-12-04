@@ -28,6 +28,7 @@ jobs:
           # Path to changelog, default is CHANGELOG.md.
           changelog: CHANGELOG.md
         env:
+          # (required)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 

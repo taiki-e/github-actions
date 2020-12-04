@@ -24,15 +24,17 @@ jobs:
       - uses: actions/checkout@v2
       - uses: taiki-e/github-actions/upload-rust-binary@main
         with:
-          # Binary name to build and upload.
+          # Binary name to build and upload (required).
           bin: ...
-          # Target name (host target is selected by default).
+          # Target name, default is host triple.
           target: ...
           # On which platform to distribute the `.tar.gz` file.
-          # (all, unix, windows, or none, default is all)
+          # [default value: all]
+          # [possible values: all, unix, windows, none]
           tar: unix
           # On which platform to distribute the `.zip` file.
-          # (all, unix, windows, or none, default is none)
+          # [default value: none]
+          # [possible values: all, unix, windows, none]
           zip: windows
         env:
           # (required)

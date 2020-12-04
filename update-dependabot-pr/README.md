@@ -28,6 +28,7 @@ jobs:
     steps:
       - uses: taiki-e/github-actions/update-dependabot-pr@main
         env:
+          # (required)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 

@@ -4,17 +4,18 @@ set -euo pipefail
 IFS=$'\n\t'
 
 toolchain="${INPUT_TOOLCHAIN:-nightly}"
-component="${INPUT_COMPONENT:-}"
-
-if [[ -n "${component}" ]] && [[ "${toolchain}" == "nightly"* ]]; then
-  host=$(rustc -Vv | grep host | sed 's/host: //')
-  toolchain=nightly-$(curl -sSf https://rust-lang.github.io/rustup-components-history/"${host}"/"${component}")
+if [[ -n "${INPUT_COMPONENT:-}" ]]; then
+  component="--component=${INPUT_COMPONENT}"
 fi
+if [[ -n "${INPUT_TARGET:-}" ]]; then
+  target="--target=${INPUT_TARGET}"
+fi
+
+set -x
 
 # --no-self-update is necessary because the windows environment cannot self-update rustup.exe.
-rustup toolchain install "${toolchain}" --no-self-update --profile minimal
-rustup default "${toolchain}"
+# shellcheck disable=SC2086
+rustup toolchain install "${toolchain}" --no-self-update --profile minimal \
+  ${component:-} ${target:-}
 
-if [[ -n "${component}" ]]; then
-  rustup component add "${component}"
-fi
+rustup default "${toolchain}"

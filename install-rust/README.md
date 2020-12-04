@@ -13,10 +13,8 @@ See [action.yml](action.yml)
   with:
     # Default toolchain to install, default is nightly
     toolchain: stable
-    # Component to install
-    component: rustfmt
+    # Components to add (comma-separated), default is empty
+    component: rustfmt,clippy
+    # Targets to add (comma-separated), default is empty
+    target: 'x86_64-unknown-linux-musl'
 ```
-
-If the toolchain is nightly (default) and the component is specified, this
-script will install the latest nightly toolchain that the specified component
-is available.

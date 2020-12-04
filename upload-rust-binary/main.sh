@@ -31,18 +31,7 @@ fi
 
 host=$(rustc -Vv | grep host | sed 's/host: //')
 target="${INPUT_TARGET:-"${host}"}"
-cargo="cargo"
-if [[ "${host}" != "${target}" ]]; then
-  rustup target add "${target}"
-  case "${target}" in
-    # https://github.com/rust-embedded/cross#supported-targets
-    *windows-msvc | *windows-gnu | *darwin | *fuchsia | *redox) ;;
-    *)
-      cargo="cross"
-      cargo install cross
-      ;;
-  esac
-fi
+rustup target add "${target}"
 
 case "${OSTYPE}" in
   linux*)
@@ -68,7 +57,7 @@ case "${OSTYPE}" in
 esac
 bin="${package}${exe:-}"
 
-$cargo build --bin "${package}" --release --target "${target}"
+cargo build --bin "${package}" --release --target "${target}"
 
 cd target/"${target}"/release
 assets=()

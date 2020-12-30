@@ -37,4 +37,4 @@ jobs:
 - `GITHUB_TOKEN` is unavailable for PR from forks, but Dependabot does not send
   PR from forks, so this is fine.
 
-[Dependabot]: https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/keeping-your-dependencies-updated-automatically
+[dependabot]: https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/keeping-your-dependencies-updated-automatically

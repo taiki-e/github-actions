@@ -1,0 +1,11 @@
+name: Deploy GitHub Pages
+description: GitHub Action for deploying GitHub Pages
+
+inputs:
+  deploy_dir:
+    description: Directory to deploy
+    required: true
+
+runs:
+  using: node12
+  main: main.js

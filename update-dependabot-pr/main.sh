@@ -21,7 +21,8 @@ fi
 pr_number="${GITHUB_REF#refs/pull/}"
 pr_number="${pr_number%/merge}"
 pr_url="https://api.github.com/repos/${GITHUB_REPOSITORY:?}/pulls/${pr_number}"
-pr_data=$(curl -sSf -H "${HEADER}" "$pr_url")
+pr_data=$(curl -LsSf -H "${HEADER}" "$pr_url")
+pr_url=$(echo "${pr_data}" | jq -r '.url')
 
 if [[ $(echo "${pr_data}" | jq -r '.user.login') != "dependabot[bot]" ]]; then
   error "this PR created by a user other than 'dependabot[bot]'"

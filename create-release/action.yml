@@ -5,7 +5,7 @@ inputs:
   changelog:
     description: Path to changelog
     required: false
-    default: 'CHANGELOG.md'
+    default: "CHANGELOG.md"
 
 runs:
   using: node12

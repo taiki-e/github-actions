@@ -12,7 +12,7 @@ only be used in infra managed by us.
   the message of the first commit.
 - [**upload-rust-binary**](upload-rust-binary): builds and uploads Rust binary
   to GitHub Releases.
-- [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages
+- [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages.
 
 [actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions
 

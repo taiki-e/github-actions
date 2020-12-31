@@ -11,11 +11,11 @@ inputs:
   tar:
     description: On which platform to distribute the `.tar.gz` file (all, unix, windows, or none)
     required: false
-    default: 'all'
+    default: "all"
   zip:
     description: On which platform to distribute the `.zip` file (all, unix, windows, or none)
     required: false
-    default: 'none'
+    default: "none"
 
 runs:
   using: node12

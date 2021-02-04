@@ -8,19 +8,20 @@ only be used in infra managed by us.
 - [**install-rust**](install-rust): installs Rust toolchain and component.
 - [**update-dependabot-pr**](update-dependabot-pr): replaces PR description with
   the message of the first commit.
-- [**upload-rust-binary**](upload-rust-binary): builds and uploads Rust binary
-  to GitHub Releases.
 - [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages.
 
 ## Moved Actions
 
 These actions were previously included in this repository but have been moved into their own repository because they were considered stable enough.
 
-- [**create-release**](create-release): moved into the
+- **create-release**: moved into the
   [**create-gh-release-action**][create-gh-release-action] repository.
+- **upload-rust-binary**: moved into the
+  [**upload-rust-binary-action**][upload-rust-binary-action] repository.
 
 [actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions
 [create-gh-release-action]: https://github.com/taiki-e/create-gh-release-action
+[upload-rust-binary-action]: https://github.com/taiki-e/upload-rust-binary-action
 
 ## License
 

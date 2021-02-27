@@ -2,20 +2,27 @@
 
 # Format all scripts.
 #
-# Note: This script requires shfmt and clang-format.
+# Usage:
+#    ./scripts/fmt.sh
+#
+# Note: This script requires shfmt and prettier.
 
 set -euo pipefail
 IFS=$'\n\t'
 
 cd "$(cd "$(dirname "${0}")" && pwd)"/..
 
-if [[ -n "${CI:-}" ]]; then
-  shfmt -d ./**/*.sh
+# shellcheck disable=SC2046
+if [[ -z "${CI:-}" ]]; then
+    (
+        set -x
+        shfmt -l -w $(git ls-files '*.sh')
+        prettier -w $(git ls-files '*.js')
+    )
 else
-  shfmt -l -w ./**/*.sh
-fi
-
-clang-format -i ./*/*.js
-if [[ -n "${CI:-}" ]]; then
-  git diff --exit-code
+    (
+        set -x
+        shfmt -d $(git ls-files '*.sh')
+        prettier -c $(git ls-files '*.js')
+    )
 fi

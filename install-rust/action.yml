@@ -5,7 +5,7 @@ inputs:
   toolchain:
     description: Default toolchain to install
     required: false
-    default: "nightly"
+    default: 'nightly'
   component:
     description: Components to add (comma-separated)
     required: false

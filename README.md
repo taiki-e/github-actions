@@ -23,6 +23,11 @@ These actions were previously included in this repository but have been moved in
 [create-gh-release-action]: https://github.com/taiki-e/create-gh-release-action
 [upload-rust-binary-action]: https://github.com/taiki-e/upload-rust-binary-action
 
+## Development
+
+- [GitHub Actions Reference](https://docs.github.com/en/actions/reference)
+- [GitHub CLI Manual](https://cli.github.com/manual)
+
 ## License
 
 Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or

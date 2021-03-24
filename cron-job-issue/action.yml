@@ -1,0 +1,11 @@
+name: Create an issue when failed and close it when fixed
+description: GitHub Action for creating an issue when failed and closing it when fixed
+
+inputs:
+  failed:
+    description: Whether failed or not
+    required: true
+
+runs:
+  using: node12
+  main: main.js

@@ -23,7 +23,7 @@ jobs:
         run: |
           GO111MODULE=on go get mvdan.cc/sh/v3/cmd/shfmt
           echo "${HOME}/go/bin" >>"${GITHUB_PATH}"
-      - run: scripts/fmt.sh
+      - run: tools/fmt.sh
       - run: shellcheck **/*.sh
 
   install-rust-action:

@@ -13,6 +13,7 @@ fi
 
 set -x
 
+# `rustup self update` is necessary because the windows environment cannot self-update rustup.exe by `rustup update`.
 rustup self update
 
 # shellcheck disable=SC2086

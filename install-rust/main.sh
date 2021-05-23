@@ -13,6 +13,8 @@ fi
 
 set -x
 
+rustup self update
+
 # --no-self-update is necessary because the windows environment cannot self-update rustup.exe.
 # shellcheck disable=SC2086
 rustup toolchain install "${toolchain}" --no-self-update --profile minimal \

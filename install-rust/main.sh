@@ -11,15 +11,18 @@ if [[ -n "${INPUT_TARGET:-}" ]]; then
     target="--target=${INPUT_TARGET}"
 fi
 
-set -x
-
 case "${OSTYPE}" in
     cygwin* | msys*)
-        # `rustup self update` is necessary because the windows environment cannot self-update rustup.exe by `rustup update`.
-        rustup self update
+        (
+            set -x
+            # `rustup self update` is necessary because the windows environment cannot self-update rustup.exe by `rustup update`.
+            rustup self update
+        )
         ;;
     *) ;;
 esac
+
+set -x
 
 # shellcheck disable=SC2086
 rustup toolchain install "${toolchain}" --profile minimal ${component:-} ${target:-}

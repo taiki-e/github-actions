@@ -13,8 +13,13 @@ fi
 
 set -x
 
-# `rustup self update` is necessary because the windows environment cannot self-update rustup.exe by `rustup update`.
-rustup self update
+case "${OSTYPE}" in
+    cygwin* | msys*)
+        # `rustup self update` is necessary because the windows environment cannot self-update rustup.exe by `rustup update`.
+        rustup self update
+        ;;
+    *) ;;
+esac
 
 # shellcheck disable=SC2086
 rustup toolchain install "${toolchain}" --profile minimal ${component:-} ${target:-}

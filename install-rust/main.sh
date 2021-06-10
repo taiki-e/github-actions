@@ -11,17 +11,6 @@ if [[ -n "${INPUT_TARGET:-}" ]]; then
     target="--target=${INPUT_TARGET}"
 fi
 
-case "${OSTYPE}" in
-    cygwin* | msys*)
-        (
-            set -x
-            # `rustup self update` is necessary because the windows environment cannot self-update rustup.exe by `rustup update`.
-            rustup self update
-        )
-        ;;
-    *) ;;
-esac
-
 set -x
 
 # --no-self-update is necessary because the windows environment cannot self-update rustup.exe.

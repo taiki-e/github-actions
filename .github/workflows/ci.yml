@@ -10,6 +10,7 @@ on:
       - main
   schedule:
     - cron: '40 1 * * *'
+  workflow_dispatch:
 
 defaults:
   run:
@@ -26,7 +27,7 @@ jobs:
         run: sudo npm install -g prettier
       - name: Install shfmt
         run: |
-          GO111MODULE=on go get mvdan.cc/sh/v3/cmd/shfmt
+          "${GOROOT_1_17_X64}"/bin/go install mvdan.cc/sh/v3/cmd/shfmt@latest
           echo "${HOME}/go/bin" >>"${GITHUB_PATH}"
       - run: tools/fmt.sh
       - run: shellcheck **/*.sh

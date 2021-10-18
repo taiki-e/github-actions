@@ -17,7 +17,7 @@ fi
 pr_number="${GITHUB_REF#refs/pull/}"
 pr_number="${pr_number%/merge}"
 pr_url="https://api.github.com/repos/${GITHUB_REPOSITORY:?}/pulls/${pr_number}"
-pr_data=$(curl -LsSf -H "${HEADER}" "$pr_url")
+pr_data=$(curl -LsSf -H "${HEADER}" "${pr_url}")
 pr_url=$(echo "${pr_data}" | jq -r '.url')
 
 if [[ $(echo "${pr_data}" | jq -r '.user.login') != "dependabot[bot]" ]]; then
@@ -39,6 +39,6 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
     exit 1
 fi
 
-curl -sSf -X PATCH -H "${HEADER}" "$pr_url" \
+curl -sSf -X PATCH -H "${HEADER}" "${pr_url}" \
     -H "Authorization: token ${GITHUB_TOKEN}" \
     -d "{ \"body\": \"${message}\" }" >/dev/null

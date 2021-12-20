@@ -53,8 +53,15 @@ jobs:
       - name: Install ShellCheck
         run: |
           sudo apt-get remove -y shellcheck
-          tag="$(curl -fsSL --retry 3 https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq -r '.tag_name')"
-          curl -fsSL --retry 3 "https://github.com/koalaman/shellcheck/releases/download/${tag}/shellcheck-${tag}.linux.x86_64.tar.xz" \
+          tag="$(curl -fsSL --retry 10 https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq -r '.tag_name')"
+          curl -fsSL --retry 10 "https://github.com/koalaman/shellcheck/releases/download/${tag}/shellcheck-${tag}.linux.x86_64.tar.xz" \
             | tar xJf - --strip-components 1 -C /usr/local/bin "shellcheck-${tag}/shellcheck"
           shellcheck --version
-      - run: tools/tidy.sh
+      - run: shfmt -d $(git ls-files '*.sh')
+        if: always()
+      - run: npx prettier -c $(git ls-files '*.yml')
+        if: always()
+      - run: npx prettier -c $(git ls-files '*.js')
+        if: always()
+      - run: shellcheck $(git ls-files '*.sh')
+        if: always()

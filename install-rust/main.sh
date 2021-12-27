@@ -1,7 +1,15 @@
 #!/bin/bash
-
 set -euo pipefail
 IFS=$'\n\t'
+
+x() {
+    local cmd="$1"
+    shift
+    (
+        set -x
+        "${cmd}" "$@"
+    )
+}
 
 toolchain="${INPUT_TOOLCHAIN:-nightly}"
 if [[ -n "${INPUT_COMPONENT:-}" ]]; then
@@ -11,11 +19,8 @@ if [[ -n "${INPUT_TARGET:-}" ]]; then
     target="--target=${INPUT_TARGET}"
 fi
 
-set -x
-
 # --no-self-update is necessary because the windows environment cannot self-update rustup.exe.
 # shellcheck disable=SC2086
-rustup toolchain install "${toolchain}" --no-self-update --profile minimal \
-    ${component:-} ${target:-}
+x rustup toolchain install "${toolchain}" --no-self-update --profile minimal ${component:-} ${target:-}
 
-rustup default "${toolchain}"
+x rustup default "${toolchain}"

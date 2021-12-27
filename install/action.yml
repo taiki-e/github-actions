@@ -1,0 +1,11 @@
+name: Install tools
+description: GitHub Action for installing tools
+
+inputs:
+  tool:
+    description: Tools to install (comma-separated)
+    required: true
+
+runs:
+  using: node12
+  main: main.js

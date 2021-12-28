@@ -24,7 +24,7 @@ fi
 
 for tool in "${tools[@]}"; do
     case "${tool}" in
-        cargo-hack | cargo-llvm-cov)
+        cargo-hack | cargo-llvm-cov | cargo-minimal-versions)
             host=$(rustc -Vv | grep host | sed 's/host: //')
             curl --proto '=https' --tlsv1.2 -fsSL --retry 10 --retry-connrefused "https://github.com/taiki-e/${tool}/releases/latest/download/${tool}-${host}.tar.gz" \
                 | tar xzf - -C ~/.cargo/bin

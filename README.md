@@ -16,11 +16,14 @@ These actions were previously included in this repository but have been moved in
 
 - **create-release**: moved into the
   [**create-gh-release-action**][create-gh-release-action] repository.
+- **install**: moved into the
+  [**install-action**][install-action] repository.
 - **upload-rust-binary**: moved into the
   [**upload-rust-binary-action**][upload-rust-binary-action] repository.
 
 [actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions
 [create-gh-release-action]: https://github.com/taiki-e/create-gh-release-action
+[install-action]: https://github.com/taiki-e/install-action
 [upload-rust-binary-action]: https://github.com/taiki-e/upload-rust-binary-action
 
 ## License

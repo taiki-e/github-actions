@@ -2,5 +2,5 @@ name: Replace PR description with the message of the first commit
 description: GitHub Action for replacing PR description with the message of the first commit
 
 runs:
-  using: node12
+  using: node16
   main: main.js

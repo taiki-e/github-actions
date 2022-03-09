@@ -2,16 +2,15 @@
 # shellcheck disable=SC2046
 set -euo pipefail
 IFS=$'\n\t'
+cd "$(dirname "$0")"/..
 
 # USAGE:
 #    ./tools/tidy.sh
 #
-# NOTE: This script requires the following tools:
+# Note: This script requires the following tools:
 # - shfmt
 # - prettier
 # - shellcheck
-
-cd "$(cd "$(dirname "$0")" && pwd)"/..
 
 x() {
     local cmd="$1"
@@ -24,6 +23,9 @@ x() {
     else
         "${cmd}" "$@"
     fi
+}
+warn() {
+    echo >&2 "warning: $*"
 }
 
 if [[ "${1:-}" == "-v" ]]; then
@@ -46,16 +48,16 @@ fi
 if type -P shfmt &>/dev/null; then
     x shfmt -l -w $(git ls-files '*.sh')
 else
-    echo >&2 "WARNING: 'shfmt' is not installed"
+    warn "'shfmt' is not installed"
 fi
 if type -P "${prettier}" &>/dev/null; then
     x "${prettier}" -l -w $(git ls-files '*.yml')
     x "${prettier}" -l -w $(git ls-files '*.js')
 else
-    echo >&2 "WARNING: 'prettier' is not installed"
+    warn "'prettier' is not installed"
 fi
 if type -P shellcheck &>/dev/null; then
     x shellcheck $(git ls-files '*.sh')
 else
-    echo >&2 "WARNING: 'shellcheck' is not installed"
+    warn "'shellcheck' is not installed"
 fi

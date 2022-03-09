@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - dev
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
@@ -30,9 +31,9 @@ jobs:
           target: x86_64-unknown-linux-musl,i686-unknown-linux-gnu
       - run: |
           set -x
-          rustc -vV
+          rustc -Vv
           rustup -V
-          cargo -vV
+          cargo -Vv
           rustfmt -V
           cargo clippy -V
           rustup component list

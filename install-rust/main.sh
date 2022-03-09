@@ -11,6 +11,8 @@ x() {
     )
 }
 
+export RUSTUP_MAX_RETRIES="${RUSTUP_MAX_RETRIES:-10}"
+
 toolchain="${INPUT_TOOLCHAIN:-nightly}"
 if [[ -n "${INPUT_COMPONENT:-}" ]]; then
     component="--component=${INPUT_COMPONENT}"
@@ -24,3 +26,7 @@ fi
 x rustup toolchain install "${toolchain}" --no-self-update --profile minimal ${component:-} ${target:-}
 
 x rustup default "${toolchain}"
+
+if [[ "${INPUT_COMPONENT:-}" == *"miri"* ]]; then
+    cargo miri setup
+fi

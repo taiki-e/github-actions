@@ -28,5 +28,5 @@ x rustup toolchain install "${toolchain}" --no-self-update --profile minimal ${c
 x rustup default "${toolchain}"
 
 if [[ "${INPUT_COMPONENT:-}" == *"miri"* ]]; then
-    cargo miri setup
+    x cargo miri setup
 fi

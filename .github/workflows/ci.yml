@@ -18,27 +18,6 @@ defaults:
     shell: bash
 
 jobs:
-  install-rust-action:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-      - uses: ./install-rust
-        with:
-          toolchain: nightly
-          component: rustfmt,clippy
-          target: x86_64-unknown-linux-musl,i686-unknown-linux-gnu
-      - run: |
-          set -x
-          rustc -Vv
-          rustup -V
-          cargo -Vv
-          rustfmt -V
-          cargo clippy -V
-          rustup component list
-          rustup target list
-
   tidy:
     runs-on: ubuntu-latest
     steps:

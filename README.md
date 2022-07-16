@@ -5,7 +5,6 @@ managed by @taiki-e.
 There are no stability guarantees for these actions, since they're supposed to
 only be used in infra managed by us.
 
-- [**install-rust**](install-rust): installs Rust toolchain and component.
 - [**update-dependabot-pr**](update-dependabot-pr): replaces PR description with
   the message of the first commit.
 - [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages.
@@ -21,9 +20,16 @@ These actions were previously included in this repository but have been moved in
 - **upload-rust-binary**: moved into the
   [**upload-rust-binary-action**][upload-rust-binary-action] repository.
 
+## Removed Actions
+
+These actions were previously included in this repository but have been removed in favor of other actions.
+
+- **install-rust**: removed in favor of the [**dtolnay/rust-toolchain**][rust-toolchain].
+
 [actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions
 [create-gh-release-action]: https://github.com/taiki-e/create-gh-release-action
 [install-action]: https://github.com/taiki-e/install-action
+[rust-toolchain]: https://github.com/dtolnay/rust-toolchain
 [upload-rust-binary-action]: https://github.com/taiki-e/upload-rust-binary-action
 
 ## License

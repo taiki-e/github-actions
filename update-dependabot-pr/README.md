@@ -27,9 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/github-actions/update-dependabot-pr@main
-        env:
+        with:
           # (required)
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 - Workflows should be `on.pull_request`, not `on.pull_request_target` because

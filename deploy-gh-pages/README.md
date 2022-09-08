@@ -13,6 +13,5 @@ See [action.yml](action.yml)
   with:
     # Directory to deploy
     deploy_dir: target/doc
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    token: ${{ secrets.GITHUB_TOKEN }}
 ```

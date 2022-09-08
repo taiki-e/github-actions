@@ -5,6 +5,12 @@ inputs:
   deploy_dir:
     description: Directory to deploy
     required: true
+  token:
+    description: >
+      GitHub token for creating GitHub Releases.
+
+      If not set this option, the GITHUB_TOKEN environment variable will be used.
+    required: false
 
 runs:
   using: node16

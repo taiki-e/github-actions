@@ -24,12 +24,11 @@ These actions were previously included in this repository but have been moved in
 
 These actions were previously included in this repository but have been removed in favor of other actions.
 
-- **install-rust**: removed in favor of the [**dtolnay/rust-toolchain**][rust-toolchain].
+- **install-rust**: removed in favor of calling `rustup` directly.
 
 [actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions
 [create-gh-release-action]: https://github.com/taiki-e/create-gh-release-action
 [install-action]: https://github.com/taiki-e/install-action
-[rust-toolchain]: https://github.com/dtolnay/rust-toolchain
 [upload-rust-binary-action]: https://github.com/taiki-e/upload-rust-binary-action
 
 ## License

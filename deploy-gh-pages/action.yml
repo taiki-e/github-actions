@@ -12,6 +12,14 @@ inputs:
       If not set this option, the GITHUB_TOKEN environment variable will be used.
     required: false
 
+# Note:
+# - inputs.* should be manually mapped to INPUT_* due to https://github.com/actions/runner/issues/665
+# - Use GITHUB_*/RUNNER_* instead of github.*/runner.* due to https://github.com/actions/runner/issues/2185
 runs:
-  using: node16
-  main: main.js
+  using: composite
+  steps:
+    - run: bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/pre.sh"
+      shell: bash
+      env:
+        INPUT_DEPLOY_DIR: ${{ inputs.deploy_dir }}
+        INPUT_TOKEN: ${{ inputs.token }}

@@ -2,11 +2,25 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-header="Accept: application/vnd.github.v3+json"
-
+retry() {
+    for i in {1..10}; do
+        if "$@"; then
+            return 0
+        else
+            sleep "${i}"
+        fi
+    done
+    "$@"
+}
 bail() {
     echo "::error::$*"
     exit 1
+}
+run_curl() {
+    retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 --retry-connrefused \
+        -H "Accept: application/vnd.github.v3+json" \
+        -H "Authorization: token ${token}" \
+        "$@"
 }
 
 token="${INPUT_TOKEN:-"${GITHUB_TOKEN:-}"}"
@@ -22,7 +36,7 @@ fi
 pr_number="${GITHUB_REF#refs/pull/}"
 pr_number="${pr_number%/merge}"
 pr_url="https://api.github.com/repos/${GITHUB_REPOSITORY:?}/pulls/${pr_number}"
-pr_data=$(curl --proto '=https' --tlsv1.2 -fsSL --retry 10 --retry-connrefused -H "${header}" "${pr_url}")
+pr_data=$(run_curl "${pr_url}")
 pr_url=$(jq <<<"${pr_data}" -r '.url')
 
 if [[ $(jq <<<"${pr_data}" -r '.user.login') != "dependabot[bot]" ]]; then
@@ -31,13 +45,12 @@ fi
 
 commits_url=$(jq <<<"${pr_data}" -r '.commits_url')
 message=$(
-    curl --proto '=https' --tlsv1.2 -fsSL --retry 10 --retry-connrefused "${commits_url}" \
+    run_curl "${commits_url}" \
         | jq -r '.[0].commit.message' \
         | sed '1,2d' \
         | sed -z 's/\n/\\n/g' \
         | sed -e 's/\\n$//'
 )
 
-curl --proto '=https' --tlsv1.2 -fsSL --retry 10 --retry-connrefused -X PATCH -H "${header}" "${pr_url}" \
-    -H "Authorization: token ${token}" \
+run_curl -X PATCH  "${pr_url}" \
     -d "{ \"body\": \"${message}\" }" >/dev/null

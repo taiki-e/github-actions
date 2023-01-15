@@ -52,5 +52,5 @@ message=$(
         | sed -e 's/\\n$//'
 )
 
-run_curl -X PATCH  "${pr_url}" \
+run_curl -X PATCH "${pr_url}" \
     -d "{ \"body\": \"${message}\" }" >/dev/null

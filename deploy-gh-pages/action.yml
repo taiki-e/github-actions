@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: deploy-gh-pages-action
 description: GitHub Action for deploying GitHub Pages
 
 inputs:

@@ -1,4 +1,4 @@
-name: Replace PR description with the message of the first commit
+name: update-dependabot-pr-action
 description: GitHub Action for replacing PR description with the message of the first commit
 
 inputs:

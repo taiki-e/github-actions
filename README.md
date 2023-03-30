@@ -5,8 +5,6 @@ managed by @taiki-e.
 There are no stability guarantees for these actions, since they're supposed to
 only be used in infra managed by us.
 
-- [**update-dependabot-pr**](update-dependabot-pr): replaces PR description with
-  the message of the first commit.
 - [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages.
 
 ## Moved Actions
@@ -25,6 +23,7 @@ These actions were previously included in this repository but have been moved in
 These actions were previously included in this repository but have been removed in favor of other actions.
 
 - **install-rust**: removed in favor of calling `rustup` directly.
+- **update-dependabot-pr**: removed because no longer used.
 
 [actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions
 [create-gh-release-action]: https://github.com/taiki-e/create-gh-release-action

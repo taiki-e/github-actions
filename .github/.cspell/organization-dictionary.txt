@@ -24,10 +24,9 @@ rustsec
 rustup
 valgrind
 xcompile
-Zdoctest
 Zmiri
 
-// Rust target triple
+// Rust target triple/spec
 aarch
 amdgpu
 androideabi
@@ -38,6 +37,7 @@ asmjs
 atmega
 bpfeb
 bpfel
+csky
 cuda
 eabi
 eabihf
@@ -45,6 +45,7 @@ emscripten
 espidf
 fortanix
 gnuabi
+gnuabiv
 gnueabi
 gnueabihf
 gnullvm
@@ -52,6 +53,7 @@ gnuspe
 gnux
 illumos
 imac
+libnx
 loongarch
 macabi
 mipsel
@@ -60,14 +62,17 @@ msvc
 muslabi
 musleabi
 musleabihf
+newlib
 newlibeabihf
 nvptx
 ohos
 openwrt
+relibc
 riscv
 softfloat
 sparcv
 spirv
+teeos
 thumbeb
 thumbebv
 thumbv
@@ -115,6 +120,7 @@ nonoverlapping
 noreturn
 nostack
 peekable
+powf
 punct
 rclass
 repr
@@ -149,12 +155,14 @@ endianness
 esac
 euxo
 gsub
+libc
 moreutils
 msys
 noninteractive
 noprofile
 norc
 nproc
+objcopy
 objdump
 pipefail
 powerset
@@ -164,7 +172,5 @@ readelf
 shellcheckrc
 SIGABRT
 SIGILL
-SIGINT
-SIGTERM
 subcmd
 tlsv

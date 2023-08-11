@@ -6,6 +6,7 @@ There are no stability guarantees for these actions, since they're supposed to
 only be used in infra managed by us.
 
 - [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages.
+- [**free-device-space**](free-device-space): frees device space.
 
 ## Moved Actions
 

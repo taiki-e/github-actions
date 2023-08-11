@@ -37,6 +37,14 @@ jobs:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
-      - run: du / -h -d2 || true
+      - run: |
+          set -x
+          du /opt -h -d2 || true
+          du /usr -h -d2 || true
+          du / -h -d1 || true
       - uses: ./free-device-space
-      - run: du / -h -d2 || true
+      - run: |
+          set -x
+          du /opt -h -d2 || true
+          du /usr -h -d2 || true
+          du / -h -d1 || true

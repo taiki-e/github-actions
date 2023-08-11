@@ -3,9 +3,15 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# Inspired by https://github.com/easimon/maximize-build-space
-
-sudo rm -rf /usr/share/dotnet
-sudo rm -rf /usr/local/lib/android
-sudo rm -rf /opt/ghc
-sudo rm -rf /opt/hostedtoolcache/CodeQL
+case "${OSTYPE}" in
+    linux*)
+        # Inspired by https://github.com/easimon/maximize-build-space
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        ;;
+    darwin*) ;;
+    cygwin* | msys*) ;;
+    *) bail "unrecognized OSTYPE '${OSTYPE}'" ;;
+esac

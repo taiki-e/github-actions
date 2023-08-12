@@ -39,14 +39,18 @@ jobs:
           persist-credentials: false
       - run: |
           set -x
+          df -h
           du /opt -h -d2 || true
           du /usr -h -d2 || true
           du /usr/local/lib -h -d1 || true
+          du /usr/local/share -h -d1 || true
           du / -h -d1 || true
       - uses: ./free-device-space
       - run: |
           set -x
+          df -h
           du /opt -h -d2 || true
           du /usr -h -d2 || true
           du /usr/local/lib -h -d1 || true
+          du /usr/local/share -h -d1 || true
           du / -h -d1 || true

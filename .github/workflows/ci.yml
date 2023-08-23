@@ -30,27 +30,35 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          # https://github.com/actions/runner-images#available-images
           - ubuntu-20.04
           - ubuntu-22.04
+          - macos-11
+          - macos-12
+          - macos-13
+          - windows-2019
+          - windows-2022
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
+      - run: df -h
       - run: |
           set -x
-          df -h
           du /opt -h -d2 || true
           du /usr -h -d2 || true
           du /usr/local/lib -h -d1 || true
           du /usr/local/share -h -d1 || true
           du / -h -d1 || true
+        if: startsWith(matrix.os, 'ubuntu')
       - uses: ./free-device-space
+      - run: df -h
       - run: |
           set -x
-          df -h
           du /opt -h -d2 || true
           du /usr -h -d2 || true
           du /usr/local/lib -h -d1 || true
           du /usr/local/share -h -d1 || true
           du / -h -d1 || true
+        if: startsWith(matrix.os, 'ubuntu')

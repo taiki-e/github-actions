@@ -7,6 +7,7 @@ only be used in infra managed by us.
 
 - [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages.
 - [**free-device-space**](free-device-space): frees device space.
+- [**setup-docker**](setup-docker): setup docker.
 
 ## Moved Actions
 
@@ -21,7 +22,7 @@ These actions were previously included in this repository but have been moved in
 
 ## Removed Actions
 
-These actions were previously included in this repository but have been removed in favor of other actions.
+These actions were previously included in this repository but have been removed.
 
 - **install-rust**: removed in favor of calling `rustup` directly.
 - **update-dependabot-pr**: removed because no longer used.

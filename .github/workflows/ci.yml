@@ -62,3 +62,11 @@ jobs:
           du /usr/local/share -h -d1 || true
           du / -h -d1 || true
         if: startsWith(matrix.os, 'ubuntu')
+
+  setup-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./setup-docker

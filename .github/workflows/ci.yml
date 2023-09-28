@@ -44,23 +44,30 @@ jobs:
         with:
           persist-credentials: false
       - run: df -h
-      - run: |
+      - name: Run du -h
+        run: |
           set -x
-          du /opt -h -d2 || true
-          du /usr -h -d2 || true
-          du /usr/local/lib -h -d1 || true
-          du /usr/local/share -h -d1 || true
-          du / -h -d1 || true
+          sudo du / -h -d1 2>/dev/null || true
+          sudo du /home -h -d2 || true
+          sudo du /opt -h -d2 || true
+          sudo du /usr -h -d2 || true
+          sudo du /usr/local/lib -h -d1 || true
+          sudo du /usr/local/share -h -d1 || true
+          sudo du /var -h -d1 || true
+          sudo du /var/lib -h -d1 || true
         if: startsWith(matrix.os, 'ubuntu')
       - uses: ./free-device-space
-      - run: df -h
-      - run: |
+      - name: Run du -h
+        run: |
           set -x
-          du /opt -h -d2 || true
-          du /usr -h -d2 || true
-          du /usr/local/lib -h -d1 || true
-          du /usr/local/share -h -d1 || true
-          du / -h -d1 || true
+          sudo du / -h -d1 2>/dev/null || true
+          sudo du /home -h -d2 || true
+          sudo du /opt -h -d2 || true
+          sudo du /usr -h -d2 || true
+          sudo du /usr/local/lib -h -d1 || true
+          sudo du /usr/local/share -h -d1 || true
+          sudo du /var -h -d1 || true
+          sudo du /var/lib -h -d1 || true
         if: startsWith(matrix.os, 'ubuntu')
 
   setup-docker:

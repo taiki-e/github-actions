@@ -46,7 +46,7 @@ jobs:
       - run: df -h
       - name: Run du -h
         run: |
-          set -x
+          set -eEuxo pipefail
           sudo du / -h -d1 2>/dev/null || true
           sudo du /home -h -d2 || true
           sudo du /opt -h -d2 || true
@@ -59,7 +59,7 @@ jobs:
       - uses: ./free-device-space
       - name: Run du -h
         run: |
-          set -x
+          set -eEuxo pipefail
           sudo du / -h -d1 2>/dev/null || true
           sudo du /home -h -d2 || true
           sudo du /opt -h -d2 || true

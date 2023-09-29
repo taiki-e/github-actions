@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0 OR MIT
-set -euo pipefail
+set -eEuo pipefail
 IFS=$'\n\t'
 
 # Source: https://github.com/rust-lang/simpleinfra/blob/2e042b654e76fe435bbab0f4c743a1015d575be4/github-actions/static-websites/entrypoint.sh

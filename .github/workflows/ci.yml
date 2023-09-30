@@ -43,7 +43,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - run: df -h
       - name: Run du -h
         run: |
           set -eEuxo pipefail

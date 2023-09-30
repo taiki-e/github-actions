@@ -5,17 +5,44 @@ IFS=$'\n\t'
 
 case "${OSTYPE}" in
     linux*)
-        # Inspired by https://github.com/easimon/maximize-build-space
-        (
-            set -x
-            sudo rm -rf \
-                /opt/hostedtoolcache/CodeQL \
-                /usr/local/.ghcup \
-                /usr/local/lib/android \
-                /usr/share/dotnet
+        # GitHub-hosted Linux runners have 14-20GB of free space.
+        # There is a tradeoff here between the amount of files deleted and
+        # performance. Deleting android and node_modules is particularly
+        # time-consuming. Additionally, due to a GitHub Actions bug, it
+        # sometimes takes a more long time.
+        # https://github.com/actions/runner-images/issues/1939#
+        dirs=(
+            # /opt/az # 676M
+            # /opt/google/chrome # 318M
+            /opt/hostedtoolcache/CodeQL # 8.3G
+            # /opt/microsoft # 695M
+            # /usr/lib/firefox # 234M
+            # /usr/lib/google-cloud-sdk # 939M
+            # /usr/lib/mono # 423M
+            /usr/local/.ghcup # 4.7G
+            # /usr/local/julia* # 501M
+            /usr/local/lib/android # 15G
+            # /usr/local/lib/node_modules # 1.2G
+            # /usr/local/share/chromium # 506M
+            /usr/local/share/powershell # 1.1G
+            # /usr/share/az_* # 346M
+            /usr/share/dotnet # 2.2G
+            /usr/share/swift  # 1.9G
         )
+        for dir in "${dirs[@]}"; do
+            (
+                set -x
+                time sudo find "${dir}" -type f -delete
+            )
+        done
         ;;
-    darwin*) ;;
-    cygwin* | msys*) ;;
+    darwin*)
+        # GitHub-hosted macOS runners already have a lot of free space.
+        ;;
+    cygwin* | msys*)
+        # GitHub-hosted Windows runners have a lot of free space in C drive,
+        # but D drive which is used as a workspace has only 14GB of free space.
+        # https://github.com/actions/runner-images/issues/1341
+        ;;
     *) bail "unrecognized OSTYPE '${OSTYPE}'" ;;
 esac

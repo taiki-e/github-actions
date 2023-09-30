@@ -7,6 +7,8 @@ description: GitHub Action for freeing device space.
 runs:
   using: composite
   steps:
+    - run: df -h
+      shell: bash
     - run: bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/main.sh"
       shell: bash
     - run: df -h

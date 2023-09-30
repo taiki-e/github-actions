@@ -1,0 +1,56 @@
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      event_name:
+        required: false
+        type: string
+      target:
+        required: false
+        type: string
+      args:
+        required: false
+        type: string
+      all-features:
+        required: false
+        type: boolean
+        default: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  msrv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: taiki-e/github-actions/free-device-space@main
+      - uses: taiki-e/install-action@cargo-hack
+      - run: |
+          echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
+        if: inputs.target != ''
+      - run: |
+          echo "ALL_FEATURES=--all-features" >>"${GITHUB_ENV}"
+        if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
+      # Make sure this crate can be built with MSRV and all later versions.
+      # However, this takes time, so for PR, set the version interval.
+      - run: cargo hack build --workspace --no-private --version-range ..                  $TARGET $ALL_FEATURES ${{ inputs.args }}
+        if: inputs.event_name != 'pull_request'
+      - run: cargo hack build --workspace --no-private --version-range .. --version-step 2 $TARGET $ALL_FEATURES ${{ inputs.args }}
+        if: inputs.event_name == 'pull_request'

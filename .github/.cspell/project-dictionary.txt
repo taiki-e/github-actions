@@ -5,4 +5,6 @@ buildx
 ghcup
 hostedtoolcache
 nojekyll
+shellcheck
+shfmt
 tonistiigi

@@ -1,15 +1,25 @@
-# GitHub Actions
+# GitHub Actions and Reusable Workflows
 
-This repository contains some shared [GitHub Actions][actions] used on CIs
-managed by @taiki-e.
+This repository contains some [actions](https://docs.github.com/en/actions/creating-actions/about-custom-actions)
+and [reusable workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
+used on CIs managed by @taiki-e.
 There are no stability guarantees for these actions, since they're supposed to
 only be used in infra managed by us.
+
+## Actions
 
 - [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages.
 - [**free-device-space**](free-device-space): frees device space.
 - [**setup-docker**](setup-docker): setup docker.
 
-## Moved Actions
+## Reusable workflows
+
+- [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
+- [**deny**](.github/workflows/deny.yml): Run `cargo deny` in a way that avoids non-ideal behaviors.
+- [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
+- [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).
+
+## Moved or removed actions
 
 These actions were previously included in this repository but have been moved into their own repository because they were considered stable enough.
 
@@ -20,14 +30,11 @@ These actions were previously included in this repository but have been moved in
 - **upload-rust-binary**: moved into the
   [**upload-rust-binary-action**][upload-rust-binary-action] repository.
 
-## Removed Actions
-
 These actions were previously included in this repository but have been removed.
 
 - **install-rust**: removed in favor of calling `rustup` directly.
 - **update-dependabot-pr**: removed because no longer used.
 
-[actions]: https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/about-actions
 [create-gh-release-action]: https://github.com/taiki-e/create-gh-release-action
 [install-action]: https://github.com/taiki-e/install-action
 [upload-rust-binary-action]: https://github.com/taiki-e/upload-rust-binary-action

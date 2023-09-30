@@ -1,0 +1,61 @@
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      rust:
+        required: false
+        type: string
+        default: nightly
+      target:
+        required: false
+        type: string
+      clippy:
+        required: false
+        type: boolean
+        default: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  tidy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: has-file
+        run: |
+          if [[ -n "$(git ls-files '*.rs')" ]]; then
+            echo "rust=true" >>"${GITHUB_OUTPUT}"
+          fi
+      - name: Install Rust
+        run: rustup toolchain add ${{ inputs.rust }} --no-self-update --profile minimal --component clippy,rustfmt && rustup default ${{ inputs.rust }}
+        if: steps.has-file.outputs.rust == 'true'
+      - run: |
+          rustup target add ${{ inputs.target }}
+          echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
+        if: inputs.target != ''
+      - uses: taiki-e/install-action@shellcheck
+      - uses: taiki-e/install-action@shfmt
+      - run: pip3 install yq
+      - run: cargo clippy --workspace --all-features --all-targets $TARGET
+        if: always() && steps.has-file.outputs.rust == 'true' && inputs.clippy
+      - run: cat tools/.tidy-check-license-headers
+        if: always()
+      - run: tools/tidy.sh
+        if: always()

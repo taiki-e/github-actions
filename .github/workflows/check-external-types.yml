@@ -1,0 +1,113 @@
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      rust:
+        required: false
+        type: string
+        default: nightly-2023-05-31
+      # target:
+      #   required: false
+      #   type: string
+      args:
+        required: false
+        type: string
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check-external-types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain add ${{ inputs.rust }} --no-self-update --profile minimal && rustup default ${{ inputs.rust }}
+      - uses: taiki-e/cache-cargo-install-action@v1
+        with:
+          tool: cargo-check-external-types@0.1.7
+      # See https://docs.rs/about/metadata for docs.rs metadata.
+      # See https://github.com/awslabs/cargo-check-external-types/blob/v0.1.7/src/main.rs#L54 for cargo-check-external-types options.
+      # NB: sync with docs.yml
+      # TODO: move this script to its own file to apply shfmt and shellcheck.
+      - name: Run cargo check-external-types
+        run: |
+          set -eEuo pipefail
+          # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
+          base_args=(${{ inputs.args }})
+          IFS=$'\n\t'
+          metadata=$(cargo metadata --format-version=1 --all-features --no-deps)
+          # TODO: check-external-types doesn't support --target flag
+          # # Handle target inputs.
+          # input_target="${{ inputs.target }}"
+          # if [[ -n "${input_target}" ]]; then
+          #   while read -rd,; do
+          #     base_args+=(--target="${REPLY}")
+          #     rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
+          #   done <<<"${input_target},"
+          # fi
+          # Run cargo check-external-types for public crates with features specified in docs.rs metadata in Cargo.toml.
+          for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
+            args=("${base_args[@]}")
+            pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
+            publish=$(jq <<<"${pkg}" -r '.publish')
+            # Publishing is unrestricted if null, and forbidden if an empty array.
+            if [[ "${publish}" == "[]" ]]; then
+              continue
+            fi
+            manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
+            args+=(--manifest-path="${manifest_path}")
+            manifest_dir=$(dirname "${manifest_path}")
+            if [[ -e "${manifest_dir}/.external-types.toml" ]]; then
+              args+=(--config "${manifest_dir}/.external-types.toml")
+            else
+              echo "info: not found .external-types.toml in ${manifest_dir}; using workspace top-level .external-types.toml"
+              args+=(--config .external-types.toml)
+            fi
+            # TODO: check-external-types doesn't support --target flag
+            # # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
+            # if [[ -z "${input_target}" ]]; then
+            #   default_target=$(jq <<<"${pkg}" '.metadata.docs.rs."default-target"')
+            #   if [[ "${default_target}" != null ]]; then
+            #     args+=(--target="${default_target}")
+            #     rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
+            #   fi
+            #   if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs.targets')" != null ]]; then
+            #     for target in $(jq <<<"${pkg}" -r '.metadata.docs.rs.targets[]'); do
+            #       args+=(--target="${target}")
+            #       rustup target add "${target}" || true # tier 3 targets fail to install rustup target
+            #     done
+            #   fi
+            # fi
+            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs.features')" != null ]]; then
+              for feature in $(jq <<<"${pkg}" -r '.metadata.docs.rs.features[]'); do
+                args+=(--features="${feature}")
+              done
+            fi
+            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs."all-features"')" == 'true' ]]; then
+              args+=(--all-features)
+            fi
+            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs."no-default-features"')" == 'true' ]]; then
+              args+=(--no-default-features)
+            fi
+            (
+              set -x
+              cargo check-external-types "${args[@]}"
+            )
+          done

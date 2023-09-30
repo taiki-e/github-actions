@@ -1,4 +1,4 @@
-# GitHub Actions and Reusable Workflows
+# Actions and Reusable Workflows for GitHub Actions
 
 This repository contains some [actions](https://docs.github.com/en/actions/creating-actions/about-custom-actions)
 and [reusable workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)

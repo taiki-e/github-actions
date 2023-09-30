@@ -11,6 +11,9 @@ on:
       target:
         required: false
         type: string
+      args:
+        required: false
+        type: string
       clippy:
         required: false
         type: boolean
@@ -46,14 +49,28 @@ jobs:
       - name: Install Rust
         run: rustup toolchain add ${{ inputs.rust }} --no-self-update --profile minimal --component clippy,rustfmt && rustup default ${{ inputs.rust }}
         if: steps.has-file.outputs.rust == 'true'
-      - run: |
-          rustup target add ${{ inputs.target }}
-          echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
-        if: inputs.target != ''
       - uses: taiki-e/install-action@shellcheck
       - uses: taiki-e/install-action@shfmt
       - run: pip3 install yq
-      - run: cargo clippy --workspace --all-features --all-targets $TARGET
+      - name: Run cargo clippy
+        run: |
+          set -eEuo pipefail
+          args=(--workspace --all-targets ${{ inputs.args }})
+          # Handle target inputs.
+          input_target="${{ inputs.target }}"
+          if [[ -n "${input_target}" ]]; then
+            while read -rd,; do
+              args+=(--target="${REPLY}")
+              rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
+            done <<<"${input_target},"
+          fi
+          if [[ "${{ inputs.args }}" != *"-features"* ]]; then
+            args+=(--all-features)
+          fi
+          (
+            set -x
+            cargo clippy "${args[@]}"
+          )
         if: always() && steps.has-file.outputs.rust == 'true' && inputs.clippy
       - run: cat tools/.tidy-check-license-headers
         if: always()

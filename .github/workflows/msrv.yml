@@ -50,7 +50,7 @@ jobs:
         if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
       # Make sure this crate can be built with MSRV and all later versions.
       # However, this takes time, so for PR, set the version interval.
-      - run: cargo hack build --workspace --no-private --version-range ..                  $TARGET $ALL_FEATURES ${{ inputs.args }}
+      - run: cargo hack build --workspace --no-private --no-dev-deps --version-range ..                  $TARGET $ALL_FEATURES ${{ inputs.args }}
         if: inputs.event_name != 'pull_request'
-      - run: cargo hack build --workspace --no-private --version-range .. --version-step 2 $TARGET $ALL_FEATURES ${{ inputs.args }}
+      - run: cargo hack build --workspace --no-private --no-dev-deps --version-range .. --version-step 2 $TARGET $ALL_FEATURES ${{ inputs.args }}
         if: inputs.event_name == 'pull_request'

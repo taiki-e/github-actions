@@ -2,7 +2,7 @@ name: deploy-gh-pages-action
 description: GitHub Action for deploying GitHub Pages
 
 inputs:
-  deploy_dir:
+  deploy-dir:
     description: Directory to deploy
     required: true
   token:
@@ -21,5 +21,5 @@ runs:
     - run: bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/main.sh"
       shell: bash
       env:
-        INPUT_DEPLOY_DIR: ${{ inputs.deploy_dir }}
+        INPUT_DEPLOY_DIR: ${{ inputs.deploy-dir }}
         INPUT_TOKEN: ${{ inputs.token }}

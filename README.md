@@ -8,9 +8,9 @@ supposed to only be used in infra managed by us.
 
 ## Actions
 
-- [**deploy-gh-pages**](deploy-gh-pages): deploys GitHub Pages.
-- [**free-device-space**](free-device-space): frees device space.
-- [**setup-docker**](setup-docker): setup docker.
+- [**deploy-gh-pages**](deploy-gh-pages): Deploy GitHub Pages.
+- [**free-device-space**](free-device-space): Free device space.
+- [**setup-docker**](setup-docker): Setup docker.
 
 ## Reusable workflows
 
@@ -18,6 +18,8 @@ supposed to only be used in infra managed by us.
 - [**deny**](.github/workflows/deny.yml): Run `cargo deny` in a way that avoids non-ideal behaviors.
 - [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
 - [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).
+- [**release-dry-run**](.github/workflows/release-dry-run.yml): Build Rust binaries based on release workflow.
+- [**tidy**](.github/workflows/tidy.yml): Tidy check.
 
 ## Moved or removed actions
 

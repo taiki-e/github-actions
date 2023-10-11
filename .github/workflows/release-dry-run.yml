@@ -1,0 +1,144 @@
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      rust:
+        required: false
+        type: string
+        default: stable
+      workflow:
+        required: false
+        type: string
+        default: .github/workflows/release.yml
+      job:
+        required: false
+        type: string
+        default: upload-assets
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: pip3 install yq
+      # TODO: move this script to its own file to apply shfmt and shellcheck.
+      - id: parse
+        run: |
+          set -eEuo pipefail
+          workflow=$(yq '.' "${{ inputs.workflow }}")
+          matrix=$(jq <<<"${workflow}" -c ".jobs.\"${{ inputs.job }}\".strategy.matrix")
+          if [[ "${matrix}" == "null" ]]; then
+            echo "::error::'.jobs.${{ inputs.job }}.strategy.matrix' of ${{ inputs.workflow }} must set"
+            exit 1
+          fi
+          echo "matrix=${matrix}" >>"${GITHUB_OUTPUT}"
+          # Handle inputs for upload-rust-binary-action.
+          # https://github.com/taiki-e/upload-rust-binary-action/blob/HEAD/action.yml
+          inputs=$(jq <<<"${workflow}" '.jobs."upload-assets".steps[] | select(.uses == "taiki-e/upload-rust-binary-action@v1") | .with')
+          bin=$(jq <<<"${inputs}" -r '.bin')
+          if [[ "${bin}" == *'$'"{{"* ]]; then
+            echo "::error::'"'$'"{{ .. }}' in 'bin' input option is not supported due to reusable workflow's limitation"
+          fi
+          echo "bin=${bin}" >>"${GITHUB_OUTPUT}"
+          target=$(jq <<<"${inputs}" -r '.target')
+          if [[ "${target}" != "null" ]] && [[ "${target}" != '$'"{{ matrix.target }}" ]]; then
+            echo "::error::'target' input option must be "'$'"{{ matrix.target }} or not set"
+            exit 1
+          fi
+          build_tool=$(jq <<<"${inputs}" -r '."build-tool"')
+          if [[ "${build_tool}" != "null" ]] && [[ "${target}" != '$'"{{ matrix.build-tool }}" ]]; then
+            echo "::error::'build-tool' input option must be "'$'"{{ matrix.build-tool }} or not set"
+            exit 1
+          fi
+          tar=$(jq <<<"${inputs}" -r '.tar')
+          if [[ "${tar}" == "null" ]]; then
+            tar=unix
+          elif [[ "${tar}" == *'$'"{{"* ]]; then
+            echo "::error::'"'$'"{{ .. }}' in 'tar' input option is not supported due to reusable workflow's limitation"
+          fi
+          echo "tar=${tar}" >>"${GITHUB_OUTPUT}"
+          zip=$(jq <<<"${inputs}" -r '.zip')
+          if [[ "${zip}" == "null" ]]; then
+            zip=windows
+          elif [[ "${zip}" == *'$'"{{"* ]]; then
+            echo "::error::'"'$'"{{ .. }}' in 'zip' input option is not supported due to reusable workflow's limitation"
+          fi
+          echo "zip=${zip}" >>"${GITHUB_OUTPUT}"
+          # Handle unsupported inputs
+          for name in archive features no-default-features no_default_features manifest-path manifest_path include asset leading-dir leading_dir build_tool checksum ref profile dry-run dry_run; do
+            if [[ "$(jq <<<"${inputs}" -r ".\"${name}\"")" != "null" ]]; then
+              echo "::error::'${name}' input option is not supported yet by this reusable workflow"
+              exit 1
+            fi
+          done
+    outputs:
+      matrix: ${{ steps.parse.outputs.matrix }}
+      bin: ${{ steps.parse.outputs.bin }}
+      tar: ${{ steps.parse.outputs.tar }}
+      zip: ${{ steps.parse.outputs.zip }}
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ${{ matrix.os || 'ubuntu-20.04' }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
+      - uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ matrix.target }}
+        if: matrix.build-tool != 'cross' && matrix.build-tool != 'cargo-zigbuild'
+      - run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
+        if: endsWith(matrix.target, 'windows-msvc')
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          dry-run: true
+          bin: ${{ needs.prepare.outputs.bin }}
+          target: ${{ matrix.target }}
+          build-tool: ${{ matrix.build-tool }}
+          tar: ${{ needs.prepare.outputs.tar }}
+          zip: ${{ needs.prepare.outputs.zip }}
+          ref: refs/tags/dummy
+          token: dummy
+      - name: Get target name for artifact
+        id: artifact-target
+        run: |
+          target="${{ matrix.target }}"
+          if [[ -z "${target}" ]]; then
+            host=$(rustc -Vv | grep 'host: ' | cut -c 7-)
+            echo "artifact-target=${host}" >>"${GITHUB_OUTPUT}"
+          elif [[ "${{ matrix.build-tool }}" == 'cargo-zigbuild' ]]; then
+            echo "artifact-target=${target%%.*}" >>"${GITHUB_OUTPUT}"
+          else
+            echo "artifact-target=${target}" >>"${GITHUB_OUTPUT}"
+          fi
+      # For debugging
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.artifact-target.outputs.artifact-target }}
+          path: ${{ needs.prepare.outputs.bin }}-${{ steps.artifact-target.outputs.artifact-target }}.*

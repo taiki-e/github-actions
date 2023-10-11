@@ -38,7 +38,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust
-        run: rustup toolchain add ${{ inputs.rust }} --no-self-update --profile minimal && rustup default ${{ inputs.rust }}
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
       # See https://docs.rs/about/metadata for docs.rs metadata.
       # NB: sync with check-external-types.yml
       # TODO: move this script to its own file to apply shfmt and shellcheck.

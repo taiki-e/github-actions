@@ -8,9 +8,9 @@ on:
         required: false
         type: string
         default: nightly-2023-05-31
-      # target:
-      #   required: false
-      #   type: string
+      target:
+        required: false
+        type: string
       args:
         required: false
         type: string
@@ -38,7 +38,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust
-        run: rustup toolchain add ${{ inputs.rust }} --no-self-update --profile minimal && rustup default ${{ inputs.rust }}
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
       - uses: taiki-e/cache-cargo-install-action@v1
         with:
           tool: cargo-check-external-types@0.1.7
@@ -53,15 +53,17 @@ jobs:
           base_args=(${{ inputs.args }})
           IFS=$'\n\t'
           metadata=$(cargo metadata --format-version=1 --all-features --no-deps)
-          # TODO: check-external-types doesn't support --target flag
-          # # Handle target inputs.
-          # input_target="${{ inputs.target }}"
-          # if [[ -n "${input_target}" ]]; then
-          #   while read -rd,; do
-          #     base_args+=(--target="${REPLY}")
-          #     rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
-          #   done <<<"${input_target},"
-          # fi
+          # Handle target inputs.
+          input_target="${{ inputs.target }}"
+          if [[ -n "${input_target}" ]]; then
+            # TODO: check-external-types doesn't support --target flag
+            # while read -rd,; do
+            #   base_args+=(--target="${REPLY}")
+            #   rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
+            # done <<<"${input_target},"
+            echo "::error::check-external-types doesn't support --target flag"
+            exit 1
+          fi
           # Run cargo check-external-types for public crates with features specified in docs.rs metadata in Cargo.toml.
           for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
             args=("${base_args[@]}")

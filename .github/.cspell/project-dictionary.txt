@@ -8,3 +8,4 @@ nojekyll
 shellcheck
 shfmt
 tonistiigi
+zigbuild

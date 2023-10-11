@@ -35,7 +35,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust
-        run: rustup toolchain add ${{ inputs.rust }} --no-self-update --profile minimal && rustup default ${{ inputs.rust }}
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
       - uses: taiki-e/install-action@cargo-deny
       # Workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
       - uses: taiki-e/install-action@cargo-no-dev-deps

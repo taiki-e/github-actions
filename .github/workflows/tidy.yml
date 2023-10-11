@@ -47,7 +47,7 @@ jobs:
             echo "rust=true" >>"${GITHUB_OUTPUT}"
           fi
       - name: Install Rust
-        run: rustup toolchain add ${{ inputs.rust }} --no-self-update --profile minimal --component clippy,rustfmt && rustup default ${{ inputs.rust }}
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal --component clippy,rustfmt && rustup default "${{ inputs.rust }}"
         if: steps.has-file.outputs.rust == 'true'
       - uses: taiki-e/install-action@shellcheck
       - uses: taiki-e/install-action@shfmt

@@ -51,6 +51,11 @@ jobs:
             exit 1
           fi
           echo "matrix=${matrix}" >>"${GITHUB_OUTPUT}"
+          runs_on=$(jq <<<"${workflow}" -r ".jobs.\"${{ inputs.job }}\".\"runs-on\"")
+          if [[ "${runs_on}" != '$'"{{ matrix.os }}" ]] && [[ "${runs_on}" != '$'"{{ matrix.os || 'ubuntu-20.04' }}" ]]; then
+            echo "::error::'runs-on' must be "'$'"{{ matrix.os }} or "'$'"{{ matrix.os || 'ubuntu-20.04' }}, but found ${runs_on}"
+            exit 1
+          fi
           # Handle inputs for upload-rust-binary-action.
           # https://github.com/taiki-e/upload-rust-binary-action/blob/HEAD/action.yml
           inputs=$(jq <<<"${workflow}" '.jobs."upload-assets".steps[] | select(.uses == "taiki-e/upload-rust-binary-action@v1") | .with')

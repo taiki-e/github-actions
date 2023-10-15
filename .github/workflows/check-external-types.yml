@@ -41,7 +41,11 @@ jobs:
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
       - uses: taiki-e/cache-cargo-install-action@v1
         with:
-          tool: cargo-check-external-types@0.1.7
+          # TODO: check-external-types doesn't support --target flag; use patched version: https://github.com/awslabs/cargo-check-external-types/pull/110
+          # tool: cargo-check-external-types@0.1.7
+          tool: cargo-check-external-types
+          git: https://github.com/taiki-e/cargo-check-external-types
+          rev: c8520d1
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs
@@ -58,13 +62,10 @@ jobs:
           # Handle target inputs.
           input_target="${{ inputs.target }}"
           if [[ -n "${input_target}" ]]; then
-            # TODO: check-external-types doesn't support --target flag
-            # while read -rd,; do
-            #   base_args+=(--target="${REPLY}")
-            #   rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
-            # done <<<"${input_target},"
-            echo "::error::check-external-types doesn't support --target flag"
-            exit 1
+            while read -rd,; do
+              base_args+=(--target="${REPLY}")
+              rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
+            done <<<"${input_target},"
           fi
           # Run cargo check-external-types for public crates with features specified in docs.rs metadata in Cargo.toml.
           for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
@@ -91,21 +92,20 @@ jobs:
                 docs_rs_metadata='{}'
               fi
             fi
-            # TODO: check-external-types doesn't support --target flag
-            # # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
-            # if [[ -z "${input_target}" ]]; then
-            #   default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
-            #   if [[ "${default_target}" != null ]]; then
-            #     args+=(--target="${default_target}")
-            #     rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
-            #   fi
-            #   if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
-            #     for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
-            #       args+=(--target="${target}")
-            #       rustup target add "${target}" || true # tier 3 targets fail to install rustup target
-            #     done
-            #   fi
-            # fi
+            # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
+            if [[ -z "${input_target}" ]]; then
+              default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
+              if [[ "${default_target}" != null ]]; then
+                args+=(--target="${default_target}")
+                rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
+              fi
+              if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
+                for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
+                  args+=(--target="${target}")
+                  rustup target add "${target}" || true # tier 3 targets fail to install rustup target
+                done
+              fi
+            fi
             if [[ "$(jq <<<"${docs_rs_metadata}" '.features')" != null ]]; then
               for feature in $(jq <<<"${docs_rs_metadata}" -r '.features[]'); do
                 args+=(--features="${feature}")

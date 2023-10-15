@@ -61,9 +61,10 @@ jobs:
           metadata=$(cargo metadata --format-version=1 --all-features --no-deps)
           # Handle target inputs.
           input_target="${{ inputs.target }}"
+          base_targets=()
           if [[ -n "${input_target}" ]]; then
             while read -rd,; do
-              base_args+=(--target="${REPLY}")
+              base_targets+=(--target="${REPLY}")
               rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
             done <<<"${input_target},"
           fi
@@ -94,17 +95,20 @@ jobs:
             fi
             # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
             if [[ -z "${input_target}" ]]; then
+              pkg_targets=()
               default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
               if [[ "${default_target}" != null ]]; then
-                args+=(--target="${default_target}")
+                pkg_targets+=(--target="${default_target}")
                 rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
               fi
               if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
                 for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
-                  args+=(--target="${target}")
+                  pkg_targets+=(--target="${target}")
                   rustup target add "${target}" || true # tier 3 targets fail to install rustup target
                 done
               fi
+            else
+              pkg_targets=("${base_targets[@]}")
             fi
             if [[ "$(jq <<<"${docs_rs_metadata}" '.features')" != null ]]; then
               for feature in $(jq <<<"${docs_rs_metadata}" -r '.features[]'); do
@@ -117,8 +121,22 @@ jobs:
             if [[ "$(jq <<<"${docs_rs_metadata}" '."no-default-features"')" == 'true' ]]; then
               args+=(--no-default-features)
             fi
-            (
-              set -x
-              cargo check-external-types "${args[@]}"
-            )
+            if [[ ${#pkg_targets[@]} -gt 0 ]]; then
+              # sort and dedup
+              IFS=$'\n'
+              # shellcheck disable=SC2207
+              pkg_targets=($(LC_ALL=C sort -u <<<"${pkg_targets[*]}"))
+              IFS=$'\n\t'
+              for target in "${pkg_targets[@]}"; do
+                (
+                  set -x
+                  cargo check-external-types "${args[@]}" "${target}"
+                )
+              done
+            else
+              (
+                set -x
+                cargo check-external-types "${args[@]}"
+              )
+            fi
           done

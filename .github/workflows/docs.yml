@@ -39,17 +39,47 @@ jobs:
           persist-credentials: false
       - name: Install Rust
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
-      # See https://docs.rs/about/metadata for docs.rs metadata.
+      # Refs:
+      # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
+      # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs
       # NB: sync with check-external-types.yml
       # TODO: move this script to its own file to apply shfmt and shellcheck.
       - name: Run cargo doc
         run: |
           set -eEuo pipefail
           # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
-          base_args=(-Z unstable-options -Z rustdoc-scrape-examples --document-private-items ${{ inputs.args }})
-          base_rustflags="${RUSTFLAGS:-}"
-          base_rustdocflags="${RUSTDOCFLAGS:-} -Z unstable-options --document-hidden-items"
+          base_args=(
+            --lib
+            -Z unstable-options
+            -Z rustdoc-map
+            -Z rustdoc-scrape-examples
+            --document-private-items
+            --config "doc.extern-map.registries.crates-io=\"https://docs.rs\""
+            ${{ inputs.args }}
+          )
           IFS=$'\n\t'
+          base_rustflags=()
+          base_rustdocflags=()
+          if [[ -n "${RUSTFLAGS:-}" ]]; then
+              while read -rd' '; do
+                  t="${REPLY# *}"
+                  base_rustflags+=("${t%* }")
+              done <<<"${RUSTFLAGS} "
+          fi
+          if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
+              while read -rd' '; do
+                  t="${REPLY# *}"
+                  base_rustdocflags+=("${t%* }")
+              done <<<"${RUSTDOCFLAGS} "
+          fi
+          base_rustdocflags+=(
+            -Z unstable-options
+            --document-hidden-items
+            --extern-html-root-takes-precedence
+          )
+          unset RUSTFLAGS
+          unset RUSTDOCFLAGS
+          export DOCS_RS=1
           metadata=$(cargo metadata --format-version=1 --all-features --no-deps)
           # Handle target inputs.
           input_target="${{ inputs.target }}"
@@ -62,8 +92,8 @@ jobs:
           # Run cargo doc for public crates with features and rustc/rustdoc/cargo args specified in docs.rs metadata in Cargo.toml.
           for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
             args=("${base_args[@]}")
-            pkg_rustflags="${base_rustflags}"
-            pkg_rustdocflags="${base_rustdocflags}"
+            pkg_rustflags=("${base_rustflags[@]}")
+            pkg_rustdocflags=("${base_rustdocflags[@]}")
             pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
             publish=$(jq <<<"${pkg}" -r '.publish')
             # Publishing is unrestricted if null, and forbidden if an empty array.
@@ -72,53 +102,73 @@ jobs:
             fi
             manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
             args+=(--manifest-path="${manifest_path}")
+            docs_rs_metadata=$(jq <<<"${pkg}" '.metadata.docs.rs')
+            if [[ "${docs_rs_metadata}" == null ]]; then
+              docs_rs_metadata=$(jq <<<"${pkg}" '.metadata."docs.rs"')
+              if [[ "${docs_rs_metadata}" == null ]]; then
+                docs_rs_metadata='{}'
+              fi
+            fi
             # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
             if [[ -z "${input_target}" ]]; then
-              default_target=$(jq <<<"${pkg}" '.metadata.docs.rs."default-target"')
+              default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
               if [[ "${default_target}" != null ]]; then
                 args+=(--target="${default_target}")
                 rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
               fi
-              if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs.targets')" != null ]]; then
-                for target in $(jq <<<"${pkg}" -r '.metadata.docs.rs.targets[]'); do
+              if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
+                for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
                   args+=(--target="${target}")
                   rustup target add "${target}" || true # tier 3 targets fail to install rustup target
                 done
               fi
             fi
-            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs.features')" != null ]]; then
-              for feature in $(jq <<<"${pkg}" -r '.metadata.docs.rs.features[]'); do
+            if [[ "$(jq <<<"${docs_rs_metadata}" '.features')" != null ]]; then
+              for feature in $(jq <<<"${docs_rs_metadata}" -r '.features[]'); do
                 args+=(--features="${feature}")
               done
             fi
-            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs."all-features"')" == 'true' ]]; then
+            if [[ "$(jq <<<"${docs_rs_metadata}" '."all-features"')" == 'true' ]]; then
               args+=(--all-features)
             fi
-            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs."no-default-features"')" == 'true' ]]; then
+            if [[ "$(jq <<<"${docs_rs_metadata}" '."no-default-features"')" == 'true' ]]; then
               args+=(--no-default-features)
             fi
-            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs."rustc-args"')" != null ]]; then
-              for arg in $(jq <<<"${pkg}" -r '.metadata.docs.rs."rustc-args"[]'); do
-                pkg_rustflags+=" ${arg}"
+            if [[ "$(jq <<<"${docs_rs_metadata}" '."rustc-args"')" != null ]]; then
+              for arg in $(jq <<<"${docs_rs_metadata}" -r '."rustc-args"[]'); do
+                pkg_rustflags+=("${arg}")
               done
-              export RUSTFLAGS="${pkg_rustflags}"
             fi
-            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs."rustdoc-args"')" != null ]]; then
-              for arg in $(jq <<<"${pkg}" -r '.metadata.docs.rs."rustdoc-args"[]'); do
-                pkg_rustdocflags+=" ${arg}"
+            if [[ "$(jq <<<"${docs_rs_metadata}" '."rustdoc-args"')" != null ]]; then
+              for arg in $(jq <<<"${docs_rs_metadata}" -r '."rustdoc-args"[]'); do
+                pkg_rustdocflags+=("${arg}")
               done
-              export RUSTDOCFLAGS="${pkg_rustdocflags}"
             fi
-            if [[ "$(jq <<<"${pkg}" '.metadata.docs.rs."cargo-args"')" != null ]]; then
-              for arg in $(jq <<<"${pkg}" -r '.metadata.docs.rs."cargo-args"[]'); do
+            if [[ -n "${pkg_rustflags[*]}" ]]; then
+              f=''
+              for flag in "${pkg_rustflags[@]}"; do
+                f+="\"${flag}\","
+              done
+              args+=(
+                --config "build.rustflags=[${f}]"
+                -Z host-config
+                -Z target-applies-to-host
+                --config "host.rustflags=[${f}]"
+              )
+            fi
+            if [[ -n "${pkg_rustdocflags[*]}" ]]; then
+              f=''
+              for flag in "${pkg_rustdocflags[@]}"; do
+                f+="\"${flag}\","
+              done
+              args+=(
+                --config "build.rustdocflags=[${f}]"
+              )
+            fi
+            if [[ "$(jq <<<"${docs_rs_metadata}" '."cargo-args"')" != null ]]; then
+              for arg in $(jq <<<"${docs_rs_metadata}" -r '."cargo-args"[]'); do
                 args+=("${arg}")
               done
-            fi
-            if [[ -n "${RUSTFLAGS:-}" ]]; then
-              echo "+ RUSTFLAGS='${RUSTFLAGS}' \\"
-            fi
-            if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
-              echo "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
             fi
             (
               set -x

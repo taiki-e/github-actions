@@ -83,9 +83,10 @@ jobs:
           metadata=$(cargo metadata --format-version=1 --all-features --no-deps)
           # Handle target inputs.
           input_target="${{ inputs.target }}"
+          base_targets=()
           if [[ -n "${input_target}" ]]; then
             while read -rd,; do
-              base_args+=(--target="${REPLY}")
+              base_targets+=(--target="${REPLY}")
               rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
             done <<<"${input_target},"
           fi
@@ -109,18 +110,22 @@ jobs:
                 docs_rs_metadata='{}'
               fi
             fi
-            # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
-            if [[ -z "${input_target}" ]]; then
-              default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
-              if [[ "${default_target}" != null ]]; then
-                args+=(--target="${default_target}")
-                rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
-              fi
-              if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
-                for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
-                  args+=(--target="${target}")
-                  rustup target add "${target}" || true # tier 3 targets fail to install rustup target
-                done
+            if ! jq <<<"${pkg}" -r '.targets[] | .kind[]' | grep -q proc-macro; then
+              # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
+              if [[ -z "${input_target}" ]]; then
+                default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
+                if [[ "${default_target}" != null ]]; then
+                  args+=(--target="${default_target}")
+                  rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
+                fi
+                if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
+                  for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
+                    args+=(--target="${target}")
+                    rustup target add "${target}" || true # tier 3 targets fail to install rustup target
+                  done
+                fi
+              else
+                args+=("${base_targets[@]}")
               fi
             fi
             if [[ "$(jq <<<"${docs_rs_metadata}" '.features')" != null ]]; then

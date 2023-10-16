@@ -93,22 +93,24 @@ jobs:
                 docs_rs_metadata='{}'
               fi
             fi
-            # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
-            if [[ -z "${input_target}" ]]; then
-              pkg_targets=()
-              default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
-              if [[ "${default_target}" != null ]]; then
-                pkg_targets+=(--target="${default_target}")
-                rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
+            pkg_targets=()
+            if ! jq <<<"${pkg}" -r '.targets[] | .kind[]' | grep -q proc-macro; then
+              # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
+              if [[ -z "${input_target}" ]]; then
+                default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
+                if [[ "${default_target}" != null ]]; then
+                  pkg_targets+=(--target="${default_target}")
+                  rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
+                fi
+                if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
+                  for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
+                    pkg_targets+=(--target="${target}")
+                    rustup target add "${target}" || true # tier 3 targets fail to install rustup target
+                  done
+                fi
+              else
+                pkg_targets+=("${base_targets[@]}")
               fi
-              if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
-                for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
-                  pkg_targets+=(--target="${target}")
-                  rustup target add "${target}" || true # tier 3 targets fail to install rustup target
-                done
-              fi
-            else
-              pkg_targets=("${base_targets[@]}")
             fi
             if [[ "$(jq <<<"${docs_rs_metadata}" '.features')" != null ]]; then
               for feature in $(jq <<<"${docs_rs_metadata}" -r '.features[]'); do

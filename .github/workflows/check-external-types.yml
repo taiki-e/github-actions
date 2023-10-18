@@ -7,7 +7,7 @@ on:
       rust:
         required: false
         type: string
-        default: nightly-2023-05-31
+        default: nightly-2023-10-10
       target:
         required: false
         type: string
@@ -37,19 +37,34 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - id: pre
+        run: |
+          set -eEuo pipefail
+          IFS=$'\n\t'
+          metadata=$(cargo metadata --format-version=1 --no-deps)
+          for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
+            pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
+            publish=$(jq <<<"${pkg}" -r '.publish')
+            # Publishing is unrestricted if null, and forbidden if an empty array.
+            if [[ "${publish}" == "[]" ]]; then
+              continue
+            fi
+            if jq <<<"${pkg}" -r '.targets[] | .kind[]' | grep -q lib; then
+              echo "has-lib=true" >>"${GITHUB_OUTPUT}"
+              break
+            fi
+          done
       - name: Install Rust
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
+        if: steps.pre.outputs.has-lib == 'true'
       - uses: taiki-e/cache-cargo-install-action@v1
         with:
-          # TODO: check-external-types doesn't support --target flag; use patched version: https://github.com/awslabs/cargo-check-external-types/pull/110
-          # tool: cargo-check-external-types@0.1.7
-          tool: cargo-check-external-types
-          git: https://github.com/taiki-e/cargo-check-external-types
-          rev: c8520d1
+          tool: cargo-check-external-types@0.1.9
+        if: steps.pre.outputs.has-lib == 'true'
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs
-      # - https://github.com/awslabs/cargo-check-external-types/blob/v0.1.7/src/main.rs#L54
+      # - https://github.com/awslabs/cargo-check-external-types/blob/v0.1.9/src/main.rs
       # NB: sync with docs.yml
       # TODO: move this script to its own file to apply shfmt and shellcheck.
       - name: Run cargo check-external-types
@@ -77,15 +92,12 @@ jobs:
             if [[ "${publish}" == "[]" ]]; then
               continue
             fi
+            if ! jq <<<"${pkg}" -r '.targets[] | .kind[]' | grep -q lib; then
+              continue
+            fi
             manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
             args+=(--manifest-path="${manifest_path}")
             manifest_dir=$(dirname "${manifest_path}")
-            if [[ -e "${manifest_dir}/.external-types.toml" ]]; then
-              args+=(--config "${manifest_dir}/.external-types.toml")
-            else
-              echo "info: not found .external-types.toml in ${manifest_dir}; using workspace top-level .external-types.toml"
-              args+=(--config .external-types.toml)
-            fi
             docs_rs_metadata=$(jq <<<"${pkg}" '.metadata.docs.rs')
             if [[ "${docs_rs_metadata}" == null ]]; then
               docs_rs_metadata=$(jq <<<"${pkg}" '.metadata."docs.rs"')
@@ -94,23 +106,21 @@ jobs:
               fi
             fi
             pkg_targets=()
-            if ! jq <<<"${pkg}" -r '.targets[] | .kind[]' | grep -q proc-macro; then
-              # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
-              if [[ -z "${input_target}" ]]; then
-                default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
-                if [[ "${default_target}" != null ]]; then
-                  pkg_targets+=(--target="${default_target}")
-                  rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
-                fi
-                if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
-                  for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
-                    pkg_targets+=(--target="${target}")
-                    rustup target add "${target}" || true # tier 3 targets fail to install rustup target
-                  done
-                fi
-              else
-                pkg_targets+=("${base_targets[@]}")
+            # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
+            if [[ -z "${input_target}" ]]; then
+              default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
+              if [[ "${default_target}" != null ]]; then
+                pkg_targets+=(--target="${default_target}")
+                rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
               fi
+              if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
+                for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
+                  pkg_targets+=(--target="${target}")
+                  rustup target add "${target}" || true # tier 3 targets fail to install rustup target
+                done
+              fi
+            else
+              pkg_targets+=("${base_targets[@]}")
             fi
             if [[ "$(jq <<<"${docs_rs_metadata}" '.features')" != null ]]; then
               for feature in $(jq <<<"${docs_rs_metadata}" -r '.features[]'); do
@@ -142,3 +152,4 @@ jobs:
               )
             fi
           done
+        if: steps.pre.outputs.has-lib == 'true'

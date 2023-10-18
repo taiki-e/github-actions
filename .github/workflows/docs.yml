@@ -80,7 +80,7 @@ jobs:
           unset RUSTFLAGS
           unset RUSTDOCFLAGS
           export DOCS_RS=1
-          metadata=$(cargo metadata --format-version=1 --all-features --no-deps)
+          metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
           input_target="${{ inputs.target }}"
           base_targets=()

@@ -41,14 +41,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - id: has-file
+      - id: pre
         run: |
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             echo "rust=true" >>"${GITHUB_OUTPUT}"
           fi
       - name: Install Rust
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal --component clippy,rustfmt && rustup default "${{ inputs.rust }}"
-        if: steps.has-file.outputs.rust == 'true'
+        if: steps.pre.outputs.rust == 'true'
       - uses: taiki-e/install-action@shellcheck
       - uses: taiki-e/install-action@shfmt
       - run: pip3 install yq
@@ -71,7 +71,7 @@ jobs:
             set -x
             cargo clippy "${args[@]}"
           )
-        if: always() && steps.has-file.outputs.rust == 'true' && inputs.clippy
+        if: always() && steps.pre.outputs.rust == 'true' && inputs.clippy
       - run: cat tools/.tidy-check-license-headers
         if: always()
       - run: tools/tidy.sh

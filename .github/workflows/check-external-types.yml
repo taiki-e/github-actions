@@ -58,7 +58,7 @@ jobs:
           # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
           base_args=(${{ inputs.args }})
           IFS=$'\n\t'
-          metadata=$(cargo metadata --format-version=1 --all-features --no-deps)
+          metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
           input_target="${{ inputs.target }}"
           base_targets=()

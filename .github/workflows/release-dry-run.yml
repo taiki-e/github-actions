@@ -119,7 +119,9 @@ jobs:
           target: ${{ matrix.target }}
         if: matrix.build-tool != 'cross' && matrix.build-tool != 'cargo-zigbuild'
       - run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
-        if: endsWith(matrix.target, 'windows-msvc')
+        if: contains(matrix.target, '-windows-msvc')
+      - run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static -C link-self-contained=yes" >>"${GITHUB_ENV}"
+        if: contains(matrix.target, '-linux-musl')
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
           dry-run: true

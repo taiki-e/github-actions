@@ -90,7 +90,7 @@ jobs:
               pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
               manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
               build_script_path=$(dirname "${manifest_path}")/build.rs
-              if [[ -e "${build_script_path}" ]]; then
+              if [[ -e "${build_script_path}" ]] && grep -Eq 'cargo:rustc-cfg=' "${build_script_path}"; then
                 known_cfgs+=($(grep -E 'cargo:rustc-cfg=' "${build_script_path}" | sed -E 's/^.*cargo:rustc-cfg=//; s/(=\\)?".*$//' | LC_ALL=C sort -u))
               fi
             done

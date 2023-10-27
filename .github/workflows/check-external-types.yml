@@ -41,6 +41,7 @@ jobs:
         run: |
           set -eEuo pipefail
           IFS=$'\n\t'
+          trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
           metadata=$(cargo metadata --format-version=1 --no-deps)
           for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
             pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
@@ -70,6 +71,7 @@ jobs:
       - name: Run cargo check-external-types
         run: |
           set -eEuo pipefail
+          trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
           # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
           base_args=(${{ inputs.args }})
           IFS=$'\n\t'

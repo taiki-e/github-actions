@@ -3,6 +3,9 @@
 set -eEuo pipefail
 IFS=$'\n\t'
 
+# shellcheck disable=SC2154
+trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
+
 # Source: https://github.com/rust-lang/simpleinfra/blob/2e042b654e76fe435bbab0f4c743a1015d575be4/github-actions/static-websites/entrypoint.sh
 
 deploy_dir="${GITHUB_WORKSPACE:?}/${INPUT_DEPLOY_DIR:?}"

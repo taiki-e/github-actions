@@ -44,6 +44,7 @@ jobs:
       - id: parse
         run: |
           set -eEuo pipefail
+          trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
           workflow=$(yq '.' "${{ inputs.workflow }}")
           matrix=$(jq <<<"${workflow}" -c ".jobs.\"${{ inputs.job }}\".strategy.matrix")
           if [[ "${matrix}" == "null" ]]; then

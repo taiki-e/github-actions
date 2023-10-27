@@ -3,6 +3,9 @@
 set -eEuo pipefail
 IFS=$'\n\t'
 
+# shellcheck disable=SC2154
+trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
+
 g() {
     local cmd="$1"
     shift

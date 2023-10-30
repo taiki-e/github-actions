@@ -109,5 +109,7 @@ jobs:
         if: always() && steps.pre.outputs.rust == 'true' && inputs.clippy
       - run: cat tools/.tidy-check-license-headers
         if: always()
+      - run: cat .cspell.json
+        if: always()
       - run: tools/tidy.sh
         if: always()

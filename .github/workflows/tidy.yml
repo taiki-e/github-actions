@@ -73,7 +73,7 @@ jobs:
             echo "known-cfgs requires check-cfg"
             exit 1
           fi
-          known_cfgs=(rustfmt careful docsrs ${{ inputs.known-cfgs }})
+          known_cfgs=(rustfmt careful ${{ inputs.known-cfgs }})
           IFS=$'\n\t'
           metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.

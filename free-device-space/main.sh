@@ -13,7 +13,7 @@ case "${OSTYPE}" in
         # performance. Deleting android and node_modules is particularly
         # time-consuming. Additionally, due to a GitHub Actions bug, it
         # sometimes takes a more long time.
-        # https://github.com/actions/runner-images/issues/1939#
+        # https://github.com/actions/runner-images/issues/1939
         dirs=(
             # /opt/az # 676M
             # /opt/google/chrome # 318M

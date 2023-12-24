@@ -1,5 +1,4 @@
 // This is a dictionary shared by projects under https://github.com/taiki-e.
-// It is not intended for manual editing.
 
 endo
 taiki

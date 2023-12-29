@@ -95,6 +95,7 @@ xtensa
 aclass
 acqrel
 alloc
+bufs
 builtins
 bytecount
 canonicalize

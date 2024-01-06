@@ -60,12 +60,12 @@ jobs:
         if: steps.pre.outputs.has-lib == 'true'
       - uses: taiki-e/cache-cargo-install-action@v1
         with:
-          tool: cargo-check-external-types@0.1.9
+          tool: cargo-check-external-types@0.1.10
         if: steps.pre.outputs.has-lib == 'true'
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs
-      # - https://github.com/awslabs/cargo-check-external-types/blob/v0.1.9/src/main.rs
+      # - https://github.com/awslabs/cargo-check-external-types
       # NB: sync with docs.yml
       # TODO: move this script to its own file to apply shfmt and shellcheck.
       - name: Run cargo check-external-types

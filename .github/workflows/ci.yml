@@ -25,6 +25,28 @@ jobs:
   tidy:
     uses: taiki-e/github-actions/.github/workflows/tidy.yml@main
 
+  checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/github-actions/checkout@main
+      - uses: taiki-e/install-action@shellcheck
+      - uses: taiki-e/install-action@shfmt
+      - run: pip3 install yq
+      - run: git ls-files
+      - run: ./tools/tidy.sh
+  # For comparison
+  # actions-checkout:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         persist-credentials: false
+  #     - uses: taiki-e/install-action@shellcheck
+  #     - uses: taiki-e/install-action@shfmt
+  #     - run: pip3 install yq
+  #     - run: git ls-files
+  #     - run: ./tools/tidy.sh
+
   free-device-space:
     strategy:
       fail-fast: false
@@ -40,9 +62,7 @@ jobs:
           - windows-2022
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - uses: taiki-e/github-actions/checkout@main
       - name: Run du -h
         run: |
           set -eEuxo pipefail
@@ -72,7 +92,5 @@ jobs:
   setup-docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - uses: taiki-e/github-actions/checkout@main
       - uses: ./setup-docker

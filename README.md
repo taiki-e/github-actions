@@ -11,6 +11,7 @@ supposed to only be used in infra managed by us.
 - [**deploy-gh-pages**](deploy-gh-pages): Deploy GitHub Pages.
 - [**free-device-space**](free-device-space): Free device space.
 - [**setup-docker**](setup-docker): Setup docker.
+- [**checkout**](checkout): Checking out a repository.
 
 ## Reusable workflows
 

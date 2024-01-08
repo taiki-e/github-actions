@@ -26,7 +26,10 @@ wd=$(pwd)
 
 g git version
 
+g git config --global --add safe.directory "${wd}"
+
 g git init
+
 g git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
 
 g git config --local gc.auto 0

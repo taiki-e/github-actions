@@ -1,0 +1,58 @@
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      rust:
+        required: false
+        type: string
+        default: nightly
+      target:
+        required: false
+        type: string
+      args:
+        required: false
+        type: string
+      all-features:
+        required: false
+        type: boolean
+        default: true
+      miriflags:
+        required: false
+        type: string
+        default: -Zmiri-strict-provenance -Zmiri-symbolic-alignment-check -Zmiri-disable-isolation
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  miri:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/github-actions/checkout@main
+      - name: Install Rust
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal --component miri && rustup default "${{ inputs.rust }}"
+      - run: |
+          echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
+        if: inputs.target != ''
+      - run: |
+          echo "ALL_FEATURES=--all-features" >>"${GITHUB_ENV}"
+        if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
+      - run: cargo miri test --workspace $TARGET $ALL_FEATURES ${{ inputs.args }}
+        env:
+          MIRIFLAGS: ${{ inputs.miriflags }}
+          RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout
+          RUSTFLAGS: ${{ env.RUSTFLAGS }} -Z randomize-layout

@@ -35,17 +35,17 @@ jobs:
       - run: git ls-files
       - run: ./tools/tidy.sh
   # For comparison
-  # actions-checkout:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         persist-credentials: false
-  #     - uses: taiki-e/install-action@shellcheck
-  #     - uses: taiki-e/install-action@shfmt
-  #     - run: pip3 install yq
-  #     - run: git ls-files
-  #     - run: ./tools/tidy.sh
+  actions-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@shellcheck
+      - uses: taiki-e/install-action@shfmt
+      - run: pip3 install yq
+      - run: git ls-files
+      - run: ./tools/tidy.sh
 
   free-device-space:
     strategy:

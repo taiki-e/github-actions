@@ -133,8 +133,8 @@ g git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
 
 g git config --local gc.auto 0
 
-g retry git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin "+${GITHUB_SHA}:${GITHUB_REF}"
+g retry git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin "+${GITHUB_SHA}:${GITHUB_REF}"
 
-g retry git checkout --progress --force "${GITHUB_REF}"
+g retry git checkout --force "${GITHUB_REF}"
 
 g git config --global --add safe.directory "${wd}"

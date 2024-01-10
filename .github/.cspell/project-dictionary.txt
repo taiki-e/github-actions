@@ -2,8 +2,12 @@ binfmt
 BUILDKIT
 buildkitd
 buildx
+distro
+doas
+endgroup
 ghcup
 hostedtoolcache
+microdnf
 nojekyll
 shellcheck
 shfmt

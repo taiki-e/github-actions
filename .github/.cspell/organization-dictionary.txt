@@ -21,7 +21,6 @@ rustc
 rustdoc
 rustdocflags
 rustflags
-rustfmt
 rustsec
 rustup
 staticlib
@@ -117,7 +116,6 @@ lateout
 libdir
 mclass
 memcpy
-msrv
 nand
 nanos
 nomem

@@ -111,7 +111,10 @@ if ! type -P git &>/dev/null; then
             case "${base_distro}" in
                 debian | fedora | alpine)
                     echo "::group::Install packages required for installation (git)"
-                    sys_install git
+                    case "${base_distro}" in
+                        debian) sys_install ca-certificates git ;;
+                        *) sys_install git ;;
+                    esac
                     echo "::endgroup::"
                     ;;
                 *) warn "checkout-action requires git on non-Debian/Fedora/Alpine-based Linux" ;;

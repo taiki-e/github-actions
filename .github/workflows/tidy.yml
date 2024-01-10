@@ -52,6 +52,7 @@ jobs:
             echo "rust=true" >>"${GITHUB_OUTPUT}"
           fi
       - name: Install Rust
+        # TODO: do not install clippy if unneeded
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal --component clippy,rustfmt && rustup default "${{ inputs.rust }}"
         if: steps.pre.outputs.rust == 'true'
       - uses: taiki-e/install-action@shellcheck

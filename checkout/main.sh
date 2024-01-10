@@ -133,8 +133,14 @@ g git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
 
 g git config --local gc.auto 0
 
-g retry git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin "+${GITHUB_SHA}:${GITHUB_REF}"
-
-g retry git checkout --force "${GITHUB_REF}"
+if [[ "${GITHUB_REF}" == "refs/heads/"* ]]; then
+    branch="${GITHUB_REF#refs/heads/}"
+    remote_ref="refs/remotes/origin/${branch}"
+    g retry git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin "+${GITHUB_SHA}:${remote_ref}"
+    g retry git checkout --force -B "${branch}" "${remote_ref}"
+else
+    g retry git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin "+${GITHUB_SHA}:${GITHUB_REF}"
+    g retry git checkout --force "${GITHUB_REF}"
+fi
 
 g git config --global --add safe.directory "${wd}"

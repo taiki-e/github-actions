@@ -37,6 +37,4 @@ jobs:
       - uses: taiki-e/install-action@cargo-deny
       # Workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
       - uses: taiki-e/install-action@cargo-no-dev-deps
-      # TODO: krates (dep of cargo-deny) bug
-      # thread '<unnamed>' panicked at 'called `Option::unwrap()` on a `None` value', /home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/krates-0.15.1/src/builder.rs:776:47
-      # - run: cargo no-dev-deps --no-private deny --workspace --all-features ${{ inputs.args }} check
+      - run: cargo no-dev-deps --no-private deny --workspace --all-features ${{ inputs.args }} check

@@ -7,7 +7,6 @@ doas
 endgroup
 ghcup
 hostedtoolcache
-krates
 microdnf
 nojekyll
 shellcheck

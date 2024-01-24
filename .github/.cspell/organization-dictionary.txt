@@ -89,6 +89,7 @@ wasi
 watchos
 xous
 xtensa
+zkvm
 
 // Rust other
 aclass

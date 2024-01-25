@@ -1,0 +1,73 @@
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      rust:
+        required: false
+        type: string
+        default: stable
+      target:
+        required: false
+        type: string
+      args:
+        required: false
+        type: string
+      # crates:
+      #   required: false
+      #   type: string
+      #   default: '.'
+      changelog:
+        required: false
+        type: string
+        default: CHANGELOG.md
+      title:
+        required: false
+        type: string
+        default: $version
+      branch:
+        required: false
+        type: string
+        default: main
+    secrets:
+      CARGO_REGISTRY_TOKEN:
+        required: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: taiki-e/github-actions/checkout@main
+      - name: Install Rust
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
+      - run: |
+          echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
+        if: inputs.target != ''
+      - run: cargo package $TARGET ${{ inputs.args }}
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          changelog: ${{ inputs.changelog }}
+          title: ${{ inputs.title }}
+          branch: ${{ inputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - run: cargo publish $TARGET ${{ inputs.args }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

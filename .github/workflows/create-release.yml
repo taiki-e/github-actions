@@ -56,11 +56,11 @@ jobs:
       contents: write
     steps:
       - uses: taiki-e/github-actions/checkout@main
-      - name: Install Rust
-        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
       - run: |
           echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
         if: inputs.target != ''
+      - name: Install Rust
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal $TARGET && rustup default "${{ inputs.rust }}"
       - run: cargo package $TARGET ${{ inputs.args }}
       - uses: taiki-e/create-gh-release-action@v1
         with:

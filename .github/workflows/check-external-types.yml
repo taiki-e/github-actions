@@ -7,7 +7,7 @@ on:
       rust:
         required: false
         type: string
-        default: nightly-2023-10-29
+        default: nightly-2024-02-07
       target:
         required: false
         type: string
@@ -58,7 +58,7 @@ jobs:
         if: steps.pre.outputs.has-lib == 'true'
       - uses: taiki-e/cache-cargo-install-action@v1
         with:
-          tool: cargo-check-external-types@0.1.10
+          tool: cargo-check-external-types@0.1.11
         if: steps.pre.outputs.has-lib == 'true'
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs

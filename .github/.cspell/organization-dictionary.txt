@@ -109,6 +109,7 @@ doctest
 doctests
 hasher
 idents
+ilog
 impls
 incompat
 inlateout
@@ -126,6 +127,7 @@ nostack
 peekable
 powf
 punct
+rchunks
 rclass
 repr
 rfind
@@ -178,6 +180,7 @@ ranlib
 readelf
 shellcheckrc
 SIGABRT
+SIGBUS
 SIGILL
 subcmd
 tempdir

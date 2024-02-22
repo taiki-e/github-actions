@@ -183,6 +183,7 @@ SIGABRT
 SIGBUS
 SIGILL
 subcmd
+taplo
 tempdir
 tlsv
 tmpdir

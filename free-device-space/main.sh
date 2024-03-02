@@ -6,8 +6,8 @@ IFS=$'\n\t'
 # shellcheck disable=SC2154
 trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
 
-case "${OSTYPE}" in
-    linux*)
+case "$(uname -s)" in
+    Linux)
         # GitHub-hosted Linux runners have 14-20GB of free space.
         # There is a tradeoff here between the amount of files deleted and
         # performance. Deleting android and node_modules is particularly
@@ -39,13 +39,13 @@ case "${OSTYPE}" in
             )
         done
         ;;
-    darwin*)
+    Darwin)
         # GitHub-hosted macOS runners already have a lot of free space.
         ;;
-    cygwin* | msys*)
+    MINGW* | MSYS* | CYGWIN* | Windows_NT)
         # GitHub-hosted Windows runners have a lot of free space in C drive,
         # but D drive which is used as a workspace has only 14GB of free space.
         # https://github.com/actions/runner-images/issues/1341
         ;;
-    *) bail "unrecognized OSTYPE '${OSTYPE}'" ;;
+    *) bail "unrecognized OS type '$(uname -s)'" ;;
 esac

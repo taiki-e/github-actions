@@ -57,7 +57,6 @@ jobs:
         if: steps.pre.outputs.rust == 'true'
       - uses: taiki-e/install-action@shellcheck
       - uses: taiki-e/install-action@shfmt
-      - run: pip3 install yq
       - name: Run cargo clippy
         run: |
           set -eEuo pipefail

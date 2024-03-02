@@ -157,6 +157,7 @@ armhf
 binutils
 connrefused
 cygwin
+devel
 dpkg
 elif
 endianness

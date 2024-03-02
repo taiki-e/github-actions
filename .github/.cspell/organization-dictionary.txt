@@ -187,3 +187,4 @@ taplo
 tempdir
 tlsv
 tmpdir
+venv

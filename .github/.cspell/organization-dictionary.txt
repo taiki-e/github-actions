@@ -86,6 +86,7 @@ uclibceabihf
 uefi
 vxworks
 wasi
+wasip
 watchos
 xous
 xtensa

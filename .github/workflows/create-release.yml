@@ -14,11 +14,10 @@ on:
       args:
         required: false
         type: string
-      # TODO: needed for pin-project and futures-async-stream
-      # crates:
-      #   required: false
-      #   type: string
-      #   default: '.'
+      crates:
+        required: false
+        type: string
+        default: '.'
       changelog:
         required: false
         type: string
@@ -62,13 +61,38 @@ jobs:
         if: inputs.target != ''
       - name: Install Rust
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal $TARGET && rustup default "${{ inputs.rust }}"
-      - run: cargo package $TARGET ${{ inputs.args }}
+      - run: |
+          crates=()
+          while read -rd,; do
+            crates+=("${REPLY}")
+          done <<<"${{ inputs.crates }},"
+          for i in "${!crates[@]}"; do
+            (
+              set -x
+              cd "${crates[${i}]}"
+              cargo build $TARGET ${{ inputs.args }}
+            )
+          done
       - uses: taiki-e/create-gh-release-action@v1
         with:
           changelog: ${{ inputs.changelog }}
           title: ${{ inputs.title }}
           branch: ${{ inputs.branch }}
           token: ${{ secrets.GITHUB_TOKEN }}
-      - run: cargo publish $TARGET ${{ inputs.args }}
+      - run: |
+          crates=()
+          while read -rd,; do
+            crates+=("${REPLY}")
+          done <<<"${{ inputs.crates }},"
+          for i in "${!crates[@]}"; do
+            (
+              set -x
+              cd "${crates[${i}]}"
+              cargo publish $TARGET ${{ inputs.args }}
+            )
+            if [[ $((i + 1)) != "${#crates[@]}" ]]; then
+              sleep 45 # cargo's waiting is sometimes not enough
+            fi
+          done
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

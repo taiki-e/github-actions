@@ -55,7 +55,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: taiki-e/github-actions/checkout@main
+      - uses: taiki-e/checkout-action@v1
       - run: |
           echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
         if: inputs.target != ''

@@ -11,7 +11,6 @@ supposed to only be used in infra managed by us.
 - [**deploy-gh-pages**](deploy-gh-pages): Deploy GitHub Pages.
 - [**free-device-space**](free-device-space): Free device space.
 - [**setup-docker**](setup-docker): Setup docker.
-- [**checkout**](checkout): Checking out a repository.
 
 ## Reusable workflows
 
@@ -28,6 +27,8 @@ supposed to only be used in infra managed by us.
 
 These actions were previously included in this repository but have been moved into their own repository because they were considered stable enough.
 
+- **checkout**: moved into the
+  [**checkout-action**][checkout-action] repository.
 - **create-release**: moved into the
   [**create-gh-release-action**][create-gh-release-action] repository.
 - **install**: moved into the
@@ -40,6 +41,7 @@ These actions were previously included in this repository but have been removed.
 - **install-rust**: removed in favor of calling `rustup` directly.
 - **update-dependabot-pr**: removed because no longer used.
 
+[checkout-action]: https://github.com/taiki-e/checkout-action
 [create-gh-release-action]: https://github.com/taiki-e/create-gh-release-action
 [install-action]: https://github.com/taiki-e/install-action
 [upload-rust-binary-action]: https://github.com/taiki-e/upload-rust-binary-action

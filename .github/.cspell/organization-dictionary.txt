@@ -181,6 +181,7 @@ powerset
 proto
 ranlib
 readelf
+shellcheck
 shellcheckrc
 SIGABRT
 SIGBUS

@@ -9,7 +9,6 @@ ghcup
 hostedtoolcache
 microdnf
 nojekyll
-shellcheck
 shfmt
 tonistiigi
 zigbuild

@@ -177,8 +177,10 @@ objcopy
 objdump
 pacman
 pipefail
+popd
 powerset
 proto
+pushd
 ranlib
 readelf
 shellcheck

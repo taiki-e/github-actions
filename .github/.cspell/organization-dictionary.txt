@@ -167,6 +167,7 @@ euxo
 gsub
 libc
 markdownlint
+mmap
 moreutils
 msys
 noninteractive

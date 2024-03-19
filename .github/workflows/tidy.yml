@@ -83,7 +83,7 @@ jobs:
             done <<<"${input_target},"
           fi
           if [[ "${{ inputs.check-cfg }}" == "true" ]]; then
-            check_cfg='-Z unstable-options --check-cfg=cfg(target_pointer_width,values("128")) --check-cfg=cfg(target_arch,values("xtensa","arm64ec"))'
+            check_cfg='-Z unstable-options --check-cfg=cfg(target_pointer_width,values("128")) --check-cfg=cfg(target_arch,values("xtensa"))'
             for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
               pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
               manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')

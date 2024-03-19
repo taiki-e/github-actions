@@ -88,6 +88,7 @@ jobs:
             (
               set -x
               cd "${crates[${i}]}"
+              # TODO: retry on failure
               cargo publish $TARGET ${{ inputs.args }}
             )
             if [[ $((i + 1)) != "${#crates[@]}" ]]; then

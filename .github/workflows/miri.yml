@@ -51,7 +51,8 @@ jobs:
       - run: |
           echo "ALL_FEATURES=--all-features" >>"${GITHUB_ENV}"
         if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
-      - run: cargo miri test --workspace $TARGET $ALL_FEATURES ${{ inputs.args }}
+      # TODO: doctest is currently broken: https://github.com/rust-lang/miri/issues/3404
+      - run: cargo miri test --workspace --tests $TARGET $ALL_FEATURES ${{ inputs.args }}
         env:
           MIRIFLAGS: ${{ inputs.miriflags }}
           RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout

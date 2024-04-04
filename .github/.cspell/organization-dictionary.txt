@@ -123,6 +123,7 @@ memcpy
 nand
 nanos
 nomem
+nonminimal
 nonoverlapping
 noreturn
 nostack

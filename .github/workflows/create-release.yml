@@ -89,6 +89,7 @@ jobs:
               set -x
               cd "${crates[${i}]}"
               # TODO: retry on failure
+              # TODO: handle already published case: https://github.com/rust-lang/cargo/blob/28e7b2bc0a812f90126be30f48a00a4ada990eaa/publish.py#L35
               cargo publish $TARGET ${{ inputs.args }}
             )
             if [[ $((i + 1)) != "${#crates[@]}" ]]; then

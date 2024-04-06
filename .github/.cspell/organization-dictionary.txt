@@ -85,6 +85,7 @@ uclibc
 uclibceabi
 uclibceabihf
 uefi
+visionos
 vxworks
 wasi
 wasip

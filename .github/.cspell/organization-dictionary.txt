@@ -181,6 +181,7 @@ objcopy
 objdump
 pacman
 pipefail
+pkgin
 popd
 powerset
 proto

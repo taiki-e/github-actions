@@ -173,6 +173,7 @@ markdownlint
 mmap
 moreutils
 msys
+noconfirm
 noninteractive
 noprofile
 norc

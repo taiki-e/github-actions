@@ -139,7 +139,7 @@ jobs:
         run: |
           target="${{ matrix.target }}"
           if [[ -z "${target}" ]]; then
-            host=$(rustc -Vv | grep 'host: ' | cut -c 7-)
+            host=$(rustc -vV | grep '^host:' | cut -d' ' -f2)
             echo "artifact-target=${host}" >>"${GITHUB_OUTPUT}"
           elif [[ "${{ matrix.build-tool }}" == 'cargo-zigbuild' ]]; then
             echo "artifact-target=${target%%.*}" >>"${GITHUB_OUTPUT}"

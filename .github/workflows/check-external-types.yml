@@ -65,7 +65,7 @@ jobs:
       - name: Install Rust
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
         if: steps.pre.outputs.has-lib == 'true'
-      - uses: taiki-e/cache-cargo-install-action@v1
+      - uses: taiki-e/cache-cargo-install-action@v2
         with:
           tool: cargo-check-external-types@0.1.11
         if: steps.pre.outputs.has-lib == 'true'

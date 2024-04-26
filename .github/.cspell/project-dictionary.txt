@@ -4,7 +4,6 @@ buildkitd
 buildx
 ghcup
 hostedtoolcache
-nojekyll
 shfmt
 tonistiigi
 zigbuild

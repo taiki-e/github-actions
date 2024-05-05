@@ -18,10 +18,6 @@ on:
         required: false
         type: boolean
         default: true
-      check-cfg:
-        required: false
-        type: boolean
-        default: true
       known-cfgs:
         required: false
         type: string
@@ -74,13 +70,7 @@ jobs:
           if [[ "${{ inputs.args }}" != *"-features"* ]]; then
             args+=(--all-features)
           fi
-          if [[ "${{ inputs.check-cfg }}" == "true" ]]; then
-            args+=(-Z check-cfg)
-          elif [[ -n "${{ inputs.known-cfgs }}" ]]; then
-            echo "known-cfgs requires check-cfg"
-            exit 1
-          fi
-          known_cfgs=(rustfmt careful ${{ inputs.known-cfgs }})
+          known_cfgs=(${{ inputs.known-cfgs }})
           IFS=$'\n\t'
           metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
@@ -91,19 +81,8 @@ jobs:
               rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
             done <<<"${input_target},"
           fi
-          if [[ "${{ inputs.check-cfg }}" == "true" ]]; then
-            check_cfg='--check-cfg=cfg(target_pointer_width,values("128")) --check-cfg=cfg(target_arch,values("xtensa"))'
-            for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
-              pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
-              manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
-              build_script_path=$(dirname "${manifest_path}")/build.rs
-              if [[ -e "${build_script_path}" ]] && grep -Eq 'cargo:rustc-cfg=' "${build_script_path}"; then
-                known_cfgs+=($(grep -E 'cargo:rustc-cfg=' "${build_script_path}" | sed -E 's/^.*cargo:rustc-cfg=//; s/(=\\)?".*$//' | LC_ALL=C sort -u))
-              fi
-            done
-            if [[ ${#known_cfgs[@]} -gt 0 ]]; then
-              check_cfg+=" --check-cfg=cfg($(IFS=',' && echo "${known_cfgs[*]}"))"
-            fi
+          if [[ ${#known_cfgs[@]} -gt 0 ]]; then
+            check_cfg+=" --check-cfg=cfg($(IFS=',' && echo "${known_cfgs[*]}"))"
             export RUSTFLAGS="${RUSTFLAGS:-} ${check_cfg}"
           fi
           if [[ -n "${RUSTFLAGS:-}" ]]; then

@@ -82,6 +82,8 @@ jobs:
           fi
           base_rustdocflags+=(
             -Z unstable-options
+            # https://github.com/rust-lang/docs.rs/blob/cb1b1f39cfacbc5a1403db35105c0ee8052bbfb8/crates/metadata/lib.rs#L274
+            --cfg docsrs
             --document-hidden-items
             --extern-html-root-takes-precedence
           )

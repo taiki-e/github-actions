@@ -18,9 +18,6 @@ on:
         required: false
         type: boolean
         default: true
-      known-cfgs:
-        required: false
-        type: string
 
 env:
   CARGO_INCREMENTAL: 0
@@ -66,11 +63,10 @@ jobs:
         run: |
           set -eEuo pipefail
           trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
-          args=(--workspace --all-targets ${{ inputs.args }})
+          args=(--workspace ${{ inputs.args }})
           if [[ "${{ inputs.args }}" != *"-features"* ]]; then
             args+=(--all-features)
           fi
-          known_cfgs=(${{ inputs.known-cfgs }})
           IFS=$'\n\t'
           metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
@@ -81,16 +77,23 @@ jobs:
               rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
             done <<<"${input_target},"
           fi
-          if [[ ${#known_cfgs[@]} -gt 0 ]]; then
-            check_cfg+=" --check-cfg=cfg($(IFS=',' && echo "${known_cfgs[*]}"))"
-            export RUSTFLAGS="${RUSTFLAGS:-} ${check_cfg}"
-          fi
           if [[ -n "${RUSTFLAGS:-}" ]]; then
               echo "+ RUSTFLAGS='${RUSTFLAGS}' \\"
           fi
+          if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
+              echo "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
+          fi
           (
             set -x
-            cargo clippy "${args[@]}"
+            cargo clippy --all-targets "${args[@]}"
+          )
+          # Refs:
+          # - https://github.com/rust-lang/rust/issues/56232
+          # - https://github.com/Nemo157/dotfiles/blob/74d54412ccb705551ef0c8d928d64bc9e6de69de/packages/cargo-rustdoc-clippy
+          export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Z unstable-options --no-run --nocapture --test-builder clippy-driver"
+          (
+            set -x
+            cargo test --doc "${args[@]}"
           )
         if: always() && steps.pre.outputs.rust == 'true' && inputs.clippy
       - run: cat tools/.tidy-check-license-headers

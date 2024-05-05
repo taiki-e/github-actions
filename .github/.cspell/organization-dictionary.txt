@@ -125,6 +125,7 @@ mclass
 memcpy
 nand
 nanos
+nocapture
 nomem
 nonminimal
 nonoverlapping

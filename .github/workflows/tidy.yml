@@ -87,29 +87,30 @@ jobs:
             set -x
             cargo clippy --workspace --all-targets "${args[@]}"
           )
-          # Refs:
-          # - https://github.com/rust-lang/rust/issues/56232
-          # - https://github.com/Nemo157/dotfiles/blob/74d54412ccb705551ef0c8d928d64bc9e6de69de/packages/cargo-rustdoc-clippy
-          export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Z unstable-options --no-run --nocapture --test-builder clippy-driver"
-          for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
-            pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
-            has_lib=''
-            for target in $(jq <<<"${pkg}" -c '.targets[]'); do
-              if jq <<<"${target}" '.kind[]' | grep -Eq '"lib"|"proc-macro"'; then
-                has_lib=1
-                break
-              fi
-            done
-            if [[ -z "${has_lib}" ]]; then
-              # https://github.com/rust-lang/cargo/issues/5477
-              continue
-            fi
-            manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
-            (
-              set -x
-              cargo test --manifest-path="${manifest_path}" --doc "${args[@]}"
-            )
-          done
+          # TODO: [lints] table is not respected...
+          # # Refs:
+          # # - https://github.com/rust-lang/rust/issues/56232
+          # # - https://github.com/Nemo157/dotfiles/blob/74d54412ccb705551ef0c8d928d64bc9e6de69de/packages/cargo-rustdoc-clippy
+          # export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Z unstable-options --no-run --nocapture --test-builder clippy-driver"
+          # for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
+          #   pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
+          #   has_lib=''
+          #   for target in $(jq <<<"${pkg}" -c '.targets[]'); do
+          #     if jq <<<"${target}" '.kind[]' | grep -Eq '"lib"|"proc-macro"'; then
+          #       has_lib=1
+          #       break
+          #     fi
+          #   done
+          #   if [[ -z "${has_lib}" ]]; then
+          #     # https://github.com/rust-lang/cargo/issues/5477
+          #     continue
+          #   fi
+          #   manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
+          #   (
+          #     set -x
+          #     cargo test --manifest-path="${manifest_path}" --doc "${args[@]}"
+          #   )
+          # done
         if: always() && steps.pre.outputs.rust == 'true' && inputs.clippy
       - run: cat tools/.tidy-check-license-headers
         if: always()

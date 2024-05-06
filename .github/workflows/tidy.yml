@@ -94,7 +94,7 @@ jobs:
           for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
             pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
             has_lib=''
-            for target in $(jq <<<"${pkg}" '.targets[]'); do
+            for target in $(jq <<<"${pkg}" -c '.targets[]'); do
               if jq <<<"${target}" '.kind[]' | grep -Eq '"lib"|"proc-macro"'; then
                 has_lib=1
                 break

@@ -33,6 +33,9 @@ case "$(uname -s)" in
             /usr/share/swift  # 1.9G
         )
         for dir in "${dirs[@]}"; do
+            if [[ ! -d "${dir}" ]]; then
+                continue
+            fi
             (
                 set -x
                 time sudo find "${dir}" -type f -delete

@@ -14,7 +14,6 @@ cranelift
 cxxflags
 debuginfo
 dylib
-exitcode
 miri
 miriflags
 msan
@@ -27,7 +26,6 @@ rustsec
 rustup
 staticlib
 tsan
-valgrind
 xcompile
 Zmiri
 
@@ -98,27 +96,20 @@ zkvm
 // Rust other
 aclass
 acqrel
-alloc
 bufs
-builtins
 bytecount
-canonicalize
 cfgs
-compat
-concat
 ctypes
 dealloc
 deque
 docsrs
 doctest
 doctests
-hasher
 idents
 ilog
 impls
 incompat
 inlateout
-intrinsics
 lateout
 libdir
 mclass
@@ -150,11 +141,9 @@ subsec
 supertrait
 supertraits
 sysroot
-toolchains
 turbofish
 uninit
 unpark
-unsized
 upcastable
 
 // Other
@@ -162,13 +151,10 @@ armel
 armhf
 binutils
 connrefused
-cygwin
 devel
-dpkg
-elif
 endianness
-esac
 euxo
+exitcode
 gsub
 libc
 markdownlint
@@ -183,23 +169,19 @@ nproc
 objcopy
 objdump
 pacman
-pipefail
 pkgin
-popd
 powerset
-proto
-pushd
 ranlib
 readelf
+sched
 semihosting
-shellcheck
 shellcheckrc
 SIGABRT
 SIGBUS
 SIGILL
 subcmd
 taplo
-tempdir
 tlsv
 tmpdir
+valgrind
 venv

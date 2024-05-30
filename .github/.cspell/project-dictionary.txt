@@ -4,6 +4,5 @@ buildkitd
 buildx
 ghcup
 hostedtoolcache
-shfmt
 tonistiigi
 zigbuild

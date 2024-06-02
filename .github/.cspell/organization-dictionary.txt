@@ -183,5 +183,6 @@ subcmd
 taplo
 tlsv
 tmpdir
+tomlq
 valgrind
 venv

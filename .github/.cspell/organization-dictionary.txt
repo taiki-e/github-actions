@@ -166,6 +166,7 @@ noninteractive
 noprofile
 norc
 nproc
+nullary
 objcopy
 objdump
 pacman

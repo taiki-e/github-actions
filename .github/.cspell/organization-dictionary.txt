@@ -150,12 +150,16 @@ upcastable
 armel
 armhf
 binutils
+chsh
 connrefused
 devel
 endianness
 euxo
 exitcode
+ggrep
+gsed
 gsub
+gtar
 libc
 markdownlint
 mmap

@@ -150,6 +150,7 @@ upcastable
 armel
 armhf
 binutils
+choco
 chsh
 connrefused
 devel
@@ -178,6 +179,7 @@ pkgin
 powerset
 ranlib
 readelf
+requirechecksums
 sched
 semihosting
 shellcheckrc

@@ -67,6 +67,7 @@ musleabi
 musleabihf
 newlib
 newlibeabihf
+nuttx
 nvptx
 ohos
 openwrt

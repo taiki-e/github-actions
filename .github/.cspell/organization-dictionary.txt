@@ -65,6 +65,7 @@ msvc
 muslabi
 musleabi
 musleabihf
+muslspe
 newlib
 newlibeabihf
 nuttx

@@ -24,7 +24,7 @@ env:
 
 defaults:
   run:
-    shell: bash
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
   deny:

@@ -38,7 +38,7 @@ env:
 
 defaults:
   run:
-    shell: bash
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
   prepare:
@@ -47,61 +47,68 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
       - run: pip3 install yq
-      # TODO: move this script to its own file to apply shfmt and shellcheck.
       - id: parse
         run: |
-          set -eEuo pipefail
-          trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
-          workflow=$(yq '.' "${{ inputs.workflow }}")
-          matrix=$(jq <<<"${workflow}" -c ".jobs.\"${{ inputs.job }}\".strategy.matrix")
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          job=$(yq -c ".jobs.\"${{ inputs.job }}\"" "${{ inputs.workflow }}")
+          matrix=$(jq -c '.strategy.matrix' <<<"${job}")
           if [[ "${matrix}" == "null" ]]; then
-            echo "::error::'.jobs.${{ inputs.job }}.strategy.matrix' of ${{ inputs.workflow }} must set"
+            printf '%s\n' "::error::'.jobs.${{ inputs.job }}.strategy.matrix' of ${{ inputs.workflow }} must set"
             exit 1
           fi
-          echo "matrix=${matrix}" >>"${GITHUB_OUTPUT}"
-          runs_on=$(jq <<<"${workflow}" -r ".jobs.\"${{ inputs.job }}\".\"runs-on\"")
+          printf '%s\n' "matrix=${matrix}" >>"${GITHUB_OUTPUT}"
+          runs_on=$(jq -r '."runs-on"' <<<"${job}")
           if [[ "${runs_on}" != '$'"{{ matrix.os }}" ]] && [[ "${runs_on}" != '$'"{{ matrix.os || 'ubuntu-20.04' }}" ]]; then
-            echo "::error::'runs-on' must be "'$'"{{ matrix.os }} or "'$'"{{ matrix.os || 'ubuntu-20.04' }}, but found ${runs_on}"
+            printf '%s\n' "::error::'runs-on' must be "'$'"{{ matrix.os }} or "'$'"{{ matrix.os || 'ubuntu-20.04' }}, but found ${runs_on}"
             exit 1
           fi
           # Handle inputs for upload-rust-binary-action.
           # https://github.com/taiki-e/upload-rust-binary-action/blob/HEAD/action.yml
-          inputs=$(jq <<<"${workflow}" '.jobs."upload-assets".steps[] | select(.uses == "taiki-e/upload-rust-binary-action@v1") | .with')
-          bin=$(jq <<<"${inputs}" -r '.bin')
-          if [[ "${bin}" == *'$'"{{"* ]]; then
-            echo "::error::'"'$'"{{ .. }}' in 'bin' input option is not supported due to reusable workflow's limitation"
-          fi
-          echo "bin=${bin}" >>"${GITHUB_OUTPUT}"
-          target=$(jq <<<"${inputs}" -r '.target')
-          if [[ "${target}" != "null" ]] && [[ "${target}" != '$'"{{ matrix.target }}" ]]; then
-            echo "::error::'target' input option must be "'$'"{{ matrix.target }} or not set"
-            exit 1
-          fi
-          build_tool=$(jq <<<"${inputs}" -r '."build-tool"')
-          if [[ "${build_tool}" != "null" ]] && [[ "${target}" != '$'"{{ matrix.build-tool }}" ]]; then
-            echo "::error::'build-tool' input option must be "'$'"{{ matrix.build-tool }} or not set"
-            exit 1
-          fi
-          tar=$(jq <<<"${inputs}" -r '.tar')
-          if [[ "${tar}" == "null" ]]; then
-            tar=unix
-          elif [[ "${tar}" == *'$'"{{"* ]]; then
-            echo "::error::'"'$'"{{ .. }}' in 'tar' input option is not supported due to reusable workflow's limitation"
-          fi
-          echo "tar=${tar}" >>"${GITHUB_OUTPUT}"
-          zip=$(jq <<<"${inputs}" -r '.zip')
-          if [[ "${zip}" == "null" ]]; then
-            zip=windows
-          elif [[ "${zip}" == *'$'"{{"* ]]; then
-            echo "::error::'"'$'"{{ .. }}' in 'zip' input option is not supported due to reusable workflow's limitation"
-          fi
-          echo "zip=${zip}" >>"${GITHUB_OUTPUT}"
-          # Handle unsupported inputs
-          for name in archive features no-default-features no_default_features manifest-path manifest_path include asset leading-dir leading_dir build_tool checksum ref profile dry-run dry_run; do
-            if [[ "$(jq <<<"${inputs}" -r ".\"${name}\"")" != "null" ]]; then
-              echo "::error::'${name}' input option is not supported yet by this reusable workflow"
-              exit 1
-            fi
+          for input in $(jq -c '.steps[] | select(.uses == "taiki-e/upload-rust-binary-action@v1") | .with | to_entries[]' <<<"${job}"); do
+            eval "$(jq -r '@sh "KEY=\(.key) value=\(.value)"' <<<"${input}")"
+            case "${KEY}" in
+              bin)
+                if [[ "${value}" == *'$'"{{"* ]]; then
+                  printf '%s\n' "::error::'"'$'"{{ .. }}' in 'bin' input option is not supported due to reusable workflow's limitation"
+                  exit 1
+                fi
+                printf '%s\n' "bin=${value}" >>"${GITHUB_OUTPUT}"
+                ;;
+              target)
+                if [[ "${value}" != "null" ]] && [[ "${value}" != '$'"{{ matrix.target }}" ]]; then
+                  printf '%s\n' "::error::'target' input option must be "'$'"{{ matrix.target }} or not set"
+                  exit 1
+                fi
+                ;;
+              build-tool)
+                if [[ "${value}" != "null" ]] && [[ "${value}" != '$'"{{ matrix.build-tool }}" ]]; then
+                  printf '%s\n' "::error::'build-tool' input option must be "'$'"{{ matrix.build-tool }} or not set"
+                  exit 1
+                fi
+                ;;
+              tar)
+                if [[ "${value}" == "null" ]]; then
+                  value=unix
+                elif [[ "${value}" == *'$'"{{"* ]]; then
+                  printf '%s\n' "::error::'"'$'"{{ .. }}' in 'tar' input option is not supported due to reusable workflow's limitation"
+                  exit 1
+                fi
+                printf '%s\n' "tar=${value}" >>"${GITHUB_OUTPUT}"
+                ;;
+              zip)
+                if [[ "${value}" == "null" ]]; then
+                  value=windows
+                elif [[ "${value}" == *'$'"{{"* ]]; then
+                  printf '%s\n' "::error::'"'$'"{{ .. }}' in 'zip' input option is not supported due to reusable workflow's limitation"
+                  exit 1
+                fi
+                printf '%s\n' "zip=${value}" >>"${GITHUB_OUTPUT}"
+                ;;
+              *)
+                printf '%s\n' "::error::'${KEY}' input option is not supported yet by this reusable workflow"
+                exit 1
+                ;;
+            esac
           done
     outputs:
       matrix: ${{ steps.parse.outputs.matrix }}
@@ -124,14 +131,14 @@ jobs:
         with:
           target: ${{ matrix.target }}
         if: matrix.build-tool != 'cross' && matrix.build-tool != 'cargo-zigbuild'
-      - run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
+      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
         if: contains(matrix.target, '-windows-msvc')
-      - run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static -C link-self-contained=yes" >>"${GITHUB_ENV}"
+      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static -C link-self-contained=yes" >>"${GITHUB_ENV}"
         if: contains(matrix.target, '-linux-musl')
       # https://doc.rust-lang.org/rustc/platform-support.html
-      - run: echo "MACOSX_DEPLOYMENT_TARGET=10.12" >>"${GITHUB_ENV}"
+      - run: printf 'MACOSX_DEPLOYMENT_TARGET=10.12\n' >>"${GITHUB_ENV}"
         if: matrix.target == 'x86_64-apple-darwin'
-      - run: echo "MACOSX_DEPLOYMENT_TARGET=11.0" >>"${GITHUB_ENV}"
+      - run: printf 'MACOSX_DEPLOYMENT_TARGET=11.0\n' >>"${GITHUB_ENV}"
         if: matrix.target == 'aarch64-apple-darwin' || matrix.target == 'universal-apple-darwin'
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
@@ -148,12 +155,12 @@ jobs:
         run: |
           target="${{ matrix.target }}"
           if [[ -z "${target}" ]]; then
-            host=$(rustc -vV | grep '^host:' | cut -d' ' -f2)
-            echo "artifact-target=${host}" >>"${GITHUB_OUTPUT}"
+            host=$(rustc -vV | grep -E '^host:' | cut -d' ' -f2)
+            printf '%s\n' "artifact-target=${host}" >>"${GITHUB_OUTPUT}"
           elif [[ "${{ matrix.build-tool }}" == 'cargo-zigbuild' ]]; then
-            echo "artifact-target=${target%%.*}" >>"${GITHUB_OUTPUT}"
+            printf '%s\n' "artifact-target=${target%%.*}" >>"${GITHUB_OUTPUT}"
           else
-            echo "artifact-target=${target}" >>"${GITHUB_OUTPUT}"
+            printf '%s\n' "artifact-target=${target}" >>"${GITHUB_OUTPUT}"
           fi
       # For debugging
       - uses: actions/upload-artifact@v4

@@ -44,7 +44,7 @@ env:
 
 defaults:
   run:
-    shell: bash
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
   miri:
@@ -55,12 +55,12 @@ jobs:
       - name: Install Rust
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal --component miri && rustup default "${{ inputs.rust }}"
       - run: |
-          echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
+          printf '%s\n' "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
         if: inputs.target != ''
       - run: |
-          echo "ALL_FEATURES=--all-features" >>"${GITHUB_ENV}"
+          printf 'ALL_FEATURES=--all-features\n' >>"${GITHUB_ENV}"
         if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
-      - run: cargo miri test --workspace $TARGET $ALL_FEATURES ${{ inputs.args }}
+      - run: cargo miri test --workspace ${TARGET:-} ${ALL_FEATURES:-} ${{ inputs.args }}
         env:
           MIRIFLAGS: ${{ inputs.miriflags }}
           RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout

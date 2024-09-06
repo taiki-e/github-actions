@@ -46,7 +46,7 @@ env:
 
 defaults:
   run:
-    shell: bash
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
   create-release:
@@ -57,10 +57,10 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
       - run: |
-          echo "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
+          printf '%s\n' "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
         if: inputs.target != ''
       - name: Install Rust
-        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal $TARGET && rustup default "${{ inputs.rust }}"
+        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal ${TARGET:-} && rustup default "${{ inputs.rust }}"
       - run: |
           crates=()
           while read -rd,; do
@@ -69,8 +69,8 @@ jobs:
           for i in "${!crates[@]}"; do
             (
               set -x
-              cd "${crates[${i}]}"
-              cargo build $TARGET ${{ inputs.args }}
+              cd -- "${crates[${i}]}"
+              cargo build ${TARGET:-} ${{ inputs.args }}
             )
           done
       - uses: taiki-e/create-gh-release-action@v1
@@ -87,10 +87,10 @@ jobs:
           for i in "${!crates[@]}"; do
             (
               set -x
-              cd "${crates[${i}]}"
+              cd -- "${crates[${i}]}"
               # TODO: retry on failure
-              # TODO: handle already published case: https://github.com/rust-lang/cargo/blob/28e7b2bc0a812f90126be30f48a00a4ada990eaa/publish.py#L35
-              cargo publish $TARGET ${{ inputs.args }}
+              # TODO: handle already published case: https://github.com/rust-lang/cargo/blob/0.80.0/publish.py#L35
+              cargo publish ${TARGET:-} ${{ inputs.args }}
             )
             if [[ $((i + 1)) != "${#crates[@]}" ]]; then
               sleep 45 # cargo's waiting is sometimes not enough

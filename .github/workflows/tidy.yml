@@ -40,7 +40,7 @@ env:
 
 defaults:
   run:
-    shell: bash
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
   tidy:
@@ -51,7 +51,7 @@ jobs:
       - id: pre
         run: |
           if [[ -n "$(git ls-files '*.rs')" ]]; then
-            echo "rust=true" >>"${GITHUB_OUTPUT}"
+            printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
           fi
       - name: Install Rust
         # TODO: do not install clippy if unneeded
@@ -61,14 +61,14 @@ jobs:
       - uses: taiki-e/install-action@shfmt
       - name: Run cargo clippy
         run: |
-          set -eEuo pipefail
-          trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          # shellcheck disable=SC2206
           args=(${{ inputs.args }})
           if [[ "${{ inputs.args }}" != *"-features"* ]]; then
             args+=(--all-features)
           fi
           IFS=$'\n\t'
-          metadata=$(cargo metadata --format-version=1 --no-deps)
+          # metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
           input_target="${{ inputs.target }}"
           if [[ -n "${input_target}" ]]; then
@@ -78,10 +78,10 @@ jobs:
             done <<<"${input_target},"
           fi
           if [[ -n "${RUSTFLAGS:-}" ]]; then
-              echo "+ RUSTFLAGS='${RUSTFLAGS}' \\"
+              printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
           fi
           if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
-              echo "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
+              printf '%s\n' "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
           fi
           (
             set -x
@@ -90,31 +90,19 @@ jobs:
           # TODO: [lints] table is not respected...
           # # Refs:
           # # - https://github.com/rust-lang/rust/issues/56232
-          # # - https://github.com/Nemo157/dotfiles/blob/74d54412ccb705551ef0c8d928d64bc9e6de69de/packages/cargo-rustdoc-clippy
+          # # - https://github.com/Nemo157/dotfiles/blob/cee1b90cb23089990fe9bc559b7c2f012d0a59f0/packages/cargo-rustdoc-clippy.sh
           # export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Z unstable-options --no-run --nocapture --test-builder clippy-driver"
-          # for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
-          #   pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
-          #   has_lib=''
-          #   for target in $(jq <<<"${pkg}" -c '.targets[]'); do
-          #     if jq <<<"${target}" '.kind[]' | grep -Eq '"lib"|"proc-macro"'; then
-          #       has_lib=1
-          #       break
-          #     fi
-          #   done
-          #   if [[ -z "${has_lib}" ]]; then
-          #     # https://github.com/rust-lang/cargo/issues/5477
-          #     continue
-          #   fi
-          #   manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
+          # # filter bin-only crate due to https://github.com/rust-lang/cargo/issues/5477
+          # for manifest_path in $(jq -r '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and (.targets[].kind[] == "lib" or .targets[].kind[] == "proc-macro")) | .manifest_path' <<<"${metadata}"); do
           #   (
           #     set -x
           #     cargo test --manifest-path="${manifest_path}" --doc "${args[@]}"
           #   )
           # done
         if: always() && steps.pre.outputs.rust == 'true' && inputs.clippy
-      - run: cat tools/.tidy-check-license-headers
+      - run: cat -- tools/.tidy-check-license-headers
         if: always()
-      - run: cat .cspell.json
+      - run: cat -- .cspell.json
         if: always()
       - run: tools/tidy.sh
         if: always()

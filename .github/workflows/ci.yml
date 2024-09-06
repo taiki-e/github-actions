@@ -15,7 +15,7 @@ on:
 
 defaults:
   run:
-    shell: bash
+    shell: bash --noprofile --norc -CeEuxo pipefail {0}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -30,7 +30,6 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          # https://github.com/actions/runner-images#available-images
           - ubuntu-20.04
           - ubuntu-22.04
           - ubuntu-24.04
@@ -44,7 +43,6 @@ jobs:
       - uses: taiki-e/checkout-action@v1
       - name: Run du -h
         run: |
-          set -eEuxo pipefail
           sudo du / -h -d1 2>/dev/null || true
           sudo du /home -h -d2 || true
           sudo du /opt -h -d2 || true
@@ -57,7 +55,6 @@ jobs:
       - uses: ./free-device-space
       - name: Run du -h
         run: |
-          set -eEuxo pipefail
           sudo du / -h -d1 2>/dev/null || true
           sudo du /home -h -d2 || true
           sudo du /opt -h -d2 || true

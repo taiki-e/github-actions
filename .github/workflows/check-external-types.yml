@@ -36,7 +36,7 @@ env:
 
 defaults:
   run:
-    shell: bash
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
   check-external-types:
@@ -46,22 +46,13 @@ jobs:
       - uses: taiki-e/checkout-action@v1
       - id: pre
         run: |
-          set -eEuo pipefail
           IFS=$'\n\t'
-          trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           metadata=$(cargo metadata --format-version=1 --no-deps)
-          for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
-            pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
-            publish=$(jq <<<"${pkg}" -r '.publish')
-            # Publishing is unrestricted if null, and forbidden if an empty array.
-            if [[ "${publish}" == "[]" ]]; then
-              continue
-            fi
-            if jq <<<"${pkg}" -r '.targets[] | .kind[]' | grep -q lib; then
-              echo "has-lib=true" >>"${GITHUB_OUTPUT}"
-              break
-            fi
-          done
+          # Publishing is unrestricted if null, and forbidden if an empty array.
+          if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and .targets[].kind[] == "lib")' <<<"${metadata}")" ]]; then
+            printf 'has-lib=true\n' >>"${GITHUB_OUTPUT}"
+          fi
       - name: Install Rust
         run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
         if: steps.pre.outputs.has-lib == 'true'
@@ -74,12 +65,11 @@ jobs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs
       # - https://github.com/awslabs/cargo-check-external-types
       # NB: sync with docs.yml
-      # TODO: move this script to its own file to apply shfmt and shellcheck.
       - name: Run cargo check-external-types
         run: |
-          set -eEuo pipefail
-          trap 's=$?; echo >&2 "$0: error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
+          # shellcheck disable=SC2206
           base_args=(${{ inputs.args }})
           IFS=$'\n\t'
           metadata=$(cargo metadata --format-version=1 --no-deps)
@@ -93,37 +83,28 @@ jobs:
             done <<<"${input_target},"
           fi
           # Run cargo check-external-types for public crates with features specified in docs.rs metadata in Cargo.toml.
-          for id in $(jq <<<"${metadata}" '.workspace_members[]'); do
+          # Publishing is unrestricted if null, and forbidden if an empty array.
+          for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and .targets[].kind[] == "lib")' <<<"${metadata}"); do
             args=("${base_args[@]}")
-            pkg=$(jq <<<"${metadata}" ".packages[] | select(.id == ${id})")
-            publish=$(jq <<<"${pkg}" -r '.publish')
-            # Publishing is unrestricted if null, and forbidden if an empty array.
-            if [[ "${publish}" == "[]" ]]; then
-              continue
-            fi
-            if ! jq <<<"${pkg}" -r '.targets[] | .kind[]' | grep -q lib; then
-              continue
-            fi
-            manifest_path=$(jq <<<"${pkg}" -r '.manifest_path')
+            eval "$(jq -r '@sh "manifest_path=\(.manifest_path)"' <<<"${pkg}")"
             args+=(--manifest-path="${manifest_path}")
-            manifest_dir=$(dirname "${manifest_path}")
-            docs_rs_metadata=$(jq <<<"${pkg}" '.metadata.docs.rs')
-            if [[ "${docs_rs_metadata}" == null ]]; then
-              docs_rs_metadata=$(jq <<<"${pkg}" '.metadata."docs.rs"')
-              if [[ "${docs_rs_metadata}" == null ]]; then
+            docs_rs_metadata=$(jq '.metadata.docs.rs' <<<"${pkg}")
+            if [[ "${docs_rs_metadata}" == "null" ]]; then
+              docs_rs_metadata=$(jq '.metadata."docs.rs"' <<<"${pkg}")
+              if [[ "${docs_rs_metadata}" == "null" ]]; then
                 docs_rs_metadata='{}'
               fi
             fi
             pkg_targets=()
             # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
             if [[ -z "${input_target}" ]]; then
-              default_target=$(jq <<<"${docs_rs_metadata}" '."default-target"')
+              default_target=$(jq -r '."default-target"' <<<"${docs_rs_metadata}")
               if [[ "${default_target}" != null ]]; then
                 pkg_targets+=(--target="${default_target}")
                 rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
               fi
-              if [[ "$(jq <<<"${docs_rs_metadata}" '.targets')" != null ]]; then
-                for target in $(jq <<<"${docs_rs_metadata}" -r '.targets[]'); do
+              if [[ "$(jq '.targets' <<<"${docs_rs_metadata}")" != null ]]; then
+                for target in $(jq -r '.targets[]' <<<"${docs_rs_metadata}"); do
                   pkg_targets+=(--target="${target}")
                   rustup target add "${target}" || true # tier 3 targets fail to install rustup target
                 done
@@ -131,15 +112,15 @@ jobs:
             else
               pkg_targets+=("${base_targets[@]}")
             fi
-            if [[ "$(jq <<<"${docs_rs_metadata}" '.features')" != null ]]; then
-              for feature in $(jq <<<"${docs_rs_metadata}" -r '.features[]'); do
+            if [[ "$(jq '.features' <<<"${docs_rs_metadata}")" != null ]]; then
+              for feature in $(jq -r '.features[]' <<<"${docs_rs_metadata}"); do
                 args+=(--features="${feature}")
               done
             fi
-            if [[ "$(jq <<<"${docs_rs_metadata}" '."all-features"')" == 'true' ]]; then
+            if [[ "$(jq '."all-features"' <<<"${docs_rs_metadata}")" == 'true' ]]; then
               args+=(--all-features)
             fi
-            if [[ "$(jq <<<"${docs_rs_metadata}" '."no-default-features"')" == 'true' ]]; then
+            if [[ "$(jq '."no-default-features"' <<<"${docs_rs_metadata}")" == 'true' ]]; then
               args+=(--no-default-features)
             fi
             if [[ ${#pkg_targets[@]} -gt 0 ]]; then

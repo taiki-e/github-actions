@@ -74,6 +74,7 @@ ohos
 openwrt
 relibc
 riscv
+rtems
 softfloat
 sparcv
 spirv

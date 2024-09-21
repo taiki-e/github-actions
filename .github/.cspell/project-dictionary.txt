@@ -4,5 +4,6 @@ buildkitd
 buildx
 ghcup
 hostedtoolcache
+miniconda
 tonistiigi
 zigbuild

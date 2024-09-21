@@ -13,22 +13,29 @@ case "$(uname -s)" in
         # sometimes takes a more long time.
         # https://github.com/actions/runner-images/issues/1939
         dirs=(
-            # /opt/az # 676M
-            # /opt/google/chrome # 318M
-            /opt/hostedtoolcache/CodeQL # 8.3G
-            # /opt/microsoft # 695M
-            # /usr/lib/firefox # 234M
-            # /usr/lib/google-cloud-sdk # 939M
-            # /usr/lib/mono # 423M
-            /usr/local/.ghcup # 4.7G
-            # /usr/local/julia* # 501M
-            /usr/local/lib/android # 15G
-            # /usr/local/lib/node_modules # 1.2G
-            # /usr/local/share/chromium # 506M
-            /usr/local/share/powershell # 1.1G
-            # /usr/share/az_* # 346M
-            /usr/share/dotnet # 2.2G
-            /usr/share/swift  # 1.9G
+            /opt/az # 758M
+            # /opt/google/chrome # 342M
+            /opt/hostedtoolcache/CodeQL # 5.1G
+            # /opt/microsoft/msedge # 565M
+            /opt/microsoft/powershell # 174M
+            # /usr/lib/firefox # 257M
+            /usr/lib/google-cloud-sdk # 909M
+            /usr/lib/jvm              # 1.2G
+            # /usr/lib/llvm-13 # 448M
+            # /usr/lib/llvm-14 # 486M
+            # /usr/lib/llvm-15 # 514M
+            /usr/lib/mono # 423M
+            # /usr/local/aws-cli # 226M
+            /usr/local/.ghcup      # 5.5G
+            /usr/local/julia*      # 602M
+            /usr/local/lib/android # 7.6G
+            # /usr/local/lib/node_modules # 1.1G
+            # /usr/local/share/chromium # 535M
+            /usr/local/share/powershell # 1.2G
+            /usr/share/az_*             # 467M
+            /usr/share/dotnet           # 1.6G
+            /usr/share/miniconda        # 658M
+            /usr/share/swift            # 1.9G
         )
         for dir in "${dirs[@]}"; do
             if [[ ! -d "${dir}" ]]; then

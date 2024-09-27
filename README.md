@@ -9,6 +9,7 @@ supposed to only be used in infra managed by us.
 ## Actions
 
 - [**free-device-space**](free-device-space): Free device space.
+- [**install-rust**](install-rust): Install Rust toolchain.
 - [**setup-docker**](setup-docker): Setup docker.
 
 ## Reusable workflows
@@ -38,7 +39,6 @@ These actions were previously included in this repository but have been moved in
 These actions were previously included in this repository but have been removed.
 
 - **deploy-gh-pages**: removed because no longer used.
-- **install-rust**: removed in favor of calling `rustup` directly.
 - **update-dependabot-pr**: removed because no longer used.
 
 [checkout-action]: https://github.com/taiki-e/checkout-action

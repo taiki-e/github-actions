@@ -75,6 +75,24 @@ jobs:
           ls -- /Applications | grep -F Xcode
         if: startsWith(matrix.os, 'macos')
 
+  install-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: ./install-rust
+        with:
+          toolchain: nightly
+          component: rustfmt,clippy
+          target: x86_64-unknown-linux-musl,i686-unknown-linux-gnu
+      - run: |
+          rustc -Vv
+          rustup -V
+          cargo -Vv
+          rustfmt -V
+          cargo clippy -V
+          rustup component list
+          rustup target list
+
   setup-docker:
     runs-on: ubuntu-latest
     steps:

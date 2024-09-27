@@ -51,6 +51,11 @@ jobs:
           sudo du /var -h -d1 || true
           sudo du /var/lib -h -d1 || true
         if: startsWith(matrix.os, 'ubuntu')
+      - run: |
+          xcode-select --print-path
+          # shellcheck disable=SC2010
+          ls -- /Applications | grep -F Xcode
+        if: startsWith(matrix.os, 'macos')
       - uses: ./free-device-space
       - name: Run du -h
         run: |
@@ -63,6 +68,11 @@ jobs:
           sudo du /var -h -d1 || true
           sudo du /var/lib -h -d1 || true
         if: startsWith(matrix.os, 'ubuntu')
+      - run: |
+          xcode-select --print-path
+          # shellcheck disable=SC2010
+          ls -- /Applications | grep -F Xcode
+        if: startsWith(matrix.os, 'macos')
 
   setup-docker:
     runs-on: ubuntu-latest

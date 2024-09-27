@@ -4,6 +4,10 @@ buildkitd
 buildx
 ghcup
 hostedtoolcache
+kotlinc
+linuxbrew
 miniconda
+monodoc
+runneradmin
 tonistiigi
 zigbuild

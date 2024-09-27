@@ -53,15 +53,27 @@ jobs:
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
           fi
-      - name: Install Rust
-        # TODO: do not install clippy if unneeded
-        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal --component clippy,rustfmt && rustup default "${{ inputs.rust }}"
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
+          # TODO: do not install clippy if unneeded
+          component: clippy,rustfmt
         if: steps.pre.outputs.rust == 'true'
       - uses: taiki-e/install-action@shellcheck
       - uses: taiki-e/install-action@shfmt
       - name: Run cargo clippy
         run: |
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
           # shellcheck disable=SC2206
           args=(${{ inputs.args }})
           if [[ "${{ inputs.args }}" != *"-features"* ]]; then
@@ -74,7 +86,7 @@ jobs:
           if [[ -n "${input_target}" ]]; then
             while read -rd,; do
               args+=(--target="${REPLY}")
-              rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
+              retry rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
             done <<<"${input_target},"
           fi
           if [[ -n "${RUSTFLAGS:-}" ]]; then

@@ -32,8 +32,9 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@v1
-      - name: Install Rust
-        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
       - uses: taiki-e/install-action@cargo-deny
       # Workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
       - uses: taiki-e/install-action@cargo-no-dev-deps

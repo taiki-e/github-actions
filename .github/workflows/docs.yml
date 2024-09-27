@@ -44,8 +44,9 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@v1
-      - name: Install Rust
-        run: rustup toolchain add "${{ inputs.rust }}" --no-self-update --profile minimal && rustup default "${{ inputs.rust }}"
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs
@@ -53,6 +54,16 @@ jobs:
       - name: Run cargo doc
         run: |
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
           # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
           # shellcheck disable=SC2206
           base_args=(
@@ -96,7 +107,7 @@ jobs:
           if [[ -n "${input_target}" ]]; then
             while read -rd,; do
               base_targets+=(--target="${REPLY}")
-              rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
+              retry rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
             done <<<"${input_target},"
           fi
           # Run cargo doc for public crates with features and rustc/rustdoc/cargo args specified in docs.rs metadata in Cargo.toml.
@@ -120,12 +131,12 @@ jobs:
                 default_target=$(jq -r '."default-target"' <<<"${docs_rs_metadata}")
                 if [[ "${default_target}" != null ]]; then
                   args+=(--target="${default_target}")
-                  rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
+                  retry rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
                 fi
                 if [[ "$(jq '.targets' <<<"${docs_rs_metadata}")" != null ]]; then
                   for target in $(jq -r '.targets[]' <<<"${docs_rs_metadata}"); do
                     args+=(--target="${target}")
-                    rustup target add "${target}" || true # tier 3 targets fail to install rustup target
+                    retry rustup target add "${target}" || true # tier 3 targets fail to install rustup target
                   done
                 fi
               else

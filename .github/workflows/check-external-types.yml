@@ -7,7 +7,7 @@ on:
       rust:
         required: false
         type: string
-        default: nightly-2024-05-28
+        default: nightly-2024-06-30
       target:
         required: false
         type: string
@@ -59,7 +59,10 @@ jobs:
         if: steps.pre.outputs.has-lib == 'true'
       - uses: taiki-e/cache-cargo-install-action@v2
         with:
-          tool: cargo-check-external-types@0.1.12
+          tool: cargo-check-external-types
+          # TODO: install from crates.io once https://github.com/awslabs/cargo-check-external-types/pull/183 merged and released.
+          git: https://github.com/taiki-e/cargo-check-external-types.git
+          rev: 83a8d29
         if: steps.pre.outputs.has-lib == 'true'
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs

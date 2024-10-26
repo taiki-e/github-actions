@@ -64,8 +64,7 @@ jobs:
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
-          # TODO: do not install clippy if unneeded
-          component: clippy,rustfmt
+          component: rustfmt
         if: steps.pre.outputs.rust == 'true'
       - uses: taiki-e/install-action@shellcheck
       - uses: taiki-e/install-action@shfmt
@@ -93,10 +92,16 @@ jobs:
           # metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
           input_target="${{ inputs.target }}"
+          targets=()
+          tier3_targets=()
           if [[ -n "${input_target}" ]]; then
             while read -rd,; do
-              args+=(--target="${REPLY}")
-              retry rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
+              if rustup target list | cut -d' ' -f1 | grep -Eq "^${REPLY}$"; then
+                retry rustup target add "${REPLY}"
+                targets+=(--target="${REPLY}")
+              else
+                tier3_targets+=(--target="${REPLY}")
+              fi
             done <<<"${input_target},"
           fi
           if [[ -n "${RUSTFLAGS:-}" ]]; then
@@ -105,10 +110,22 @@ jobs:
           if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
               printf '%s\n' "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
           fi
-          (
-            set -x
-            cargo clippy --workspace --all-targets "${args[@]}"
-          )
+          if [[ -z "${input_target}" ]] || [[ ${#targets[@]} -gt 0 ]]; then
+            retry rustup component add clippy
+            (
+              set -x
+              cargo clippy --workspace --all-targets "${targets[@]}" "${args[@]}"
+            )
+          fi
+          if [[ ${#tier3_targets[@]} -gt 0 ]]; then
+            retry rustup component add clippy rust-src
+            for target in "${tier3_targets[@]}"; do
+              (
+                set -x
+                cargo clippy --workspace --all-targets "${target}" -Z build-std "${args[@]}"
+              )
+            done
+          fi
           # TODO: [lints] table is not respected...
           # # Refs:
           # # - https://github.com/rust-lang/rust/issues/56232

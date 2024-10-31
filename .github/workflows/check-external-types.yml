@@ -59,10 +59,7 @@ jobs:
         if: steps.pre.outputs.has-lib == 'true'
       - uses: taiki-e/cache-cargo-install-action@v2
         with:
-          tool: cargo-check-external-types
-          # TODO: install from crates.io once https://github.com/awslabs/cargo-check-external-types/pull/183 merged and released.
-          git: https://github.com/taiki-e/cargo-check-external-types.git
-          rev: 83a8d29
+          tool: cargo-check-external-types@0.1.13
         if: steps.pre.outputs.has-lib == 'true'
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs

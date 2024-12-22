@@ -10,7 +10,7 @@ on:
       target:
         required: false
         type: string
-        default: x86_64-unknown-linux-gnu,x86_64-pc-windows-msvc
+        default: x86_64-unknown-linux-gnu,x86_64-apple-darwin,x86_64-pc-windows-msvc
       args:
         required: false
         type: string
@@ -43,8 +43,53 @@ defaults:
     shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
-  msrv:
+  prepare:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - run: pip3 install yq
+      - id: prepare
+        run: |
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          IFS=$'\n\t'
+          # Handle target inputs.
+          input_target="${{ inputs.target }}"
+          linux_target=''
+          apple_target=''
+          windows_target=''
+          if [[ -n "${input_target}" ]]; then
+            while read -rd,; do
+              case "${REPLY}" in
+                *-apple-*) apple_target+=" --target ${REPLY}" ;;
+                *-windows*) windows_target+=" --target ${REPLY}" ;;
+                *) linux_target+=" --target ${REPLY}" ;;
+              esac
+            done <<<"${input_target},"
+          fi
+          linux_target="${linux_target# }"
+          apple_target="${apple_target# }"
+          windows_target="${windows_target# }"
+          printf '%s\n' "linux-target=${linux_target}" >>"${GITHUB_OUTPUT}"
+          printf '%s\n' "apple-target=${apple_target}" >>"${GITHUB_OUTPUT}"
+          printf '%s\n' "windows-target=${windows_target}" >>"${GITHUB_OUTPUT}"
+          matrix=''
+          [[ -z "${linux_target}" ]] || matrix+=',"ubuntu-latest"'
+          [[ -z "${apple_target}" ]] || matrix+=',"macos-latest"'
+          [[ -z "${windows_target}" ]] || matrix+=',"windows-latest"'
+          printf '%s\n' "matrix={\"os\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+      linux-target: ${{ steps.prepare.outputs.linux-target }}
+      apple-target: ${{ steps.prepare.outputs.apple-target }}
+      windows-target: ${{ steps.prepare.outputs.windows-target }}
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@v1
@@ -61,12 +106,14 @@ jobs:
           if [[ "${{ inputs.event_name }}" == 'pull_request' ]]; then
             args+=(--version-step 2)
           fi
-          IFS=$'\n\t'
-          # Handle target inputs.
-          input_target="${{ inputs.target }}"
-          if [[ -n "${input_target}" ]]; then
-            while read -rd,; do
-              args+=(--target="${REPLY}")
-            done <<<"${input_target},"
-          fi
+          case "${{ matrix.os }}" in
+            ubuntu-*) args=(${LINUX_TARGET:-}) ;;
+            macos-*) args=(${APPLE_TARGET:-}) ;;
+            windows-*) args=(${WINDOWS_TARGET:-}) ;;
+            *) exit 1 ;;
+          esac
           cargo hack build --workspace --no-private --no-dev-deps --version-range .. ${ALL_FEATURES:-} "${args[@]}"
+        env:
+          LINUX_TARGET: ${{ needs.prepare.outputs.linux-target }}
+          APPLE_TARGET: ${{ needs.prepare.outputs.apple-target }}
+          WINDOWS_TARGET: ${{ needs.prepare.outputs.windows-target }}

@@ -10,7 +10,9 @@ on:
       target:
         required: false
         type: string
-        default: x86_64-unknown-linux-gnu,x86_64-apple-darwin,x86_64-pc-windows-msvc
+        # macOS cannot be included by default since cannot be compiled on pre-1.54:
+        # https://github.com/rust-lang/rust/issues/105167
+        default: x86_64-unknown-linux-gnu,x86_64-pc-windows-msvc
       args:
         required: false
         type: string

@@ -58,8 +58,8 @@ jobs:
           fi
           printf '%s\n' "matrix=${matrix}" >>"${GITHUB_OUTPUT}"
           runs_on=$(jq -r '."runs-on"' <<<"${job}")
-          if [[ "${runs_on}" != '$'"{{ matrix.os }}" ]] && [[ "${runs_on}" != '$'"{{ matrix.os || 'ubuntu-20.04' }}" ]]; then
-            printf '%s\n' "::error::'runs-on' must be "'$'"{{ matrix.os }} or "'$'"{{ matrix.os || 'ubuntu-20.04' }}, but found ${runs_on}"
+          if [[ "${runs_on}" != '$'"{{ matrix.os }}" ]] && [[ "${runs_on}" != '$'"{{ matrix.os || 'ubuntu-latest' }}" ]]; then
+            printf '%s\n' "::error::'runs-on' must be "'$'"{{ matrix.os }} or "'$'"{{ matrix.os || 'ubuntu-latest' }}, but found ${runs_on}"
             exit 1
           fi
           # Handle inputs for upload-rust-binary-action.
@@ -121,7 +121,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
-    runs-on: ${{ matrix.os || 'ubuntu-20.04' }}
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@v1

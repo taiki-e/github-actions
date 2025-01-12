@@ -44,23 +44,12 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@v1
-      - id: pre
-        run: |
-          IFS=$'\n\t'
-          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
-          metadata=$(cargo metadata --format-version=1 --no-deps)
-          # Publishing is unrestricted if null, and forbidden if an empty array.
-          if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and .targets[].kind[] == "lib")' <<<"${metadata}")" ]]; then
-            printf 'has-lib=true\n' >>"${GITHUB_OUTPUT}"
-          fi
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
-        if: steps.pre.outputs.has-lib == 'true'
       - uses: taiki-e/cache-cargo-install-action@v2
         with:
           tool: cargo-check-external-types@0.1.13
-        if: steps.pre.outputs.has-lib == 'true'
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs
@@ -153,4 +142,3 @@ jobs:
               )
             fi
           done
-        if: steps.pre.outputs.has-lib == 'true'

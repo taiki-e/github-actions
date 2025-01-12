@@ -8,24 +8,37 @@ on:
         required: false
         type: string
         default: nightly
-      target:
-        required: false
-        type: string
-      args:
-        required: false
-        type: string
       clippy:
         required: false
         type: boolean
         default: true
-      fuzzy_provenance_casts:
+      clippy-target:
+        required: false
+        type: string
+      clippy-args:
+        required: false
+        type: string
+      check-external-types:
         required: false
         type: boolean
         default: true
-      unqualified_local_imports:
+      deny:
         required: false
         type: boolean
         default: true
+      deny-args:
+        required: false
+        type: string
+      docs:
+        required: false
+        type: boolean
+        default: true
+      docs-target:
+        required: false
+        type: string
+      docs-args:
+        required: false
+        type: string
 
 env:
   CARGO_INCREMENTAL: 0
@@ -51,7 +64,31 @@ defaults:
     shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - id: parse
+        run: |
+          if [[ -n "$(git ls-files '*.rs')" ]]; then
+            printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
+            metadata=$(cargo metadata --format-version=1 --no-deps)
+            # Publishing is unrestricted if null, and forbidden if an empty array.
+            if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}")" ]]; then
+              printf 'rust-pub=true\n' >>"${GITHUB_OUTPUT}"
+              if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and .targets[].kind[] == "lib")' <<<"${metadata}")" ]]; then
+                printf 'rust-pub-lib=true\n' >>"${GITHUB_OUTPUT}"
+              fi
+            fi
+          fi
+    outputs:
+      rust: ${{ steps.parse.outputs.rust }}
+      rust-pub: ${{ steps.parse.outputs.rust-pub }}
+      rust-pub-lib: ${{ steps.parse.outputs.rust-pub-lib }}
+
   tidy:
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -60,102 +97,18 @@ jobs:
       repository-projects: read # for gh pr edit --add-assignee
     steps:
       - uses: taiki-e/checkout-action@v1
-      - id: pre
-        run: |
-          if [[ -n "$(git ls-files '*.rs')" ]]; then
-            printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
-          fi
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
           component: rustfmt
-        if: steps.pre.outputs.rust == 'true'
+        if: needs.prepare.outputs.rust == 'true'
       - uses: taiki-e/install-action@shellcheck
       - uses: taiki-e/install-action@shfmt
-      - run: printf '%s\n' "STRICT_PROVENANCE_LINTS= -Z crate-attr=feature(strict_provenance_lints) -D fuzzy_provenance_casts" >>"${GITHUB_ENV}"
-        if: always() && steps.pre.outputs.rust == 'true' && inputs.fuzzy_provenance_casts
-      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -Z crate-attr=feature(unqualified_local_imports) -D unqualified_local_imports" >>"${GITHUB_ENV}"
-        if: always() && steps.pre.outputs.rust == 'true' && inputs.unqualified_local_imports
-      - name: Run cargo clippy
-        run: |
-          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
-          retry() {
-            for i in {1..10}; do
-              if "$@"; then
-                return 0
-              else
-                sleep "${i}"
-              fi
-            done
-            "$@"
-          }
-          # shellcheck disable=SC2206
-          args=(${{ inputs.args }})
-          if [[ "${{ inputs.args }}" != *"-features"* ]]; then
-            args+=(--all-features)
-          fi
-          IFS=$'\n\t'
-          # metadata=$(cargo metadata --format-version=1 --no-deps)
-          # Handle target inputs.
-          input_target="${{ inputs.target }}"
-          targets=()
-          tier3_targets=()
-          if [[ -n "${input_target}" ]]; then
-            while read -rd,; do
-              if rustup target list | cut -d' ' -f1 | grep -Eq "^${REPLY}$"; then
-                retry rustup target add "${REPLY}"
-                targets+=(--target="${REPLY}")
-              else
-                tier3_targets+=(--target="${REPLY}")
-              fi
-            done <<<"${input_target},"
-          fi
-          if [[ -n "${RUSTFLAGS:-}" ]]; then
-              printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}${STRICT_PROVENANCE_LINTS:-}' \\"
-          fi
-          if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
-              printf '%s\n' "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
-          fi
-          if [[ -z "${input_target}" ]] || [[ ${#targets[@]} -gt 0 ]]; then
-            retry rustup component add clippy
-            (
-              # core/alloc/std sets feature(strict_provenance_lints), so we cannot use
-              # -Z crate-attr=feature(strict_provenance_lints) when -Z build-std is needed.
-              export RUSTFLAGS="${RUSTFLAGS}${STRICT_PROVENANCE_LINTS:-}"
-              set -x
-              cargo clippy --workspace --all-targets "${targets[@]}" "${args[@]}"
-            )
-          fi
-          if [[ ${#tier3_targets[@]} -gt 0 ]]; then
-            retry rustup component add clippy rust-src
-            for target in "${tier3_targets[@]}"; do
-              (
-                set -x
-                cargo clippy --workspace --all-targets "${target}" -Z build-std "${args[@]}"
-              )
-            done
-          fi
-          # TODO: [lints] table is not respected...
-          # # Refs:
-          # # - https://github.com/rust-lang/rust/issues/56232
-          # # - https://github.com/Nemo157/dotfiles/blob/cee1b90cb23089990fe9bc559b7c2f012d0a59f0/packages/cargo-rustdoc-clippy.sh
-          # export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Z unstable-options --no-run --nocapture --test-builder clippy-driver"
-          # # filter bin-only crate due to https://github.com/rust-lang/cargo/issues/5477
-          # for manifest_path in $(jq -r '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and (.targets[].kind[] == "lib" or .targets[].kind[] == "proc-macro")) | .manifest_path' <<<"${metadata}"); do
-          #   (
-          #     set -x
-          #     cargo test --manifest-path="${manifest_path}" --doc "${args[@]}"
-          #   )
-          # done
-        if: always() && steps.pre.outputs.rust == 'true' && inputs.clippy
       - run: cat -- tools/.tidy-check-license-headers
-        if: always()
       - run: cat -- .cspell.json
-        if: always()
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: tools/tidy.sh
-        if: always()
       - id: diff
         run: |
           git config user.name 'Taiki Endo'
@@ -183,3 +136,113 @@ jobs:
           PR_NUMBER: ${{ steps.create-pull-request.outputs.pull-request-number }}
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - run: git add -N . && git diff --exit-code
+
+  clippy:
+    needs: prepare
+    if: needs.prepare.outputs.rust == 'true' && inputs.clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
+          component: clippy
+      - name: Run cargo clippy
+        run: |
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
+          # shellcheck disable=SC2206
+          args=(${{ inputs.clippy-args }})
+          if [[ "${{ inputs.clippy-args }}" != *"-features"* ]]; then
+            args+=(--all-features)
+          fi
+          IFS=$'\n\t'
+          # metadata=$(cargo metadata --format-version=1 --no-deps)
+          # Handle target inputs.
+          input_target="${{ inputs.clippy-target }}"
+          targets=()
+          tier3_targets=()
+          if [[ -n "${input_target}" ]]; then
+            while read -rd,; do
+              if rustup target list | cut -d' ' -f1 | grep -Eq "^${REPLY}$"; then
+                retry rustup target add "${REPLY}"
+                targets+=(--target="${REPLY}")
+              else
+                tier3_targets+=(--target="${REPLY}")
+              fi
+            done <<<"${input_target},"
+          fi
+          if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
+              printf '%s\n' "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
+          fi
+          export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(unqualified_local_imports) -D unqualified_local_imports"
+          if [[ -z "${input_target}" ]] || [[ ${#targets[@]} -gt 0 ]]; then
+            (
+              # core/alloc/std sets feature(strict_provenance_lints), so we cannot use
+              # -Z crate-attr=feature(strict_provenance_lints) when -Z build-std is needed.
+              # shellcheck disable=SC2030
+              export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(strict_provenance_lints) -D fuzzy_provenance_casts"
+              printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
+              set -x
+              cargo clippy --workspace --all-targets "${targets[@]}" "${args[@]}"
+            )
+          fi
+          # shellcheck disable=SC2031
+          if [[ -n "${RUSTFLAGS:-}" ]]; then
+              printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
+          fi
+          if [[ ${#tier3_targets[@]} -gt 0 ]]; then
+            retry rustup component add rust-src
+            for target in "${tier3_targets[@]}"; do
+              (
+                set -x
+                cargo clippy --workspace --all-targets "${target}" -Z build-std "${args[@]}"
+              )
+            done
+          fi
+          # TODO: [lints] table is not respected...
+          # # Refs:
+          # # - https://github.com/rust-lang/rust/issues/56232
+          # # - https://github.com/Nemo157/dotfiles/blob/cee1b90cb23089990fe9bc559b7c2f012d0a59f0/packages/cargo-rustdoc-clippy.sh
+          # export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Z unstable-options --no-run --nocapture --test-builder clippy-driver"
+          # # filter bin-only crate due to https://github.com/rust-lang/cargo/issues/5477
+          # for manifest_path in $(jq -r '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and (.targets[].kind[] == "lib" or .targets[].kind[] == "proc-macro")) | .manifest_path' <<<"${metadata}"); do
+          #   (
+          #     set -x
+          #     cargo test --manifest-path="${manifest_path}" --doc "${args[@]}"
+          #   )
+          # done
+
+  check-external-types:
+    needs: prepare
+    if: needs.prepare.outputs.rust-pub-lib == 'true' && inputs.check-external-types
+    uses: ./.github/workflows/check-external-types.yml
+    # with:
+    #   rust: ${{ inputs.check-external-types-toolchain }}
+    #   target: ${{ inputs.check-external-types-target }}
+    #   args: ${{ inputs.check-external-types-args }}
+  deny:
+    needs: prepare
+    if: needs.prepare.outputs.rust-pub == 'true' && inputs.deny
+    uses: ./.github/workflows/deny.yml
+    with:
+      rust: ${{ inputs.rust }}
+      args: ${{ inputs.deny-args }}
+  docs:
+    needs: prepare
+    if: needs.prepare.outputs.rust-pub-lib == 'true' && inputs.docs
+    uses: ./.github/workflows/docs.yml
+    with:
+      rust: ${{ inputs.rust }}
+      target: ${{ inputs.docs-target }}
+      args: ${{ inputs.docs-args }}

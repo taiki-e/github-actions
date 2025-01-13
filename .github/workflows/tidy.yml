@@ -201,11 +201,11 @@ jobs:
               cargo clippy --workspace --all-targets "${targets[@]}" "${args[@]}"
             )
           fi
-          # shellcheck disable=SC2031
-          if [[ -n "${RUSTFLAGS:-}" ]]; then
-              printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
-          fi
           if [[ ${#tier3_targets[@]} -gt 0 ]]; then
+            # shellcheck disable=SC2031
+            if [[ -n "${RUSTFLAGS:-}" ]]; then
+                printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
+            fi
             retry rustup component add rust-src
             for target in "${tier3_targets[@]}"; do
               (

@@ -10,4 +10,3 @@ miniconda
 monodoc
 runneradmin
 tonistiigi
-zigbuild

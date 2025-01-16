@@ -5,22 +5,22 @@ IFS=$'\n\t'
 trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
 
 g() {
-    IFS=' '
-    local cmd="$*"
-    IFS=$'\n\t'
-    printf '::group::%s\n' "${cmd#retry }"
-    "$@"
-    printf '::endgroup::\n'
+  IFS=' '
+  local cmd="$*"
+  IFS=$'\n\t'
+  printf '::group::%s\n' "${cmd#retry }"
+  "$@"
+  printf '::endgroup::\n'
 }
 retry() {
-    for i in {1..10}; do
-        if "$@"; then
-            return 0
-        else
-            sleep "${i}"
-        fi
-    done
-    "$@"
+  for i in {1..10}; do
+    if "$@"; then
+      return 0
+    else
+      sleep "${i}"
+    fi
+  done
+  "$@"
 }
 
 export RUSTUP_MAX_RETRIES="${RUSTUP_MAX_RETRIES:-10}"
@@ -29,10 +29,10 @@ export RUSTUP_MAX_RETRIES="${RUSTUP_MAX_RETRIES:-10}"
 rustup_args=(--no-self-update --profile minimal)
 toolchain="${INPUT_TOOLCHAIN:?}"
 if [[ -n "${INPUT_COMPONENT:-}" ]]; then
-    rustup_args+=("--component=${INPUT_COMPONENT}")
+  rustup_args+=("--component=${INPUT_COMPONENT}")
 fi
 if [[ -n "${INPUT_TARGET:-}" ]]; then
-    rustup_args+=("--target=${INPUT_TARGET}")
+  rustup_args+=("--target=${INPUT_TARGET}")
 fi
 
 g retry rustup toolchain add "${toolchain}" "${rustup_args[@]}"

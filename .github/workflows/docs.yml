@@ -79,16 +79,16 @@ jobs:
           base_rustflags=()
           base_rustdocflags=()
           if [[ -n "${RUSTFLAGS:-}" ]]; then
-              while read -rd' '; do
-                  t="${REPLY# *}"
-                  base_rustflags+=("${t%* }")
-              done <<<"${RUSTFLAGS} "
+            while read -rd' '; do
+              t="${REPLY# *}"
+              base_rustflags+=("${t%* }")
+            done <<<"${RUSTFLAGS} "
           fi
           if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
-              while read -rd' '; do
-                  t="${REPLY# *}"
-                  base_rustdocflags+=("${t%* }")
-              done <<<"${RUSTDOCFLAGS} "
+            while read -rd' '; do
+              t="${REPLY# *}"
+              base_rustdocflags+=("${t%* }")
+            done <<<"${RUSTDOCFLAGS} "
           fi
           base_rustdocflags+=(
             -Z unstable-options

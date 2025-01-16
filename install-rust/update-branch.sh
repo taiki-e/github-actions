@@ -11,27 +11,27 @@ cd -- "$(dirname -- "$0")"/..
 #    ./install-rust/update-branch.sh
 
 retry() {
-    for i in {1..10}; do
-        if "$@"; then
-            return 0
-        else
-            sleep "${i}"
-        fi
-    done
-    "$@"
+  for i in {1..10}; do
+    if "$@"; then
+      return 0
+    else
+      sleep "${i}"
+    fi
+  done
+  "$@"
 }
 bail() {
-    printf >&2 'error: %s\n' "$*"
-    exit 1
+  printf >&2 'error: %s\n' "$*"
+  exit 1
 }
 
 if [[ $# -gt 1 ]]; then
-    bail "invalid argument '$2'"
+  bail "invalid argument '$2'"
 fi
 if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then
-    in_place=(-i '')
+  in_place=(-i '')
 else
-    in_place=(-i)
+  in_place=(-i)
 fi
 
 # Make sure there is no uncommitted change.
@@ -40,10 +40,10 @@ git diff --exit-code --staged
 
 # Make sure that the release was created from an allowed branch.
 if ! git branch | grep -Eq '\* main$'; then
-    bail "current branch is not 'main'"
+  bail "current branch is not 'main'"
 fi
 if ! git remote -v | grep -F origin | grep -Eq 'github\.com[:/]taiki-e/'; then
-    bail "cannot publish a new release from fork repository"
+  bail "cannot publish a new release from fork repository"
 fi
 
 set -x
@@ -51,18 +51,18 @@ set -x
 retry git push origin main
 
 toolchains=(
-    stable
-    beta
-    nightly
+  stable
+  beta
+  nightly
 )
 
 for toolchain in "${toolchains[@]}"; do
-    git checkout -b "${toolchain}"
-    sed -E "${in_place[@]}" "s/required: true/required: false/g" install-rust/action.yml
-    sed -E "${in_place[@]}" "s/# default: #publish:toolchain/default: ${toolchain}/g" install-rust/action.yml
-    git add install-rust/action.yml
-    git commit -m "${toolchain}"
-    retry git push origin -f refs/heads/"${toolchain}"
-    git checkout main
-    git branch -D "${toolchain}"
+  git checkout -b "${toolchain}"
+  sed -E "${in_place[@]}" "s/required: true/required: false/g" install-rust/action.yml
+  sed -E "${in_place[@]}" "s/# default: #publish:toolchain/default: ${toolchain}/g" install-rust/action.yml
+  git add install-rust/action.yml
+  git commit -m "${toolchain}"
+  retry git push origin -f refs/heads/"${toolchain}"
+  git checkout main
+  git branch -D "${toolchain}"
 done

@@ -166,6 +166,7 @@ ggrep
 gsed
 gsub
 gtar
+HEALTHCHECK
 libc
 markdownlint
 mmap
@@ -191,6 +192,7 @@ shellcheckrc
 SIGABRT
 SIGBUS
 SIGILL
+STOPSIGNAL
 subcmd
 taplo
 tlsv
@@ -198,3 +200,4 @@ tmpdir
 tomlq
 valgrind
 venv
+zigbuild

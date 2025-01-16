@@ -5,22 +5,22 @@ IFS=$'\n\t'
 trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
 
 g() {
-    IFS=' '
-    local cmd="$*"
-    IFS=$'\n\t'
-    printf '::group::%s\n' "${cmd#retry }"
-    "$@"
-    printf '::endgroup::\n'
+  IFS=' '
+  local cmd="$*"
+  IFS=$'\n\t'
+  printf '::group::%s\n' "${cmd#retry }"
+  "$@"
+  printf '::endgroup::\n'
 }
 retry() {
-    for i in {1..10}; do
-        if "$@"; then
-            return 0
-        else
-            sleep "${i}"
-        fi
-    done
-    "$@"
+  for i in {1..10}; do
+    if "$@"; then
+      return 0
+    else
+      sleep "${i}"
+    fi
+  done
+  "$@"
 }
 
 g docker version

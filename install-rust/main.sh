@@ -28,6 +28,9 @@ export RUSTUP_MAX_RETRIES="${RUSTUP_MAX_RETRIES:-10}"
 rustup_args=(--profile minimal)
 toolchain="${INPUT_TOOLCHAIN:?}"
 if [[ -n "${INPUT_COMPONENT:-}" ]]; then
+  if [[ "${INPUT_COMPONENT}" =~ (^|,)miri(,|$) ]] && [[ ! "${INPUT_COMPONENT}" =~ (^|,)rust-src(,|$) ]]; then
+    INPUT_COMPONENT+=',rust-src'
+  fi
   rustup_args+=("--component=${INPUT_COMPONENT}")
 fi
 if [[ -n "${INPUT_TARGET:-}" ]]; then

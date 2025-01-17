@@ -36,7 +36,9 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
+          - ubuntu-22.04-arm
           - ubuntu-24.04
+          - ubuntu-24.04-arm
           - macos-13
           - macos-14
           - macos-15
@@ -81,7 +83,15 @@ jobs:
         if: startsWith(matrix.os, 'macos')
 
   install-rust:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: ./install-rust
@@ -99,7 +109,13 @@ jobs:
           rustup target list
 
   setup-docker:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: ./setup-docker

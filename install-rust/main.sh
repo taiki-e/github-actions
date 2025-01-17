@@ -25,8 +25,7 @@ retry() {
 
 export RUSTUP_MAX_RETRIES="${RUSTUP_MAX_RETRIES:-10}"
 
-# --no-self-update is necessary because the windows environment cannot self-update rustup.exe.
-rustup_args=(--no-self-update --profile minimal)
+rustup_args=(--profile minimal)
 toolchain="${INPUT_TOOLCHAIN:?}"
 if [[ -n "${INPUT_COMPONENT:-}" ]]; then
   rustup_args+=("--component=${INPUT_COMPONENT}")
@@ -35,6 +34,11 @@ if [[ -n "${INPUT_TARGET:-}" ]]; then
   rustup_args+=("--target=${INPUT_TARGET}")
 fi
 
-g retry rustup toolchain add "${toolchain}" "${rustup_args[@]}"
-
-g rustup default "${toolchain}"
+if type -P rustup; then
+  # --no-self-update is necessary because the windows environment cannot self-update rustup.exe.
+  g retry rustup toolchain add "${toolchain}" --no-self-update "${rustup_args[@]}"
+  g rustup default "${toolchain}"
+else
+  retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 https://sh.rustup.rs | sh -s -- -y --default-toolchain "${toolchain}" --no-modify-path "${rustup_args[@]}"
+  printf '%s\n' "${HOME}/.cargo/bin" >>"${GITHUB_PATH}"
+fi

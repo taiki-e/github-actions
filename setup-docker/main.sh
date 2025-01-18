@@ -32,4 +32,4 @@ case "${INPUT_QEMU:-}" in
 esac
 
 g docker buildx create --name setup-docker-buildx-builder --driver docker-container --driver-opt env.BUILDKIT_STEP_LOG_MAX_SIZE=10485760 --driver-opt network=host --buildkitd-flags --debug --use
-g docker buildx inspect --bootstrap --builder setup-docker-buildx-builder
+g retry docker buildx inspect --bootstrap --builder setup-docker-buildx-builder

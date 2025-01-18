@@ -1,6 +1,12 @@
 name: setup-docker
 description: GitHub Action for setup docker.
 
+inputs:
+  qemu:
+    description: Set up QEMU
+    required: false
+    default: 'arm64'
+
 # Note:
 # - inputs.* should be manually mapped to INPUT_* due to https://github.com/actions/runner/issues/665
 # - Use GITHUB_*/RUNNER_* instead of github.*/runner.* due to https://github.com/actions/runner/issues/2185
@@ -9,3 +15,5 @@ runs:
   steps:
     - run: bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/main.sh"
       shell: bash
+      env:
+        INPUT_QEMU: ${{ inputs.qemu }}

@@ -60,10 +60,6 @@ case "$(uname -s)" in
         time sudo find "${dir}" -type f -delete
       )
     done
-    (
-      set -x
-      time sudo docker image prune --all --force
-    )
     ;;
   Darwin)
     # GitHub-hosted macOS runners already have a lot of free space than Ubuntu runners.

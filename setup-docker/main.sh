@@ -23,7 +23,7 @@ retry() {
   "$@"
 }
 
-g docker version
+g retry docker version
 g docker buildx version
 
 case "${INPUT_QEMU:-}" in

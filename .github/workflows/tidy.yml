@@ -113,7 +113,8 @@ jobs:
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: tools/tidy.sh
-      - id: diff
+      - name: Handle diff
+        id: diff
         run: |
           git config user.name 'Taiki Endo'
           git config user.email 'te316e89@gmail.com'
@@ -124,6 +125,7 @@ jobs:
             printf 'success=false\n' >>"${GITHUB_OUTPUT}"
           fi
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+      - run: git add -N . && git diff --exit-code
       - id: create-pull-request
         uses: peter-evans/create-pull-request@v7
         with:
@@ -139,7 +141,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create-pull-request.outputs.pull-request-number }}
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
-      - run: git add -N . && git diff --exit-code
 
   clippy:
     needs: prepare

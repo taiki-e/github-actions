@@ -4,11 +4,21 @@ permissions:
 on:
   workflow_call:
     inputs:
+      component:
+        required: false
+        type: string
       optional-deps:
         required: false
         type: string
         default: --optional-deps
       test-args:
+        required: false
+        type: string
+      careful:
+        required: false
+        type: boolean
+        default: true
+      careful-args:
         required: false
         type: string
       doc-nightly-only:
@@ -99,14 +109,22 @@ jobs:
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ matrix.rust }}
+          component: ${{ inputs.component }}${{ (!contains(inputs.component, 'rust-src') && inputs.careful && startsWith(matrix.rust, 'nightly')) && 'rust-src' || '' }}
           target: ${{ steps.prepare.outputs.no-std == 'true' && inputs.no-std-target || '' }}
       - uses: taiki-e/install-action@cargo-hack
       - uses: taiki-e/install-action@cargo-minimal-versions
         if: inputs.minimal-versions || inputs.direct-minimal-versions
+      - uses: taiki-e/install-action@cargo-careful
+        if: inputs.careful && startsWith(matrix.rust, 'nightly')
       - run: cargo test --workspace --all-features --tests ${{ inputs.test-args }}
         if: inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')
       - run: cargo test --workspace --all-features ${{ inputs.test-args }}
         if: (!(inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')))
+      - run: cargo careful test --all --all-features ${{ inputs.careful-args }}
+        env:
+          RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout
+          RUSTFLAGS: ${{ env.RUSTFLAGS }} -Z randomize-layout
+        if: inputs.careful && startsWith(matrix.rust, 'nightly')
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps ${{ inputs.build-args }}
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
         if: steps.prepare.outputs.no-std == 'true'

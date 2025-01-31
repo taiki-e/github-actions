@@ -11,6 +11,10 @@ on:
       test-args:
         required: false
         type: string
+      doc-nightly-only:
+        required: false
+        type: boolean
+        default: false
       build-args:
         required: false
         type: string
@@ -93,7 +97,10 @@ jobs:
       - uses: taiki-e/install-action@cargo-hack
       - uses: taiki-e/install-action@cargo-minimal-versions
         if: inputs.minimal-versions || inputs.direct-minimal-versions
+      - run: cargo test --workspace --all-features --tests ${{ inputs.test-args }}
+        if: inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')
       - run: cargo test --workspace --all-features ${{ inputs.test-args }}
+        if: (!(inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')))
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.build-optional-deps || inputs.optional-deps }} --no-dev-deps ${{ inputs.build-args }}
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.no-std-optional-deps || inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
         if: inputs.no-std

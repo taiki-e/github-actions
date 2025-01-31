@@ -38,7 +38,7 @@ jobs:
           - ubuntu-22.04
           - ubuntu-22.04-arm
           - ubuntu-24.04
-          - ubuntu-24.04-arm
+          # - os: ubuntu-24.04-arm # TODO: re-enable when https://github.com/rust-lang/rust/issues/135867 solved
           - macos-13
           - macos-14
           - macos-15
@@ -88,7 +88,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - ubuntu-24.04-arm
+          - ubuntu-22.04-arm # TODO: update to 24.04 when https://github.com/rust-lang/rust/issues/135867 solved
           - macos-latest
           - windows-latest
     runs-on: ${{ matrix.os }}
@@ -114,7 +114,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - ubuntu-24.04-arm
+          - ubuntu-22.04-arm # TODO: update to 24.04 when https://github.com/rust-lang/rust/issues/135867 solved
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1

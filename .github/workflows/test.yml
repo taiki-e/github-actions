@@ -18,9 +18,6 @@ on:
       build-args:
         required: false
         type: string
-      build-optional-deps:
-        required: false
-        type: string
       no-std:
         required: false
         type: boolean
@@ -30,9 +27,6 @@ on:
         type: string
         default: thumbv6m-none-eabi
       no-std-args:
-        required: false
-        type: string
-      no-std-optional-deps:
         required: false
         type: string
       minimal-versions:
@@ -90,10 +84,22 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@v1
+      - id: prepare
+        run: |
+          IFS=$'\n\t'
+          metadata=$(cargo metadata --format-version=1 --no-deps)
+          # Publishing is unrestricted if null, and forbidden if an empty array.
+          for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
+            if ! jq '.targets[] | .kind[]' <<<"${pkg}" | grep -Fq '"proc-macro"'; then
+              printf 'no-std=true\n' >>"${GITHUB_OUTPUT}"
+              break
+            fi
+          done
+        if: inputs.no-std
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ matrix.rust }}
-          target: ${{ inputs.no-std && inputs.no-std-target || '' }}
+          target: ${{ steps.prepare.outputs.no-std == 'true' && inputs.no-std-target || '' }}
       - uses: taiki-e/install-action@cargo-hack
       - uses: taiki-e/install-action@cargo-minimal-versions
         if: inputs.minimal-versions || inputs.direct-minimal-versions
@@ -101,9 +107,9 @@ jobs:
         if: inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')
       - run: cargo test --workspace --all-features ${{ inputs.test-args }}
         if: (!(inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')))
-      - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.build-optional-deps || inputs.optional-deps }} --no-dev-deps ${{ inputs.build-args }}
-      - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.no-std-optional-deps || inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
-        if: inputs.no-std
+      - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps ${{ inputs.build-args }}
+      - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
+        if: steps.prepare.outputs.no-std == 'true'
       - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact --all-features ${{ inputs.minimal-versions-args }}
         if: inputs.minimal-versions
       - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact --all-features --direct ${{ inputs.direct-minimal-versions-args }}

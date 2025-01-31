@@ -125,7 +125,7 @@ jobs:
                 docs_rs_metadata='{}'
               fi
             fi
-            if ! jq -r '.targets[] | .kind[]' <<<"${pkg}" | grep -Fq '"proc-macro"'; then
+            if ! jq '.targets[] | .kind[]' <<<"${pkg}" | grep -Fq '"proc-macro"'; then
               # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
               if [[ -z "${input_target}" ]]; then
                 default_target=$(jq -r '."default-target"' <<<"${docs_rs_metadata}")

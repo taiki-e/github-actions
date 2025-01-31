@@ -1,0 +1,103 @@
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      optional-deps:
+        required: false
+        type: string
+        default: --optional-deps
+      test-args:
+        required: false
+        type: string
+      build-args:
+        required: false
+        type: string
+      build-optional-deps:
+        required: false
+        type: string
+      no-std:
+        required: false
+        type: boolean
+        default: true
+      no-std-target:
+        required: false
+        type: string
+        default: thumbv6m-none-eabi
+      no-std-args:
+        required: false
+        type: string
+      no-std-optional-deps:
+        required: false
+        type: string
+      minimal-versions:
+        required: false
+        type: boolean
+        default: true
+      minimal-versions-args:
+        required: false
+        type: string
+      direct-minimal-versions:
+        required: false
+        type: boolean
+        default: true
+      direct-minimal-versions-args:
+        required: false
+        type: string
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+  # Reusable workflows cannot inherit environment variables.
+  ATOMIC_MAYBE_UNINIT_DENY_WARNINGS: 1
+  CARGO_HACK_DENY_WARNINGS: 1
+  CARGO_LLVM_COV_DENY_WARNINGS: 1
+  CARGO_MINIMAL_VERSIONS_DENY_WARNINGS: 1
+  CARGO_NO_DEV_DEPS_DENY_WARNINGS: 1
+  CONST_FN_DENY_WARNINGS: 1
+  PORTABLE_ATOMIC_DENY_WARNINGS: 1
+  SEMIHOSTING_DENY_WARNINGS: 1
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rust: stable
+          - rust: beta
+          - rust: nightly
+          - rust: nightly
+            os: macos-latest
+          - rust: nightly
+            os: windows-latest
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ matrix.rust }}
+          target: ${{ inputs.no-std && inputs.no-std-target || '' }}
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@cargo-minimal-versions
+        if: inputs.minimal-versions || inputs.direct-minimal-versions
+      - run: cargo test --workspace --all-features ${{ inputs.test-args }}
+      - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.build-optional-deps || inputs.optional-deps }} --no-dev-deps ${{ inputs.build-args }}
+      - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.no-std-optional-deps || inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
+        if: inputs.no-std
+      - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact --all-features ${{ inputs.minimal-versions-args }}
+        if: inputs.minimal-versions
+      - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact --all-features --direct ${{ inputs.direct-minimal-versions-args }}
+        if: inputs.direct-minimal-versions

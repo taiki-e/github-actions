@@ -4,6 +4,10 @@ permissions:
 on:
   workflow_call:
     inputs:
+      rust:
+        required: false
+        type: string
+        default: stable,beta,nightly
       component:
         required: false
         type: string
@@ -78,18 +82,34 @@ defaults:
     shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - id: prepare
+        run: |
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          IFS=$'\n\t'
+          # Handle rust inputs.
+          input_rust="${{ inputs.rust }}"
+          matrix=''
+          last=''
+          while read -rd,; do
+            matrix+=',{"rust":"'"${REPLY}"'"}'
+            last="${REPLY}"
+          done <<<"${input_rust:?},"
+          matrix+=',{"rust":"'"${last}"'","os":"macos-latest"}'
+          matrix+=',{"rust":"'"${last}"'","os":"windows-latest"}'
+          printf '%s\n' "matrix={\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+
   test:
+    needs: prepare
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - rust: stable
-          - rust: beta
-          - rust: nightly
-          - rust: nightly
-            os: macos-latest
-          - rust: nightly
-            os: windows-latest
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     timeout-minutes: 60
     steps:
@@ -110,15 +130,15 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           component: ${{ inputs.component }}${{ (!contains(inputs.component, 'rust-src') && inputs.careful && startsWith(matrix.rust, 'nightly')) && 'rust-src' || '' }}
-          target: ${{ steps.prepare.outputs.no-std == 'true' && inputs.no-std-target || '' }}
+          target: ${{ (inputs.no-std && steps.prepare.outputs.no-std == 'true') && inputs.no-std-target || '' }}
       - uses: taiki-e/install-action@cargo-hack
       - uses: taiki-e/install-action@cargo-minimal-versions
-        if: inputs.minimal-versions || inputs.direct-minimal-versions
+        if: inputs.minimal-versions || (inputs.direct-minimal-versions && !(startsWith(matrix.rust, '1.3') || startsWith(matrix.rust, '1.4') || startsWith(matrix.rust, '1.5') || startsWith(matrix.rust, '1.6')))
       - uses: taiki-e/install-action@cargo-careful
         if: inputs.careful && startsWith(matrix.rust, 'nightly')
-      - run: cargo test --workspace --all-features --tests ${{ inputs.test-args }}
+      - run: cargo test --all --all-features --tests ${{ inputs.test-args }}
         if: inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')
-      - run: cargo test --workspace --all-features ${{ inputs.test-args }}
+      - run: cargo test --all --all-features ${{ inputs.test-args }}
         if: (!(inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')))
       - run: cargo careful test --all --all-features ${{ inputs.careful-args }}
         env:
@@ -127,8 +147,9 @@ jobs:
         if: inputs.careful && startsWith(matrix.rust, 'nightly')
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps ${{ inputs.build-args }}
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
-        if: steps.prepare.outputs.no-std == 'true'
+        if: inputs.no-std && steps.prepare.outputs.no-std == 'true'
       - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact --all-features ${{ inputs.minimal-versions-args }}
         if: inputs.minimal-versions
       - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact --all-features --direct ${{ inputs.direct-minimal-versions-args }}
-        if: inputs.direct-minimal-versions
+        # -Z direct-minimal-versions requires Cargo 1.70.
+        if: inputs.direct-minimal-versions && !(startsWith(matrix.rust, '1.3') || startsWith(matrix.rust, '1.4') || startsWith(matrix.rust, '1.5') || startsWith(matrix.rust, '1.6'))

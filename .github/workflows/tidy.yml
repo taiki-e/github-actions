@@ -66,10 +66,10 @@ defaults:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: taiki-e/checkout-action@v1
-      - id: parse
+      - id: prepare
         run: |
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
@@ -86,10 +86,10 @@ jobs:
             fi
           fi
     outputs:
-      rust: ${{ steps.parse.outputs.rust }}
-      rust-pub: ${{ steps.parse.outputs.rust-pub }}
-      rust-pub-lib: ${{ steps.parse.outputs.rust-pub-lib }}
-      rust-pub-proc-macro: ${{ steps.parse.outputs.rust-pub-proc-macro }}
+      rust: ${{ steps.prepare.outputs.rust }}
+      rust-pub: ${{ steps.prepare.outputs.rust-pub }}
+      rust-pub-lib: ${{ steps.prepare.outputs.rust-pub-lib }}
+      rust-pub-proc-macro: ${{ steps.prepare.outputs.rust-pub-proc-macro }}
 
   tidy:
     needs: prepare

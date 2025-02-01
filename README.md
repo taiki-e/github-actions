@@ -16,13 +16,12 @@ supposed to only be used in infra managed by us.
 
 - [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
 - [**create-release**](.github/workflows/create-release.yml): Create a new GitHub release and run `cargo publish`.
-- [**deny**](.github/workflows/deny.yml): Run `cargo deny` in a way that avoids non-ideal behaviors.
 - [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
 - [**miri**](.github/workflows/miri.yml): Run `cargo miri test` in strict mode.
 - [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).
 - [**release-dry-run**](.github/workflows/release-dry-run.yml): Build Rust binaries based on release workflow.
 - [**test**](.github/workflows/test.yml): Run `cargo test` `cargo careful test` + `cargo hack build --feature-powerset` + `cargo minimal-versions build`.
-- [**tidy**](.github/workflows/tidy.yml): Tidy check.
+- [**tidy**](.github/workflows/tidy.yml): Run various checks.
 
 ## Moved or removed actions
 

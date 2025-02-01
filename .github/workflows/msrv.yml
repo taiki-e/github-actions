@@ -105,7 +105,7 @@ jobs:
       - run: |
           # shellcheck disable=SC2206
           args=(${{ inputs.args }})
-          if [[ "${{ inputs.event_name }}" == 'pull_request' ]]; then
+          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             args+=(--version-step 2)
           fi
           case "${{ matrix.os }}" in

@@ -18,7 +18,8 @@ cd -- "$(dirname -- "$0")"/..
 # - shfmt
 # - shellcheck
 # - cargo, rustfmt (if Rust code exists)
-# - clang-format (if C/C++ code exists)
+# - clang-format (if C/C++/Protobuf code exists)
+# - parse-dockerfile <https://github.com/taiki-e/parse-dockerfile> (if Dockerfile exists)
 #
 # This script is shared with other repositories, so there may also be
 # checks for files not included in this repository, but they will be
@@ -37,7 +38,25 @@ check_diff() {
 }
 check_config() {
   if [[ ! -e "$1" ]]; then
-    error "could not found $1 in the repository root"
+    error "could not found $1 in the repository root${2:-}"
+  fi
+}
+check_hidden() {
+  if [[ -n "$(comm -23 <(ls_files "*$1") <(ls_files "*.$1"))" ]]; then
+    error "please use '.$1' instead of '$1' for consistency"
+    printf '=======================================\n'
+    comm -23 <(ls_files "*$1") <(ls_files "*.$1")
+    printf '=======================================\n\n'
+  fi
+}
+check_alt() {
+  local recommended="$1"
+  shift
+  if [[ -n "$(ls_files "$@")" ]]; then
+    error "please use '${recommended}' instead of the following for consistency"
+    printf '=======================================\n'
+    ls_files "$@"
+    printf '=======================================\n\n'
   fi
 }
 check_install() {
@@ -206,7 +225,8 @@ ls_files() {
 # Rust (if exists)
 if [[ -n "$(ls_files '*.rs')" ]]; then
   info "checking Rust code style"
-  check_config .rustfmt.toml
+  check_config .rustfmt.toml "; consider adding with reference to https://github.com/taiki-e/cargo-hack/blob/HEAD/.rustfmt.toml"
+  check_config .clippy.toml "; consider adding with reference to https://github.com/taiki-e/cargo-hack/blob/HEAD/.clippy.toml"
   if check_install cargo jq python3; then
     # `cargo fmt` cannot recognize files not included in the current workspace and modules
     # defined inside macros, so run rustfmt directly.
@@ -292,6 +312,7 @@ if [[ -n "$(ls_files '*.rs')" ]]; then
       fi
     done
     if [[ -n "${has_public_crate}" ]]; then
+      check_config .deny.toml "; consider adding with reference to https://github.com/taiki-e/cargo-hack/blob/HEAD/.deny.toml"
       info "checking public crates don't contain executables and binaries"
       for p in $(ls_files --include-symlink); do
         # Skip directories.
@@ -323,24 +344,31 @@ if [[ -n "$(ls_files '*.rs')" ]]; then
         error "file-permissions-check failed: executables are only allowed to be present in directories that are excluded from crates.io"
         printf '=======================================\n'
         printf '%s' "${executables}"
-        printf '=======================================\n'
+        printf '=======================================\n\n'
       fi
       if [[ -n "${binaries}" ]]; then
         error "file-permissions-check failed: binaries are only allowed to be present in directories that are excluded from crates.io"
         printf '=======================================\n'
         printf '%s' "${binaries}"
-        printf '=======================================\n'
+        printf '=======================================\n\n'
       fi
     fi
   fi
-elif [[ -e .rustfmt.toml ]]; then
-  error ".rustfmt.toml is unused"
+  printf '\n'
+elif [[ -n "$(ls_files '*.cargo' '*clippy.toml' '*deny.toml' '*rustfmt.toml' '*Cargo.toml' '*Cargo.lock')" ]]; then
+  error "the following files are unused because there is no Rust code; consider removing them"
+  printf '=======================================\n'
+  ls_files '*.cargo' '*clippy.toml' '*deny.toml' '*rustfmt.toml' '*Cargo.toml' '*Cargo.lock'
+  printf '=======================================\n\n'
 fi
+check_hidden clippy.toml
+check_hidden deny.toml
+check_hidden rustfmt.toml
 
-# C/C++ (if exists)
-clang_format_ext=('*.c' '*.h' '*.cpp' '*.hpp')
+# C/C++/Protobuf (if exists)
+clang_format_ext=('*.c' '*.h' '*.cpp' '*.hpp' '*.proto')
 if [[ -n "$(ls_files "${clang_format_ext[@]}")" ]]; then
-  info "checking C/C++ code style"
+  info "checking C/C++/Protobuf code style"
   check_config .clang-format
   if check_install clang-format; then
     IFS=' '
@@ -349,29 +377,27 @@ if [[ -n "$(ls_files "${clang_format_ext[@]}")" ]]; then
     clang-format -i $(ls_files "${clang_format_ext[@]}")
     check_diff $(ls_files "${clang_format_ext[@]}")
   fi
-elif [[ -e .clang-format ]]; then
-  error ".clang-format is unused"
+  printf '\n'
+elif [[ -n "$(ls_files '*.clang-format' '*_clang-format' '*.clang-format-ignore')" ]]; then
+  error "the following files are unused because there is no C/C++/Protobuf code; consider removing them"
+  printf '=======================================\n'
+  ls_files '*.clang-format' '*_clang-format' '*.clang-format-ignore'
+  printf '=======================================\n\n'
+fi
+if [[ -n "$(ls_files '*_clang-format')" ]]; then
+  error "please use '.clang-format' instead of '_clang-format' for consistency"
+  printf '=======================================\n'
+  ls_files '*_clang-format'
+  printf '=======================================\n\n'
 fi
 # https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html
-cpp_alt_ext=('*.cc' '*.cp' '*.cxx' '*.C' '*.CPP' '*.c++')
-hpp_alt_ext=('*.hh' '*.hp' '*.hxx' '*.H' '*.HPP' '*.h++')
-if [[ -n "$(ls_files "${cpp_alt_ext[@]}")" ]]; then
-  error "please use '.cpp' for consistency"
-  printf '=======================================\n'
-  ls_files "${cpp_alt_ext[@]}"
-  printf '=======================================\n'
-fi
-if [[ -n "$(ls_files "${hpp_alt_ext[@]}")" ]]; then
-  error "please use '.hpp' for consistency"
-  printf '=======================================\n'
-  ls_files "${hpp_alt_ext[@]}"
-  printf '=======================================\n'
-fi
+check_alt '.cpp' '*.cc' '*.cp' '*.cxx' '*.C' '*.CPP' '*.c++'
+check_alt '.hpp' '*.hh' '*.hp' '*.hxx' '*.H' '*.HPP' '*.h++'
 
-# YAML/JavaScript/JSON (if exists)
-prettier_ext=('*.yml' '*.yaml' '*.js' '*.json')
+# YAML/HTML/CSS/JavaScript/JSON (if exists)
+prettier_ext=('*.css' '*.html' '*.js' '*.json' '*.yml' '*.yaml')
 if [[ -n "$(ls_files "${prettier_ext[@]}")" ]]; then
-  info "checking YAML/JavaScript/JSON code style"
+  info "checking YAML/HTML/CSS/JavaScript/JSON code style"
   check_config .editorconfig
   if [[ "${ostype}" == "solaris" ]] && [[ -n "${CI:-}" ]] && ! type -P npm >/dev/null; then
     warn "this check is skipped on Solaris due to no node 18+ in upstream package manager"
@@ -382,12 +408,20 @@ if [[ -n "$(ls_files "${prettier_ext[@]}")" ]]; then
     npx -y prettier -l -w $(ls_files "${prettier_ext[@]}")
     check_diff $(ls_files "${prettier_ext[@]}")
   fi
+  printf '\n'
+elif [[ -n "$(ls_files '*.prettierignore')" ]]; then
+  error "the following files are unused because there is no YAML/JavaScript/JSON file; consider removing them"
+  printf '=======================================\n'
+  ls_files '*.prettierignore'
+  printf '=======================================\n\n'
 fi
+# https://prettier.io/docs/en/configuration
+check_alt '.editorconfig' '*.prettierrc*' '*prettier.config.*'
 if [[ -n "$(ls_files '*.yaml' | { grep -Fv '.markdownlint-cli2.yaml' || true; })" ]]; then
   error "please use '.yml' instead of '.yaml' for consistency"
   printf '=======================================\n'
   ls_files '*.yaml' | { grep -Fv '.markdownlint-cli2.yaml' || true; }
-  printf '=======================================\n'
+  printf '=======================================\n\n'
 fi
 
 # TOML (if exists)
@@ -401,9 +435,14 @@ if [[ -n "$(ls_files '*.toml' | { grep -Fv '.taplo.toml' || true; })" ]]; then
     RUST_LOG=warn npx -y @taplo/cli fmt $(ls_files '*.toml')
     check_diff $(ls_files '*.toml')
   fi
-elif [[ -e .taplo.toml ]]; then
-  error ".taplo.toml is unused"
+  printf '\n'
+elif [[ -n "$(ls_files '*taplo.toml')" ]]; then
+  error "the following files are unused because there is no TOML file; consider removing them"
+  printf '=======================================\n'
+  ls_files '*taplo.toml'
+  printf '=======================================\n\n'
 fi
+check_hidden taplo.toml
 
 # Markdown (if exists)
 if [[ -n "$(ls_files '*.md')" ]]; then
@@ -417,18 +456,19 @@ if [[ -n "$(ls_files '*.md')" ]]; then
       error "check failed; please resolve the above markdownlint error(s)"
     fi
   fi
-elif [[ -e .markdownlint-cli2.yaml ]]; then
-  error ".markdownlint-cli2.yaml is unused"
-fi
-if [[ -n "$(ls_files '*.markdown')" ]]; then
-  error "please use '.md' instead of '.markdown' for consistency"
+  printf '\n'
+elif [[ -n "$(ls_files '*.markdownlint-cli2.*')" ]]; then
+  error "the following files are unused because there is no markdown file; consider removing them"
   printf '=======================================\n'
-  ls_files '*.markdown'
-  printf '=======================================\n'
+  ls_files '*.markdownlint-cli2.*'
+  printf '=======================================\n\n'
 fi
+# https://github.com/DavidAnson/markdownlint-cli2#configuration
+check_alt '.markdownlint-cli2.yaml' '*.markdownlint-cli2.jsonc' '*.markdownlint-cli2.cjs' '*.markdownlint-cli2.mjs' '*.markdownlint.*'
+check_alt '.md' '*.markdown'
 
 # Shell scripts
-info "checking Shell scripts"
+info "checking shell scripts"
 shell_files=()
 docker_files=()
 bash_files=()
@@ -436,7 +476,7 @@ grep_ere_files=()
 sed_ere_files=()
 for p in $(ls_files '*.sh' '*Dockerfile*'); do
   case "${p}" in
-    tests/fixtures/* | */tests/fixtures/*) continue ;;
+    tests/fixtures/* | */tests/fixtures/* | *.json) continue ;;
   esac
   case "${p##*/}" in
     *.sh)
@@ -457,7 +497,6 @@ for p in $(ls_files '*.sh' '*Dockerfile*'); do
     sed_ere_files+=("${p}")
   fi
 done
-# TODO: .cirrus.yml
 workflows=()
 actions=()
 if [[ -d .github/workflows ]]; then
@@ -482,7 +521,7 @@ if [[ -n "${res}" ]]; then
   error "bare [[ ]] and (( )) may not work as intended: see https://github.com/koalaman/shellcheck/issues/2360 for more"
   printf '=======================================\n'
   printf '%s\n' "${res}"
-  printf '=======================================\n'
+  printf '=======================================\n\n'
 fi
 # TODO: chmod|chown
 res=$({ grep -En '(^|[^0-9A-Za-z\."'\''-])(basename|cat|cd|cp|dirname|ln|ls|mkdir|mv|pushd|rm|rmdir|tee|touch)( +-[0-9A-Za-z]+)* +[^<>\|-]' "${bash_files[@]}" || true; } | { grep -Ev '^[^ ]+: *(#|//)' || true; } | LC_ALL=C sort)
@@ -490,14 +529,14 @@ if [[ -n "${res}" ]]; then
   error "use \`--\` before path(s): see https://github.com/koalaman/shellcheck/issues/2707 / https://github.com/koalaman/shellcheck/issues/2612 / https://github.com/koalaman/shellcheck/issues/2305 / https://github.com/koalaman/shellcheck/issues/2157 / https://github.com/koalaman/shellcheck/issues/2121 / https://github.com/koalaman/shellcheck/issues/314 for more"
   printf '=======================================\n'
   printf '%s\n' "${res}"
-  printf '=======================================\n'
+  printf '=======================================\n\n'
 fi
 res=$({ grep -En '(^|[^0-9A-Za-z\."'\''-])(LINES|RANDOM|PWD)=' "${bash_files[@]}" || true; } | { grep -Ev '^[^ ]+: *(#|//)' || true; } | LC_ALL=C sort)
 if [[ -n "${res}" ]]; then
   error "do not modify these built-in bash variables: see https://github.com/koalaman/shellcheck/issues/2160 / https://github.com/koalaman/shellcheck/issues/2559 for more"
   printf '=======================================\n'
   printf '%s\n' "${res}"
-  printf '=======================================\n'
+  printf '=======================================\n\n'
 fi
 # perf
 res=$({ grep -En '(^|[^\\])\$\((cat) ' "${bash_files[@]}" || true; } | { grep -Ev '^[^ ]+: *(#|//)' || true; } | LC_ALL=C sort)
@@ -505,21 +544,21 @@ if [[ -n "${res}" ]]; then
   error "use faster \`\$(<file)\` instead of \$(cat -- file): see https://github.com/koalaman/shellcheck/issues/2493 for more"
   printf '=======================================\n'
   printf '%s\n' "${res}"
-  printf '=======================================\n'
+  printf '=======================================\n\n'
 fi
 res=$({ grep -En '(^|[^0-9A-Za-z\."'\''-])(command +-[vV]) ' "${bash_files[@]}" || true; } | { grep -Ev '^[^ ]+: *(#|//)' || true; } | LC_ALL=C sort)
 if [[ -n "${res}" ]]; then
   error "use faster \`type -P\` instead of \`command -v\`: see https://github.com/koalaman/shellcheck/issues/1162 for more"
   printf '=======================================\n'
   printf '%s\n' "${res}"
-  printf '=======================================\n'
+  printf '=======================================\n\n'
 fi
 res=$({ grep -En '(^|[^0-9A-Za-z\."'\''-])(type) +-P +[^ ]+ +&>' "${bash_files[@]}" || true; } | { grep -Ev '^[^ ]+: *(#|//)' || true; } | LC_ALL=C sort)
 if [[ -n "${res}" ]]; then
   error "\`type -P\` doesn't output to stderr; use \`>\` instead of \`&>\`"
   printf '=======================================\n'
   printf '%s\n' "${res}"
-  printf '=======================================\n'
+  printf '=======================================\n\n'
 fi
 # TODO: multi-line case
 res=$({ grep -En '(^|[^0-9A-Za-z\."'\''-])(echo|printf )[^;)]* \|[^\|]' "${bash_files[@]}" || true; } | { grep -Ev '^[^ ]+: *(#|//)' || true; } | LC_ALL=C sort)
@@ -527,7 +566,7 @@ if [[ -n "${res}" ]]; then
   error "use faster \`<<<...\` instead of \`echo ... |\`/\`printf ... |\`: see https://github.com/koalaman/shellcheck/issues/2593 for more"
   printf '=======================================\n'
   printf '%s\n' "${res}"
-  printf '=======================================\n'
+  printf '=======================================\n\n'
 fi
 # style
 if [[ ${#grep_ere_files[@]} -gt 0 ]]; then
@@ -538,7 +577,7 @@ if [[ ${#grep_ere_files[@]} -gt 0 ]]; then
     error "please always use ERE (grep -E) instead of BRE for code consistency within a file"
     printf '=======================================\n'
     printf '%s\n' "${res}"
-    printf '=======================================\n'
+    printf '=======================================\n\n'
   fi
 fi
 if [[ ${#sed_ere_files[@]} -gt 0 ]]; then
@@ -547,7 +586,7 @@ if [[ ${#sed_ere_files[@]} -gt 0 ]]; then
     error "please always use ERE (sed -E) instead of BRE for code consistency within a file"
     printf '=======================================\n'
     printf '%s\n' "${res}"
-    printf '=======================================\n'
+    printf '=======================================\n\n'
   fi
 fi
 if check_install shfmt; then
@@ -568,12 +607,132 @@ elif check_install shellcheck; then
   fi
   # Check scripts in dockerfile.
   if [[ ${#docker_files[@]} -gt 0 ]]; then
-    # SC2154 doesn't seem to work for ENV/ARG.
-    # SC2250 may not correct for ENV because $v and ${v} is sometime different: https://github.com/moby/moby/issues/42863
-    shellcheck_exclude=SC2154,SC2250
-    info "running \`shellcheck --shell bash --exclude ${shellcheck_exclude} \$(git ls-files '*Dockerfile*')\`"
-    if ! shellcheck --shell bash --exclude "${shellcheck_exclude}" "${docker_files[@]}"; then
-      error "check failed; please resolve the above shellcheck error(s)"
+    # Exclude SC2096 due to the way the temporary script is created.
+    shellcheck_exclude=SC2096
+    info "running \`shellcheck --exclude ${shellcheck_exclude}\` for scripts in \$(git ls-files '*Dockerfile*')\`"
+    if [[ "${ostype}" == "windows" ]]; then
+      # No such file or directory: '/proc/N/fd/N'
+      warn "this check is skipped on Windows due to upstream bug (failed to found fd created by <())"
+    elif [[ "${ostype}" == "dragonfly" ]]; then
+      warn "this check is skipped on DragonFly BSD due to upstream bug (hang)"
+    elif check_install jq python3 parse-dockerfile; then
+      shellcheck_for_dockerfile() {
+        local text=$1
+        local shell=$2
+        local display_path=$3
+        if [[ "${text}" == "null" ]]; then
+          return
+        fi
+        text="#!${shell}"$'\n'"${text}"
+        case "${ostype}" in
+          windows) text=${text//\r/} ;;
+        esac
+        local color=auto
+        if [[ -t 1 ]] || [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+          color=always
+        fi
+        if ! shellcheck --color="${color}" --exclude "${shellcheck_exclude}" <(printf '%s\n' "${text}") | sed "s/\/dev\/fd\/[0-9][0-9]*/$(sed_rhs_escape "${display_path}")/g"; then
+          error "check failed; please resolve the above shellcheck error(s)"
+        fi
+      }
+      for dockerfile_path in ${docker_files[@]+"${docker_files[@]}"}; do
+        dockerfile=$(parse-dockerfile "${dockerfile_path}")
+        normal_shell=''
+        for instruction in $(jq -c '.instructions[]' <<<"${dockerfile}"); do
+          instruction_kind=$(jq -r '.kind' <<<"${instruction}")
+          case "${instruction_kind}" in
+            FROM)
+              # https://docs.docker.com/reference/dockerfile/#from
+              # > Each FROM instruction clears any state created by previous instructions.
+              normal_shell=''
+              continue
+              ;;
+            ADD | ARG | CMD | COPY | ENTRYPOINT | ENV | EXPOSE | HEALTHCHECK | LABEL) ;;
+            # https://docs.docker.com/reference/build-checks/maintainer-deprecated/
+            MAINTAINER) error "MAINTAINER instruction is deprecated in favor of using label" ;;
+            RUN) ;;
+            SHELL)
+              normal_shell=''
+              for argument in $(jq -c '.arguments[]' <<<"${instruction}"); do
+                value=$(jq -r '.value' <<<"${argument}")
+                if [[ -z "${normal_shell}" ]]; then
+                  case "${value}" in
+                    cmd | cmd.exe | powershell | powershell.exe)
+                      # not unix shell
+                      normal_shell="${value}"
+                      break
+                      ;;
+                  esac
+                else
+                  normal_shell+=' '
+                fi
+                normal_shell+="${value}"
+              done
+              ;;
+            STOPSIGNAL | USER | VOLUME | WORKDIR) ;;
+            *) error "unknown instruction ${instruction_kind}" ;;
+          esac
+          arguments=''
+          # only shell-form RUN/ENTRYPOINT/CMD is run in a shell
+          case "${instruction_kind}" in
+            RUN)
+              if [[ "$(jq -r '.arguments.shell' <<<"${instruction}")" == "null" ]]; then
+                continue
+              fi
+              arguments=$(jq -r '.arguments.shell.value' <<<"${instruction}")
+              if [[ -z "${arguments}" ]]; then
+                if [[ "$(jq -r '.here_docs[0]' <<<"${instruction}")" == "null" ]]; then
+                  error "empty RUN is useless (${dockerfile_path})"
+                  continue
+                fi
+                if [[ "$(jq -r '.here_docs[1]' <<<"${instruction}")" != "null" ]]; then
+                  # TODO:
+                  error "multi here-docs without command is not yet supported (${dockerfile_path})"
+                fi
+                arguments=$(jq -r '.here_docs[0].value' <<<"${instruction}")
+                if [[ "${arguments}" == "#!"* ]]; then
+                  # TODO:
+                  error "here-docs with shebang is not yet supported (${dockerfile_path})"
+                  continue
+                fi
+              else
+                if [[ "$(jq -r '.here_docs[0]' <<<"${instruction}")" != "null" ]]; then
+                  # TODO:
+                  error "sh/bash command with here-docs is not yet checked (${dockerfile_path})"
+                fi
+              fi
+              ;;
+            ENTRYPOINT | CMD)
+              if [[ "$(jq -r '.arguments.shell' <<<"${instruction}")" == "null" ]]; then
+                continue
+              fi
+              arguments=$(jq -r '.arguments.shell.value' <<<"${instruction}")
+              if [[ -z "${normal_shell}" ]] && [[ -n "${arguments}" ]]; then
+                # https://docs.docker.com/reference/build-checks/json-args-recommended/
+                error "JSON arguments recommended for ENTRYPOINT/CMD to prevent unintended behavior related to OS signals"
+              fi
+              ;;
+            HEALTHCHECK)
+              if [[ "$(jq -r '.arguments.kind' <<<"${instruction}")" != "CMD" ]]; then
+                continue
+              fi
+              if [[ "$(jq -r '.arguments.arguments.shell' <<<"${instruction}")" == "null" ]]; then
+                continue
+              fi
+              arguments=$(jq -r '.arguments.arguments.shell.value' <<<"${instruction}")
+              ;;
+            *) continue ;;
+          esac
+          case "${normal_shell}" in
+            # not unix shell
+            cmd | cmd.exe | powershell | powershell.exe) continue ;;
+            # https://docs.docker.com/reference/dockerfile/#shell
+            '') shell='/bin/sh -c' ;;
+            *) shell="${normal_shell}" ;;
+          esac
+          shellcheck_for_dockerfile "${arguments}" "${shell}" "${dockerfile_path}"
+        done
+      done
     fi
   fi
   # Check scripts in YAML.
@@ -697,6 +856,8 @@ EOF
     fi
   fi
 fi
+printf '\n'
+check_alt '.sh' '*.bash'
 
 # License check
 # TODO: This check is still experimental and does not track all files that should be tracked.
@@ -706,6 +867,7 @@ if [[ -f tools/.tidy-check-license-headers ]]; then
   for p in $(comm -12 <(eval $(<tools/.tidy-check-license-headers) | LC_ALL=C sort) <(ls_files | LC_ALL=C sort)); do
     case "${p##*/}" in
       *.stderr | *.expanded.rs) continue ;; # generated files
+      *.json) continue ;;                   # no comment support
       *.sh | *.py | *.rb | *Dockerfile*) prefix=("# ") ;;
       *.rs | *.c | *.h | *.cpp | *.hpp | *.s | *.S | *.js) prefix=("// " "/* ") ;;
       *.ld | *.x) prefix=("/* ") ;;
@@ -736,7 +898,9 @@ if [[ -f tools/.tidy-check-license-headers ]]; then
     error "license-check failed: please add SPDX-License-Identifier to the following files"
     printf '=======================================\n'
     printf '%s' "${failed_files}"
-    printf '=======================================\n'
+    printf '=======================================\n\n'
+  else
+    printf '\n'
   fi
 fi
 
@@ -773,7 +937,7 @@ if [[ -f .cspell.json ]]; then
     if [[ -n "${has_rust}" ]]; then
       dependencies_words=$(npx -y cspell stdin --no-progress --no-summary --words-only --unique <<<"${dependencies}" || true)
     fi
-    all_words=$(npx -y cspell --no-progress --no-summary --words-only --unique $(ls_files | { grep -Fv "${project_dictionary}" || true; }) || true)
+    all_words=$(ls_files | { grep -Fv "${project_dictionary}" || true; } | npx -y cspell --file-list stdin --no-progress --no-summary --words-only --unique || true)
     printf '%s\n' "${config_old}" >|.cspell.json
     trap -- 'printf >&2 "%s\n" "${0##*/}: trapped SIGINT"; exit 1' SIGINT
     cat >|.github/.cspell/rust-dependencies.txt <<EOF
@@ -783,6 +947,9 @@ EOF
     if [[ -n "${dependencies_words}" ]]; then
       LC_ALL=C sort -f >>.github/.cspell/rust-dependencies.txt <<<"${dependencies_words}"$'\n'
     fi
+    if [[ -z "${CI:-}" ]]; then
+      REMOVE_UNUSED_WORDS=1
+    fi
     if [[ -z "${REMOVE_UNUSED_WORDS:-}" ]]; then
       check_diff .github/.cspell/rust-dependencies.txt
     fi
@@ -790,11 +957,11 @@ EOF
       error "you may want to mark .github/.cspell/rust-dependencies.txt linguist-generated"
     fi
 
-    info "running \`npx -y cspell --no-progress --no-summary \$(git ls-files)\`"
-    if ! npx -y cspell --no-progress --no-summary $(ls_files); then
+    info "running \`git ls-files | npx -y cspell --file-list stdin --no-progress --no-summary\`"
+    if ! ls_files | npx -y cspell --file-list stdin --no-progress --no-summary; then
       error "spellcheck failed: please fix uses of below words or add to ${project_dictionary} if correct"
       printf '=======================================\n'
-      { npx -y cspell --no-progress --no-summary --words-only $(ls_files) || true; } | LC_ALL=C sort -f -u
+      { ls_files | npx -y cspell --file-list stdin --no-progress --no-summary --words-only || true; } | LC_ALL=C sort -f -u
       printf '=======================================\n\n'
     fi
 
@@ -837,13 +1004,14 @@ EOF
         fi
       done
       if [[ -n "${unused}" ]]; then
-        error "unused words in dictionaries; please remove the following words from ${project_dictionary} or run ${0##*/} with REMOVE_UNUSED_WORDS=1"
+        error "unused words in dictionaries; please remove the following words from ${project_dictionary} or run ${0##*/} locally"
         printf '=======================================\n'
         printf '%s' "${unused}"
-        printf '=======================================\n'
+        printf '=======================================\n\n'
       fi
     fi
   fi
+  printf '\n'
 fi
 
 if [[ -n "${should_fail:-}" ]]; then

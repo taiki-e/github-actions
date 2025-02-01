@@ -94,9 +94,6 @@ jobs:
         run: |
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           IFS=$'\n\t'
-          printf 'github.event_name=%s\n' "${{ github.event_name }}"
-          printf 'github.ref=%s\n' "${{ github.ref }}"
-          printf 'github.repository_owner=%s\n' "${{ github.repository_owner }}"
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
             metadata=$(cargo metadata --format-version=1 --no-deps)
@@ -110,6 +107,9 @@ jobs:
                 printf 'rust-pub-proc-macro=true\n' >>"${GITHUB_OUTPUT}"
               fi
             fi
+          fi
+          if [[ -n "$(git ls-files '*Dockerfile*')" ]]; then
+            printf 'dockerfile=true\n' >>"${GITHUB_OUTPUT}"
           fi
           if [[ -e "${{ inputs.codegen-script }}" ]]; then
             pip3 install yq
@@ -129,6 +129,7 @@ jobs:
       rust-pub: ${{ steps.prepare.outputs.rust-pub }}
       rust-pub-lib: ${{ steps.prepare.outputs.rust-pub-lib }}
       rust-pub-proc-macro: ${{ steps.prepare.outputs.rust-pub-proc-macro }}
+      dockerfile: ${{ steps.prepare.outputs.dockerfile }}
       codegen: ${{ steps.prepare.outputs.codegen }}
       codegen-commit: ${{ steps.prepare.outputs.codegen-commit }}
 
@@ -149,6 +150,8 @@ jobs:
         if: needs.prepare.outputs.rust == 'true'
       - uses: taiki-e/install-action@shellcheck
       - uses: taiki-e/install-action@shfmt
+      - uses: taiki-e/install-action@parse-dockerfile
+        if: needs.prepare.outputs.dockerfile == 'true'
       - run: cat -- tools/.tidy-check-license-headers
       - run: cat -- .cspell.json
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"

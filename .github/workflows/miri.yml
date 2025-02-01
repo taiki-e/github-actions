@@ -4,9 +4,6 @@ permissions:
 on:
   workflow_call:
     inputs:
-      event_name:
-        required: false
-        type: string
       rust:
         required: false
         type: string

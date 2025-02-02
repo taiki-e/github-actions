@@ -162,12 +162,11 @@ case "$(uname -s)" in
       # GNU/BSD grep/sed is required to run some checks, but most checks are okay with other POSIX grep/sed.
       # Solaris /usr/xpg4/bin/grep has -q, -E, -F, but no -o (non-POSIX).
       # Solaris /usr/xpg4/bin/sed has no -E (POSIX.1-2024) yet.
-      if type -P ggrep >/dev/null; then
-        grep() { ggrep "$@"; }
-      fi
-      if type -P gsed >/dev/null; then
-        sed() { gsed "$@"; }
-      fi
+      for tool in sed grep; do
+        if type -P "g${tool}" >/dev/null; then
+          eval "${tool}() { g${tool} \"\$@\"; }"
+        fi
+      done
     fi
     ;;
   MINGW* | MSYS* | CYGWIN* | Windows_NT)

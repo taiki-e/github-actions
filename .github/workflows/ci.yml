@@ -119,3 +119,11 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: ./setup-docker
+
+  cspell-dict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - run: tools/cspell-dict.sh clean
+      - run: git add -N . && git diff --exit-code

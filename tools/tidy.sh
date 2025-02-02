@@ -250,31 +250,6 @@ if [[ -n "$(ls_files '*.rs')" ]]; then
       error "please replace \`.cast()\` with \`.cast::<type_name>()\`:"
       printf '%s\n' "${cast_without_turbofish}"
     fi
-    # Sync readme and crate-level doc.
-    first=1
-    for readme in $(ls_files '*README.md'); do
-      if ! grep -Eq '^<!-- tidy:crate-doc:start -->' "${readme}"; then
-        continue
-      fi
-      lib="$(dirname -- "${readme}")/src/lib.rs"
-      if [[ -n "${first}" ]]; then
-        first=''
-        info "checking readme and crate-level doc are synchronized"
-      fi
-      if ! grep -Eq '^<!-- tidy:crate-doc:end -->' "${readme}"; then
-        bail "missing '<!-- tidy:crate-doc:end -->' comment in ${readme}"
-      fi
-      if ! grep -Eq '^<!-- tidy:crate-doc:start -->' "${lib}"; then
-        bail "missing '<!-- tidy:crate-doc:start -->' comment in ${lib}"
-      fi
-      if ! grep -Eq '^<!-- tidy:crate-doc:end -->' "${lib}"; then
-        bail "missing '<!-- tidy:crate-doc:end -->' comment in ${lib}"
-      fi
-      new=$(tr '\n' '\a' <"${readme}" | grep -Eo '<!-- tidy:crate-doc:start -->.*<!-- tidy:crate-doc:end -->')
-      new=$(tr '\n' '\a' <"${lib}" | sed "s/<!-- tidy:crate-doc:start -->.*<!-- tidy:crate-doc:end -->/$(sed_rhs_escape "${new}")/" | tr '\a' '\n')
-      printf '%s\n' "${new}" >|"${lib}"
-      check_diff "${lib}"
-    done
     # Make sure that public Rust crates don't contain executables and binaries.
     executables=''
     binaries=''
@@ -353,6 +328,124 @@ if [[ -n "$(ls_files '*.rs')" ]]; then
       fi
     fi
   fi
+  # Sync markdown to rustdoc.
+  first=1
+  for markdown in $(ls_files '*.md'); do
+    markers=$(grep -En '^<!-- tidy:sync-markdown-to-rustdoc:(start[^ ]*|end) -->' "${markdown}" || true)
+    if [[ "$(wc -l <<<"${markers}")" != '2' ]]; then
+      if [[ -n "${markers}" ]]; then
+        error "inconsistent '<!-- tidy:sync-markdown-to-rustdoc:* -->' marker found in ${markdown}"
+        printf '%s\n' "${markers}"
+      fi
+      continue
+    fi
+    start_marker=$(head -n1 <<<"${markers}")
+    end_marker=$(head -n2 <<<"${markers}" | tail -n1)
+    if [[ "${start_marker}" == *"tidy:sync-markdown-to-rustdoc:end"* ]] || [[ "${end_marker}" == *"tidy:sync-markdown-to-rustdoc:start"* ]]; then
+      error "inconsistent '<!-- tidy:sync-markdown-to-rustdoc:* -->' marker found in ${markdown}"
+      printf '%s\n' "${markers}"
+      continue
+    fi
+    if [[ -n "${first}" ]]; then
+      first=''
+      info "syncing markdown to rustdoc"
+    fi
+    lib="${start_marker#*:<\!-- tidy:sync-markdown-to-rustdoc:start:}"
+    if [[ "${start_marker}" == "${lib}" ]]; then
+      error "missing path in '<!-- tidy:sync-markdown-to-rustdoc:start:<path> -->' marker in ${markdown}"
+      continue
+    fi
+    lib="${lib% -->}"
+    lib="$(dirname -- "${markdown}")/${lib}"
+    markers=$(grep -En '^<!-- tidy:sync-markdown-to-rustdoc:(start[^ ]*|end) -->' "${lib}" || true)
+    if [[ "$(wc -l <<<"${markers}")" != '2' ]]; then
+      if [[ -n "${markers}" ]]; then
+        error "inconsistent '<!-- tidy:sync-markdown-to-rustdoc:* -->' marker found in ${lib}"
+        printf '%s\n' "${markers}"
+      else
+        error "missing '<!-- tidy:sync-markdown-to-rustdoc:* -->' marker in ${lib}"
+      fi
+      continue
+    fi
+    start_marker=$(head -n1 <<<"${markers}")
+    end_marker=$(head -n2 <<<"${markers}" | tail -n1)
+    if [[ "${start_marker}" == *"tidy:sync-markdown-to-rustdoc:end"* ]] || [[ "${end_marker}" == *"tidy:sync-markdown-to-rustdoc:start"* ]]; then
+      error "inconsistent '<!-- tidy:sync-markdown-to-rustdoc:* -->' marker found in ${lib}"
+      printf '%s\n' "${markers}"
+      continue
+    fi
+    new='<!-- tidy:sync-markdown-to-rustdoc:start -->'$'\a'
+    empty_line_re='^ *$'
+    gfm_alert_re='^> {0,4}\[!.*\] *$'
+    rust_code_block_re='^ *```(rust|rs) *$'
+    code_block_attr=''
+    in_alert=''
+    first_line=1
+    ignore=''
+    while IFS='' read -rd$'\a' line; do
+      if [[ -n "${ignore}" ]]; then
+        if [[ "${line}" == '<!-- tidy:sync-markdown-to-rustdoc:ignore:end -->'* ]]; then
+          ignore=''
+        fi
+        continue
+      fi
+      if [[ -n "${first_line}" ]]; then
+        # Ignore start marker.
+        first_line=''
+        continue
+      elif [[ -n "${in_alert}" ]]; then
+        if [[ "${line}" =~ ${empty_line_re} ]]; then
+          in_alert=''
+          new+=$'\a'"</div>"$'\a'
+        fi
+      elif [[ "${line}" =~ ${gfm_alert_re} ]]; then
+        alert="${line#*[\!}"
+        alert="${alert%%]*}"
+        alert=$(tr '[:lower:]' '[:upper:]' <<<"${alert%%]*}")
+        alert_lower=$(tr '[:upper:]' '[:lower:]' <<<"${alert}")
+        case "${alert}" in
+          NOTE | TIP | IMPORTANT) alert_sign='ⓘ' ;;
+          WARNING | CAUTION) alert_sign='⚠' ;;
+          *)
+            error "unknown alert type '${alert}' found; please use one of the types listed in <https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts>"
+            new+="${line}"$'\a'
+            continue
+            ;;
+        esac
+        in_alert=1
+        new+="<div class=\"rustdoc-alert rustdoc-alert-${alert_lower}\">"$'\a\a'
+        new+="> **${alert_sign} ${alert:0:1}${alert_lower:1}**"$'\a>\a'
+        continue
+      fi
+      if [[ "${line}" =~ ${rust_code_block_re} ]]; then
+        code_block_attr="${code_block_attr#<\!-- tidy:sync-markdown-to-rustdoc:code-block:}"
+        code_block_attr="${code_block_attr%% -->*}"
+        new+="${line/\`\`\`*/\`\`\`}${code_block_attr}"$'\a'
+        code_block_attr=''
+        continue
+      fi
+      if [[ -n "${code_block_attr}" ]]; then
+        error "'${code_block_attr}' ignored because there is no subsequent Rust code block"
+        code_block_attr=''
+      fi
+      if [[ "${line}" == '<!-- tidy:sync-markdown-to-rustdoc:code-block:'*' -->'* ]]; then
+        code_block_attr="${line}"
+        continue
+      fi
+      if [[ "${line}" == '<!-- tidy:sync-markdown-to-rustdoc:ignore:start -->'* ]]; then
+        if [[ "${new}" == *$'\a\a' ]]; then
+          new="${new%$'\a'}"
+        fi
+        ignore=1
+        continue
+      fi
+      new+="${line}"$'\a'
+    done < <(tr '\n' '\a' <"${markdown}" | grep -Eo '<!-- tidy:sync-markdown-to-rustdoc:start[^ ]* -->.*<!-- tidy:sync-markdown-to-rustdoc:end -->')
+    new+='<!-- tidy:sync-markdown-to-rustdoc:end -->'
+    new=$(tr '\n' '\a' <"${lib}" | sed "s/<!-- tidy:sync-markdown-to-rustdoc:start[^ ]* -->.*<!-- tidy:sync-markdown-to-rustdoc:end -->/$(sed_rhs_escape "${new}")/" | tr '\a' '\n')
+    printf '%s\n' "${new}" >|"${lib}"
+    check_diff "${lib}"
+  done
   printf '\n'
 elif [[ -n "$(ls_files '*.cargo' '*clippy.toml' '*deny.toml' '*rustfmt.toml' '*Cargo.toml' '*Cargo.lock')" ]]; then
   error "the following files are unused because there is no Rust code; consider removing them"

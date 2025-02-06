@@ -51,7 +51,7 @@ jobs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs
       # NB: sync with check-external-types.yml
-      - name: Run cargo doc
+      - name: Run cargo rustdoc
         run: |
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           retry() {
@@ -71,7 +71,6 @@ jobs:
             -Z unstable-options
             -Z rustdoc-map
             -Z rustdoc-scrape-examples
-            --document-private-items
             --config "doc.extern-map.registries.crates-io=\"https://docs.rs\""
             ${{ inputs.args }}
           )
@@ -95,6 +94,7 @@ jobs:
             # https://github.com/rust-lang/docs.rs/issues/2389
             --cfg docsrs
             --document-hidden-items
+            --document-private-items
             --extern-html-root-takes-precedence
           )
           unset RUSTFLAGS
@@ -110,7 +110,7 @@ jobs:
               retry rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
             done <<<"${input_target},"
           fi
-          # Run cargo doc for public crates with features and rustc/rustdoc/cargo args specified in docs.rs metadata in Cargo.toml.
+          # Run cargo rustdoc for public crates with features and rustc/rustdoc/cargo args specified in docs.rs metadata in Cargo.toml.
           # Publishing is unrestricted if null, and forbidden if an empty array.
           for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
             args=("${base_args[@]}")
@@ -192,6 +192,6 @@ jobs:
             fi
             (
               set -x
-              cargo doc "${args[@]}"
+              cargo rustdoc "${args[@]}"
             )
           done

@@ -162,21 +162,32 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@v1
-      - name: Prepare
+      - name: Prepare for no-std/minimal-versions/direct-minimal-versions
         id: prepare
         run: |
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           IFS=$'\n\t'
           metadata=$(cargo metadata --format-version=1 --no-deps)
+          has_public=''
           # Publishing is unrestricted if null, and forbidden if an empty array.
           for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
+            has_public=1
             if ! jq '.targets[] | .kind[]' <<<"${pkg}" | grep -Fq '"proc-macro"'; then
               printf 'no-std=true\n' >>"${GITHUB_OUTPUT}"
               break
             fi
           done
-        if: inputs.no-std
-      - run: |
+          if [[ -n "${has_public}" ]]; then
+            printf 'minimal-versions=true\n' >>"${GITHUB_OUTPUT}"
+            # -Z direct-minimal-versions requires Cargo 1.70.
+            case "${{ matrix.rust }}" in
+              1.? | 1.[1-6]?) ;;
+              *) printf 'direct-minimal-versions=true\n' >>"${GITHUB_OUTPUT}" ;;
+            esac
+          fi
+        if: inputs.no-std || inputs.minimal-versions || inputs.direct-minimal-versions
+      - name: Prepare for doc-nightly-only
+        run: |
           if [[ "${{ inputs.test-args }}" != *"--test"* ]]; then
             printf 'TESTS=--tests\n' >>"${GITHUB_ENV}"
           fi
@@ -188,7 +199,7 @@ jobs:
           target: ${{ (inputs.no-std && steps.prepare.outputs.no-std == 'true' && matrix.target == '') && inputs.no-std-target || '' }}
       - uses: taiki-e/install-action@cargo-hack
       - uses: taiki-e/install-action@cargo-minimal-versions
-        if: inputs.minimal-versions || (inputs.direct-minimal-versions && !(startsWith(matrix.rust, '1.3') || startsWith(matrix.rust, '1.4') || startsWith(matrix.rust, '1.5') || startsWith(matrix.rust, '1.6')))
+        if: inputs.minimal-versions && steps.prepare.outputs.minimal-versions == 'true' || inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true'
       - uses: taiki-e/install-action@cargo-careful
         if: inputs.careful && startsWith(matrix.rust, 'nightly')
       - uses: taiki-e/setup-cross-toolchain-action@v1
@@ -213,7 +224,6 @@ jobs:
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
         if: inputs.no-std && steps.prepare.outputs.no-std == 'true' && matrix.target == ''
       - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact ${{ inputs.features }} ${TARGET:-} ${BUILD_STD:-} ${{ inputs.minimal-versions-args }}
-        if: inputs.minimal-versions
+        if: inputs.minimal-versions && steps.prepare.outputs.minimal-versions == 'true'
       - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact ${{ inputs.features }} --direct ${TARGET:-} ${BUILD_STD:-} ${{ inputs.direct-minimal-versions-args }}
-        # -Z direct-minimal-versions requires Cargo 1.70.
-        if: inputs.direct-minimal-versions && !(startsWith(matrix.rust, '1.3') || startsWith(matrix.rust, '1.4') || startsWith(matrix.rust, '1.5') || startsWith(matrix.rust, '1.6'))
+        if: inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true'

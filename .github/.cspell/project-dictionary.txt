@@ -8,5 +8,7 @@ kotlinc
 linuxbrew
 miniconda
 monodoc
+rsbegin
+rsend
 runneradmin
 tonistiigi

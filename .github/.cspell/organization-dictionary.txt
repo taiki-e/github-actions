@@ -28,6 +28,7 @@ Zmiri
 
 // Rust target triple/spec
 aarch
+amdgcn
 amdhsa
 androideabi
 armeb

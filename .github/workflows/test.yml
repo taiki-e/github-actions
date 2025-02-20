@@ -126,9 +126,8 @@ jobs:
             rust="$2"
             case "${target}" in
               x86_64-unknown-linux-gnu) matrix+=',{"rust":"'"${rust}"'","os":"ubuntu-latest"}' ;;
-              # TODO: update to 24.04 when https://github.com/rust-lang/rust/issues/135867 solved
-              aarch64-unknown-linux-gnu) matrix+=',{"rust":"'"${rust}"'","os":"ubuntu-22.04-arm"}' ;;
-              armv7*-linux-gnueabihf | thumbv7*-linux-gnueabihf) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'","os":"ubuntu-22.04-arm"}' ;;
+              aarch64-unknown-linux-gnu) matrix+=',{"rust":"'"${rust}"'","os":"ubuntu-24.04-arm"}' ;;
+              armv7*-linux-gnueabihf | thumbv7*-linux-gnueabihf) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'","os":"ubuntu-24.04-arm"}' ;;
               *-linux-gnu*) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'","os":"ubuntu-latest"}' ;;
               x86_64-apple-darwin) matrix+=',{"rust":"'"${rust}"'","os":"macos-13"}' ;;
               aarch64-apple-darwin) matrix+=',{"rust":"'"${rust}"'","os":"macos-latest"}' ;;

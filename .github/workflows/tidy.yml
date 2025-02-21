@@ -163,13 +163,13 @@ jobs:
           git config user.name 'Taiki Endo'
           git config user.email 'te316e89@gmail.com'
           git add -N .github/.cspell
-          if ! git diff --exit-code -- .github/.cspell; then
+          if ! git diff --exit-code -- .github/.cspell &>/dev/null; then
             git add .github/.cspell
             git commit -m "Update cspell dictionary"
             printf 'success=false\n' >>"${GITHUB_OUTPUT}"
           fi
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'push' && github.ref == 'refs/heads/main')
-      - run: git add -N . && git diff --exit-code
+      - run: git add -N . && git -c color.ui=always diff --exit-code
       - id: create-pull-request
         uses: peter-evans/create-pull-request@v7
         with:
@@ -323,7 +323,7 @@ jobs:
         id: diff
         run: tools/ci/gen.sh
         if: needs.prepare.outputs.codegen-commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'push' && github.ref == 'refs/heads/main')
-      - run: git add -N . && git diff --exit-code
+      - run: git add -N . && git -c color.ui=always diff --exit-code
       - id: create-pull-request
         uses: peter-evans/create-pull-request@v7
         with:

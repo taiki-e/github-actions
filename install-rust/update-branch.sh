@@ -58,8 +58,9 @@ toolchains=(
 
 for toolchain in "${toolchains[@]}"; do
   git checkout -b "${toolchain}"
-  sed -E "${in_place[@]}" "s/required: true/required: false/g" install-rust/action.yml
-  sed -E "${in_place[@]}" "s/# default: #publish:toolchain/default: ${toolchain}/g" install-rust/action.yml
+  sed -E "${in_place[@]}" install-rust/action.yml \
+    -e "s/required: true/required: false/g" \
+    -e "s/# default: #publish:toolchain/default: ${toolchain}/g"
   git add install-rust/action.yml
   git commit -m "${toolchain}"
   retry git push origin -f refs/heads/"${toolchain}"

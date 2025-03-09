@@ -48,7 +48,7 @@ fi
 
 set -x
 
-retry git push origin main
+retry git push origin refs/heads/main
 
 toolchains=(
   stable

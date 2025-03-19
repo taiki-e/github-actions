@@ -85,6 +85,7 @@ uclibceabihf
 uefi
 visionos
 vxworks
+wali
 wasi
 wasip
 watchos
@@ -174,3 +175,4 @@ tomlq
 valgrind
 venv
 zigbuild
+zstd

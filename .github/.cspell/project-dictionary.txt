@@ -10,7 +10,6 @@ linuxbrew
 mecab
 miniconda
 monodoc
-pipx
 rsbegin
 rsend
 runneradmin

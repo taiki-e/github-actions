@@ -158,6 +158,7 @@ noprofile
 norc
 nullary
 pacman
+pipx
 pkgin
 powerset
 ranlib

@@ -1,3 +1,4 @@
+actionarchivecache
 binfmt
 BUILDKIT
 buildkitd
@@ -6,9 +7,12 @@ ghcup
 hostedtoolcache
 kotlinc
 linuxbrew
+mecab
 miniconda
 monodoc
+pipx
 rsbegin
 rsend
 runneradmin
 tonistiigi
+venvs

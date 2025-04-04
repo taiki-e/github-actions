@@ -8,7 +8,6 @@ hostedtoolcache
 kotlinc
 linuxbrew
 mecab
-miniconda
 monodoc
 rsbegin
 rsend

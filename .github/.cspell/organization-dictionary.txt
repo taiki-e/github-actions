@@ -55,6 +55,7 @@ imafc
 iosock
 libnx
 loongarch
+lynxos
 macabi
 mipsel
 mipsisa

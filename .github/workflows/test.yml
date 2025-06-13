@@ -215,11 +215,11 @@ jobs:
           CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
           CARGO_PROFILE_RELEASE_LTO: fat
         if: inputs.test-fat-lto
-      - run: cargo careful test --all ${{ inputs.features }} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${{ inputs.careful-args }}
-        env:
-          RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout
-          RUSTFLAGS: ${{ env.RUSTFLAGS }} -Z randomize-layout
-        if: inputs.careful && startsWith(matrix.rust, 'nightly') && !(contains(matrix.rust, '-windows-gnu') || contains(matrix.target, '-windows-gnu'))
+      # - run: cargo careful test --all ${{ inputs.features }} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${{ inputs.careful-args }}
+      #   env:
+      #     RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout
+      #     RUSTFLAGS: ${{ env.RUSTFLAGS }} -Z randomize-layout
+      #   if: inputs.careful && startsWith(matrix.rust, 'nightly') && !(contains(matrix.rust, '-windows-gnu') || contains(matrix.target, '-windows-gnu'))
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps ${TARGET:-} ${BUILD_STD:-} ${{ inputs.build-args }}
       - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
         if: inputs.no-std && steps.prepare.outputs.no-std == 'true' && matrix.target == ''

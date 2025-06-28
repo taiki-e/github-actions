@@ -44,6 +44,7 @@ jobs:
           - macos-15
           - windows-2022
           - windows-2025
+          - windows-11-arm
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1
@@ -90,6 +91,7 @@ jobs:
           - ubuntu-24.04-arm
           - macos-latest
           - windows-latest
+          - windows-11-arm
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1

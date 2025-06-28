@@ -135,6 +135,8 @@ jobs:
               aarch64-apple-ios-macabi) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'","os":"macos-latest"}' ;;
               x86_64-pc-windows-msvc) matrix+=',{"rust":"'"${rust}"'","os":"windows-latest"}' ;;
               x86_64-pc-windows-* | i686-pc-windows-*) matrix+=',{"rust":"'"${rust}-${target}"'","os":"windows-latest"}' ;;
+              aarch64-pc-windows-msvc) matrix+=',{"rust":"'"${rust}"'","os":"windows-11-arm"}' ;;
+              arm64ec-pc-windows-msvc) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'","os":"windows-11-arm"}' ;;
               *)
                 printf '%s\n' "unrecognized target '${target}'"
                 exit 1

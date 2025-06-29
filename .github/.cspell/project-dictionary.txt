@@ -3,6 +3,7 @@ binfmt
 BUILDKIT
 buildkitd
 buildx
+cygdrive
 ghcup
 hostedtoolcache
 kotlinc

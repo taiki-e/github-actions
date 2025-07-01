@@ -175,6 +175,5 @@ taplo
 tlsv
 tomlq
 valgrind
-venv
 zigbuild
 zstd

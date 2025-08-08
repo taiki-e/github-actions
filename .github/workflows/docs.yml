@@ -116,8 +116,8 @@ jobs:
             args=("${base_args[@]}")
             pkg_rustflags=("${base_rustflags[@]}")
             pkg_rustdocflags=("${base_rustdocflags[@]}")
-            eval "$(jq -r '@sh "manifest_path=\(.manifest_path)"' <<<"${pkg}")"
-            args+=(--manifest-path="${manifest_path}")
+            eval "$(jq -r '@sh "MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
+            args+=(--manifest-path="${MANIFEST_PATH}")
             docs_rs_metadata=$(jq '.metadata.docs.rs' <<<"${pkg}")
             if [[ "${docs_rs_metadata}" == "null" ]]; then
               docs_rs_metadata=$(jq '.metadata."docs.rs"' <<<"${pkg}")

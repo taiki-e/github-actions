@@ -7,7 +7,7 @@ on:
       rust:
         required: false
         type: string
-        default: nightly-2025-05-04
+        default: nightly-2025-08-06
       target:
         required: false
         type: string
@@ -49,7 +49,7 @@ jobs:
           toolchain: ${{ inputs.rust }}
       - uses: taiki-e/cache-cargo-install-action@v2
         with:
-          tool: cargo-check-external-types@0.2.0
+          tool: cargo-check-external-types@0.3.0
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs

@@ -84,6 +84,7 @@ uclibc
 uclibceabi
 uclibceabihf
 uefi
+vexos
 visionos
 vxworks
 wali

@@ -49,14 +49,14 @@ jobs:
       - uses: taiki-e/checkout-action@v1
       - name: Run du -h
         run: |
-          sudo du / -h -d1 2>/dev/null || true
-          sudo du /home -h -d2 || true
-          sudo du /opt -h -d2 || true
-          sudo du /usr -h -d2 || true
-          sudo du /usr/local/lib -h -d1 || true
-          sudo du /usr/local/share -h -d1 || true
-          sudo du /var -h -d1 || true
-          sudo du /var/lib -h -d1 || true
+          sudo du -h -d1 / 2>/dev/null || true
+          sudo du -h -d2 /home || true
+          sudo du -h -d2 /opt || true
+          sudo du -h -d2 /usr || true
+          sudo du -h -d1 /usr/local/lib || true
+          sudo du -h -d1 /usr/local/share || true
+          sudo du -h -d1 /var || true
+          sudo du -h -d1 /var/lib || true
         if: startsWith(matrix.os, 'ubuntu')
       - run: |
           xcode-select --print-path
@@ -66,14 +66,14 @@ jobs:
       - uses: ./free-device-space
       - name: Run du -h
         run: |
-          sudo du / -h -d1 2>/dev/null || true
-          sudo du /home -h -d2 || true
-          sudo du /opt -h -d2 || true
-          sudo du /usr -h -d2 || true
-          sudo du /usr/local/lib -h -d1 || true
-          sudo du /usr/local/share -h -d1 || true
-          sudo du /var -h -d1 || true
-          sudo du /var/lib -h -d1 || true
+          sudo du -h -d1 / 2>/dev/null || true
+          sudo du -h -d2 /home || true
+          sudo du -h -d2 /opt || true
+          sudo du -h -d2 /usr || true
+          sudo du -h -d1 /usr/local/lib || true
+          sudo du -h -d1 /usr/local/share || true
+          sudo du -h -d1 /var || true
+          sudo du -h -d1 /var/lib || true
         if: startsWith(matrix.os, 'ubuntu')
       - run: |
           xcode-select --print-path

@@ -57,8 +57,10 @@ libnx
 loongarch
 lynxos
 macabi
+managarm
 mipsel
 mipsisa
+mlibc
 muslabi
 musleabi
 musleabihf

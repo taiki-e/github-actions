@@ -15,7 +15,8 @@ supposed to only be used in infra managed by us.
 ## Reusable workflows
 
 - [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
-- [**create-release**](.github/workflows/create-release.yml): Create a new GitHub release and run `cargo publish`.
+- [**create-release**](.github/workflows/create-release.yml): Create a new GitHub release and run `cargo publish` (with [Trusted Publishing](https://blog.rust-lang.org/2025/07/11/crates-io-development-update-2025-07/#trusted-publishing)).
+- [**create-release-token**](.github/workflows/create-release-token.yml): Create a new GitHub release and run `cargo publish` (with API token at `secrets.CARGO_REGISTRY_TOKEN`).
 - [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
 - [**miri**](.github/workflows/miri.yml): Run `cargo miri test` in strict mode.
 - [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).

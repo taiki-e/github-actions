@@ -1,35 +1,37 @@
-# Create a new GitHub release and run `cargo publish` (with Trusted Publishing).
+# Create a new GitHub release and run `cargo publish` (with API token at `secrets.CARGO_REGISTRY_TOKEN`).
 #
-# Note: On the initial publish, Trusted Publishing doesn't work so use
-# create-release-token.yml instead.
+# Note: It is recommended to use create-release.yml rather than this workflow,
+# but cases like the initial publish requires this workflow.
 #
 # Setup:
 #
-# 1. Visit https://crates.io/crates/<crate-name>/settings
-#    and add Trusted Publishing setting, like:
-#
-#    Repository: <owner>/<repo>
-#    Workflow: release.yml
-#    Environment: release
+# 1. Visit https://crates.io/settings/tokens
+#    and create an API token with "publish-new" scope.
 #
 # 2. Visit https://github.com/<owner>/<repo>/settings/environments
 #    and create "release" environment.
 #
+#    Then create a environment secret named "CARGO_REGISTRY_TOKEN"
+#    with the API token created above.
+#
 # 3. Visit https://github.com/<owner>/<repo>/settings/actions
 #    and add the followings to allowed actions (if only selected actions are allowed):
 #
-#    rust-lang/crates-io-auth-action@*
 #    taiki-e/*
+#
+# Post Publish:
+#
+# - Switch to use create-release.yml
+#   and remove the API token and environment secret created above.
 #
 # Usage:
 #
 # ```yml
 #   create-release:
 #     if: github.repository_owner == '<owner>'
-#     uses: taiki-e/github-actions/.github/workflows/create-release.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/create-release-token.yml@main
 #     permissions:
 #       contents: write # for taiki-e/create-gh-release-action
-#       id-token: write # for rust-lang/crates-io-auth-action
 #     secrets: inherit
 # ```
 #
@@ -67,6 +69,9 @@ on:
         required: false
         type: string
         default: main
+    secrets:
+      CARGO_REGISTRY_TOKEN:
+        required: true
 
 env:
   CARGO_INCREMENTAL: 0
@@ -89,7 +94,6 @@ jobs:
     environment: release
     permissions:
       contents: write # for taiki-e/create-gh-release-action
-      id-token: write # for rust-lang/crates-io-auth-action
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: taiki-e/github-actions/install-rust@main
@@ -117,8 +121,6 @@ jobs:
           title: ${{ inputs.title }}
           branch: ${{ inputs.branch }}
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: rust-lang/crates-io-auth-action@v1
-        id: auth
       - run: |
           crates=()
           while read -rd,; do
@@ -138,4 +140,4 @@ jobs:
             fi
           done
         env:
-          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

@@ -18,8 +18,10 @@
 # 3. Visit https://github.com/<owner>/<repo>/settings/actions
 #    and add the followings to allowed actions (if only selected actions are allowed):
 #
-#    rust-lang/crates-io-auth-action@*
-#    taiki-e/*
+#    rust-lang/crates-io-auth-action@*,
+#    taiki-e/*,
+#
+# 4. Remove crates.io API token from secrets (if you ware migrated from create-release-token.yml).
 #
 # Usage:
 #

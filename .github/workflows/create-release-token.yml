@@ -17,7 +17,7 @@
 # 3. Visit https://github.com/<owner>/<repo>/settings/actions
 #    and add the followings to allowed actions (if only selected actions are allowed):
 #
-#    taiki-e/*
+#    taiki-e/*,
 #
 # Post Publish:
 #

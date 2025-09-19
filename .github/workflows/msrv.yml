@@ -7,9 +7,6 @@ on:
       target:
         required: false
         type: string
-        # macOS cannot be included by default since cannot be compiled on pre-1.54:
-        # https://github.com/rust-lang/rust/issues/105167
-        default: x86_64-unknown-linux-gnu,x86_64-pc-windows-msvc
       args:
         required: false
         type: string
@@ -57,15 +54,23 @@ jobs:
           linux_target=''
           apple_target=''
           windows_target=''
-          if [[ -n "${input_target}" ]]; then
-            while read -rd,; do
-              case "${REPLY}" in
-                *-apple-*) apple_target+=" --target ${REPLY}" ;;
-                *-windows*) windows_target+=" --target ${REPLY}" ;;
-                *) linux_target+=" --target ${REPLY}" ;;
-              esac
-            done <<<"${input_target},"
+          if [[ -z "${input_target}" ]]; then
+            input_target=x86_64-unknown-linux-gnu,aarch64-apple-darwin,x86_64-pc-windows-msvc
+            # shellcheck disable=SC2046
+            lowest_msrv=$(grep -E '^rust-version *=' $(git ls-files '*Cargo.toml') | sed -E 's/^[^"]+"//g; s/".*//g' | LC_ALL=C sort -Vu | head -1)
+            case "${lowest_msrv}" in
+              # macOS cannot be included by default since cannot be compiled on pre-1.54:
+              # https://github.com/rust-lang/rust/issues/105167
+              1.? | 1.[1-4]? | 1.5[0-3]) input_target="${input_target//,aarch64-apple-darwin/}" ;;
+            esac
           fi
+          while read -rd,; do
+            case "${REPLY}" in
+              *-apple-*) apple_target+=" --target ${REPLY}" ;;
+              *-windows*) windows_target+=" --target ${REPLY}" ;;
+              *) linux_target+=" --target ${REPLY}" ;;
+            esac
+          done <<<"${input_target},"
           linux_target="${linux_target# }"
           apple_target="${apple_target# }"
           windows_target="${windows_target# }"

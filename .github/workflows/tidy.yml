@@ -216,30 +216,48 @@ jobs:
             args+=(--all-features)
           fi
           IFS=$'\n\t'
+          host=$(rustc -vV | grep -E '^host:' | cut -d' ' -f2)
           # metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
           input_target="${{ inputs.clippy-target }}"
+          run_host=''
           targets=()
           tier3_targets=()
           if [[ -n "${input_target}" ]]; then
             while read -rd,; do
-              if rustup target list | cut -d' ' -f1 | grep -Eq "^${REPLY}$"; then
+              if [[ "${REPLY}" == "${host}" ]]; then
+                run_host=1
+              elif rustup target list | cut -d' ' -f1 | grep -Eq "^${REPLY}$"; then
                 retry rustup target add "${REPLY}"
                 targets+=(--target="${REPLY}")
               else
                 tier3_targets+=(--target="${REPLY}")
               fi
             done <<<"${input_target},"
+          else
+            run_host=1
           fi
           if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
               printf '%s\n' "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
           fi
           export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(unqualified_local_imports) -D unqualified_local_imports"
-          if [[ -z "${input_target}" ]] || [[ ${#targets[@]} -gt 0 ]]; then
+          if [[ -n ${run_host} ]]; then
+            # Do not pass --target for the target that same as host as RUSTFLAGS is not applied for host when --target option passed.
             (
               # core/alloc/std sets feature(strict_provenance_lints), so we cannot use
               # -Z crate-attr=feature(strict_provenance_lints) when -Z build-std is needed.
               # shellcheck disable=SC2030
+              export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(strict_provenance_lints) -D fuzzy_provenance_casts"
+              printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
+              set -x
+              cargo clippy --workspace --all-targets "${args[@]}"
+            )
+          fi
+          if [[ ${#targets[@]} -gt 0 ]]; then
+            (
+              # core/alloc/std sets feature(strict_provenance_lints), so we cannot use
+              # -Z crate-attr=feature(strict_provenance_lints) when -Z build-std is needed.
+              # shellcheck disable=SC2030,SC2031
               export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(strict_provenance_lints) -D fuzzy_provenance_casts"
               printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
               set -x

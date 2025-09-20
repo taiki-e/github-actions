@@ -1,5 +1,8 @@
 # Create a new GitHub release and run `cargo publish` (with Trusted Publishing).
 #
+# There is no stability guarantee for this workflow, since it's supposed to only be
+# used in infra managed by us.
+#
 # Note: On the initial publish, Trusted Publishing doesn't work so use
 # create-release-token.yml instead.
 #
@@ -15,13 +18,15 @@
 # 2. Visit https://github.com/<owner>/<repo>/settings/environments
 #    and create "release" environment.
 #
-# 3. Visit https://github.com/<owner>/<repo>/settings/actions
-#    and add the followings to allowed actions (if only selected actions are allowed):
+# 3. If only selected actions are allowed,
+#    Visit https://github.com/<owner>/<repo>/settings/actions
+#    and add the followings to allowed actions:
 #
 #    rust-lang/crates-io-auth-action@*,
 #    taiki-e/*,
 #
-# 4. Remove crates.io API token from secrets (if you ware migrated from create-release-token.yml).
+# 4. If you ware migrated from create-release-token.yml,
+#    remove crates.io API token from secrets.
 #
 # Usage:
 #

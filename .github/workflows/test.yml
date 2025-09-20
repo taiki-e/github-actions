@@ -1,3 +1,17 @@
+# Run `cargo test` `cargo careful test` + `cargo hack build --feature-powerset` + `cargo minimal-versions build`.
+#
+# There is no stability guarantee for this workflow, since it's supposed to only be
+# used in infra managed by us.
+#
+# Usage:
+#
+# ```yml
+#   test:
+#     uses: taiki-e/github-actions/.github/workflows/test.yml@main
+# ```
+#
+# See "on.workflow_call.inputs" below for input options.
+
 permissions:
   contents: read
 

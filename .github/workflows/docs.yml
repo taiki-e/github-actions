@@ -1,3 +1,19 @@
+# Run `cargo doc` in a way that is as similar to docs.rs as possible.
+#
+# There is no stability guarantee for this workflow, since it's supposed to only be
+# used in infra managed by us.
+#
+# Note: We also call this workflow from tidy.yml.
+#
+# Usage:
+#
+# ```yml
+#   docs:
+#     uses: taiki-e/github-actions/.github/workflows/docs.yml@main
+# ```
+#
+# See "on.workflow_call.inputs" below for input options.
+
 permissions:
   contents: read
 

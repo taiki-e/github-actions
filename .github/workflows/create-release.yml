@@ -69,6 +69,9 @@ on:
         required: false
         type: string
         default: main
+      prefix:
+        required: false
+        type: string
 
 env:
   CARGO_INCREMENTAL: 0
@@ -118,6 +121,7 @@ jobs:
           changelog: ${{ inputs.changelog }}
           title: ${{ inputs.title }}
           branch: ${{ inputs.branch }}
+          prefix: ${{ inputs.prefix }}
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: rust-lang/crates-io-auth-action@v1
         id: auth

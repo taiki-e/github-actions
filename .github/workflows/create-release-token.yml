@@ -69,6 +69,9 @@ on:
         required: false
         type: string
         default: main
+      prefix:
+        required: false
+        type: string
     secrets:
       CARGO_REGISTRY_TOKEN:
         required: true
@@ -120,6 +123,7 @@ jobs:
           changelog: ${{ inputs.changelog }}
           title: ${{ inputs.title }}
           branch: ${{ inputs.branch }}
+          prefix: ${{ inputs.prefix }}
           token: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           crates=()

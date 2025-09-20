@@ -60,8 +60,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
       - run: |
           xcode-select --print-path
-          # shellcheck disable=SC2010
-          ls -- /Applications | grep -F Xcode
+          du -h -d1 /Applications || true
         if: startsWith(matrix.os, 'macos')
       - uses: ./free-device-space
       - name: Run du -h
@@ -77,8 +76,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
       - run: |
           xcode-select --print-path
-          # shellcheck disable=SC2010
-          ls -- /Applications | grep -F Xcode
+          du -h -d1 /Applications || true
         if: startsWith(matrix.os, 'macos')
 
   install-rust:

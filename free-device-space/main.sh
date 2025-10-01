@@ -95,7 +95,7 @@ case "$(uname -s)" in
   Darwin)
     # GitHub-hosted macOS runners already have a lot of free space than Ubuntu runners.
     # However, non-default Xcode take significant space:
-    # 70GiB (macos-12), 44GiB (macos-13), 27GiB (macos-14), 22GiB (macos-15)
+    # 70GiB (macos-12), 44GiB (macos-13), 27GiB (macos-14), 22GiB (macos-15), 5GiB (macos-26)
     # dirs+=(
     #   '/Applications/Google Chrome.app' # 606M
     #   /Applications/PowerShell.app # 276K
@@ -103,7 +103,7 @@ case "$(uname -s)" in
     #   '/Applications/Microsoft Edge.app' # 908M
     #   /Applications/Firefox.app # 440M
     # )
-    default_xcode=$(xcode-select --print-path | grep -Eo 'Xcode_[0-9]+\.[0-9]+(\.[0-9]+)?\.app' | grep -Eo 'Xcode_[0-9]+\.[0-9]+')
+    default_xcode=$(xcode-select --print-path | grep -Eo 'Xcode_[0-9]+(\.[0-9]+(\.[0-9]+)?)?\.app' | grep -Eo 'Xcode_[0-9]+(\.[0-9]+)?')
     for dir in /Applications/Xcode_*.app; do
       if [[ "${dir}" != /Applications/"${default_xcode}"* ]]; then
         dirs+=("${dir}")

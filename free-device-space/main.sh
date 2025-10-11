@@ -95,7 +95,7 @@ case "$(uname -s)" in
   Darwin)
     # GitHub-hosted macOS runners already have a lot of free space than Ubuntu runners.
     # However, non-default Xcode take significant space:
-    # 70GiB (macos-12), 44GiB (macos-13), 27GiB (macos-14), 22GiB (macos-15), 5GiB (macos-26)
+    # 70GiB (macos-12), 44GiB (macos-13), 28GiB (macos-14), 26GiB (macos-15), 27GiB (macos-15-intel), 9GiB (macos-26)
     # dirs+=(
     #   '/Applications/Google Chrome.app' # 606M
     #   /Applications/PowerShell.app # 276K

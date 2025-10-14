@@ -13,5 +13,6 @@ monodoc
 rsbegin
 rsend
 runneradmin
+shortstat
 tonistiigi
 venvs

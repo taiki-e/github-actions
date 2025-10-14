@@ -3,25 +3,6 @@
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
 #
-# Setup:
-#
-# 1. Visit https://github.com/settings/personal-access-tokens/new
-#    and cerate an PAT with "Read and write" permission on "Contents"
-#    for the target repository.
-#
-# 2. Visit https://github.com/<owner>/<repo>/settings/environments
-#    and create "release" environment.
-#
-#    Then create a environment secret named "PUSH_TOKEN"
-#    with the API token created above.
-#
-# 3. If only selected actions are allowed,
-#    Visit https://github.com/<owner>/<repo>/settings/actions
-#    and add the followings to allowed actions:
-#
-#    rust-lang/crates-io-auth-action@*,
-#    taiki-e/*,
-#
 # Usage:
 #
 # ```yml
@@ -420,5 +401,6 @@ jobs:
           TAG_PREFIX: ${{ inputs.tag-prefix }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
-          PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
+          # Re-use CREATE_PR_TOKEN which has superset of the permission needed here.
+          PUSH_TOKEN: ${{ secrets.CREATE_PR_TOKEN }}
           PREPARE_REV: ${{ needs.prepare.outputs.rev }}

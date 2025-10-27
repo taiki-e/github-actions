@@ -115,7 +115,6 @@ inlateout
 lateout
 mclass
 nand
-nanos
 nocapture
 nomem
 nonminimal
@@ -146,7 +145,6 @@ armhf
 binutils
 choco
 connrefused
-devel
 dockerfiles
 endgroup
 exitcode
@@ -157,7 +155,6 @@ libunwind
 machdep
 moreutils
 noconfirm
-noninteractive
 noprofile
 norc
 nullary
@@ -177,6 +174,5 @@ subcmd
 taplo
 tlsv
 tomlq
-valgrind
 zigbuild
 zstd

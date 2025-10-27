@@ -180,7 +180,7 @@ jobs:
             printf '%s\n' "artifact-target=${target}" >>"${GITHUB_OUTPUT}"
           fi
       # For debugging
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ steps.artifact-target.outputs.artifact-target }}
           path: ${{ needs.prepare.outputs.bin }}-${{ steps.artifact-target.outputs.artifact-target }}.*

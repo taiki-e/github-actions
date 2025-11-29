@@ -99,8 +99,8 @@ defaults:
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-slim
+    timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
     steps:
       - uses: taiki-e/checkout-action@v1
       - name: Prepare
@@ -108,8 +108,22 @@ jobs:
         run: |
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           IFS=$'\n\t'
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
+            if ! type -P rustup; then
+              retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 https://sh.rustup.rs | sh -s -- -y --default-toolchain "${{ inputs.rust }}" --no-modify-path --profile minimal
+              export PATH="${HOME}/.cargo/bin:${PATH}"
+            fi
             metadata=$(cargo metadata --format-version=1 --no-deps)
             # Publishing is unrestricted if null, and forbidden if an empty array.
             if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}")" ]]; then
@@ -127,6 +141,7 @@ jobs:
           fi
           if [[ -e "${{ inputs.codegen-script }}" ]]; then
             pip3 install yq
+            export PATH="${HOME}/.local/bin:${PATH}"
             job=$(yq -c ".jobs.\"${{ inputs.codegen-job }}\"" "${{ inputs.codegen-workflow }}")
             if [[ "${job}" == "null" ]]; then
               printf 'codegen=true\n' >>"${GITHUB_OUTPUT}"

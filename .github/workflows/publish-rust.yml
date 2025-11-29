@@ -10,6 +10,29 @@
 #   workflow_dispatch:
 #     inputs:
 #       version:
+#         description: Version to be increased
+#         required: true
+#         type: choice
+#         options:
+#           - patch
+#           - minor
+#           - major
+#
+#   publish:
+#     if: github.repository_owner == '<owner>'
+#     uses: taiki-e/github-actions/.github/workflows/publish-rust.yml@main
+#     with:
+#       version: ${{ inputs.version }}
+#     secrets: inherit
+# ```
+#
+# Or:
+#
+# ```yml
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       version:
 #         description: Version to be published
 #         required: true
 #         type: string
@@ -107,9 +130,47 @@ jobs:
 
           git fetch origin
           rev=$(git rev-parse HEAD)
+          printf '%s\n' "rev: ${rev}"
           printf '%s\n' "rev=${rev}" >>"${GITHUB_OUTPUT}"
 
-          version="${version#v}"
+          metadata=$(cargo metadata --format-version=1 --no-deps)
+          prev_version=''
+          # Publishing is unrestricted if null, and forbidden if an empty array.
+          for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
+            eval "$(jq -r '@sh "NAME=\(.name) ACTUAL_VERSION=\(.version) MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
+            if [[ -z "${prev_version}" ]]; then
+              prev_version="${ACTUAL_VERSION}"
+            fi
+            # Make sure that the version number of all publishable workspace members matches.
+            if [[ "${ACTUAL_VERSION}" != "${prev_version}" ]]; then
+              bail "publishable workspace members must be version '${prev_version}', but package '${NAME}' is version '${ACTUAL_VERSION}'"
+            fi
+
+            if ! grep -Eq "^version = \"${prev_version}\" #publish:version" "${MANIFEST_PATH}"; then
+              bail "not found '#publish:version' in version in ${MANIFEST_PATH}"
+            fi
+          done
+
+          case "${version}" in
+            major | minor | patch)
+              if [[ ! "${prev_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                bail "pre-release/build-metadata"
+              fi
+              major="${prev_version%%.*}"
+              minor_patch="${prev_version#*.}"
+              minor="${minor_patch%%.*}"
+              patch="${minor_patch#*.}"
+              case "${version}" in
+                major) version="$((major+1)).0.0" ;;
+                minor) version="${major}.$((minor+1)).0" ;;
+                patch) version="${major}.${minor}.$((patch+1))" ;;
+              esac
+              ;;
+            *) version="${version#v}" ;;
+          esac
+          printf '%s\n' "version: ${version}"
+          printf '%s\n' "version=${version}" >>"${GITHUB_OUTPUT}"
+
           tag="${tag_prefix}${version}"
           if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z\.-]+)?(\+[0-9A-Za-z\.-]+)?$ ]]; then
             bail "invalid version format '${version}'"
@@ -173,24 +234,6 @@ jobs:
           printf '%s\n' "${changes}"
           printf '=======================================\n'
 
-          metadata=$(cargo metadata --format-version=1 --no-deps)
-          prev_version=''
-          # Publishing is unrestricted if null, and forbidden if an empty array.
-          for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
-            eval "$(jq -r '@sh "NAME=\(.name) ACTUAL_VERSION=\(.version) MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
-            if [[ -z "${prev_version}" ]]; then
-              prev_version="${ACTUAL_VERSION}"
-            fi
-            # Make sure that the version number of all publishable workspace members matches.
-            if [[ "${ACTUAL_VERSION}" != "${prev_version}" ]]; then
-              bail "publishable workspace members must be version '${prev_version}', but package '${NAME}' is version '${ACTUAL_VERSION}'"
-            fi
-
-            if ! grep -Eq "^version = \"${prev_version}\" #publish:version" "${MANIFEST_PATH}"; then
-              bail "not found '#publish:version' in version in ${MANIFEST_PATH}"
-            fi
-          done
-
           (
             set -x
             git show HEAD --shortstat
@@ -217,6 +260,7 @@ jobs:
           done
     outputs:
       rev: ${{ steps.check.outputs.rev }}
+      version: ${{ steps.check.outputs.version }}
 
   publish:
     needs: prepare
@@ -397,7 +441,7 @@ jobs:
 
           rm -- ~/.git-credentials
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ needs.prepare.outputs.version }}
           TAG_PREFIX: ${{ inputs.tag-prefix }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}

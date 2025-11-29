@@ -55,7 +55,6 @@ imac
 imafc
 iosock
 libnx
-loongarch
 lynxos
 macabi
 managarm

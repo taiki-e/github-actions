@@ -171,6 +171,8 @@ jobs:
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: tools/tidy.sh
+      - run: |
+          [[ ! -f tools/cspell-dict.sh ]] || tools/cspell-dict.sh clean
       - name: Handle diff
         id: diff
         run: |

@@ -49,6 +49,7 @@ gnueabihf
 gnullvm
 gnuspe
 gnux
+helenos
 illumos
 imac
 imafc
@@ -71,6 +72,7 @@ nuttx
 nvptx
 ohos
 openwrt
+qurt
 relibc
 riscv
 rtems

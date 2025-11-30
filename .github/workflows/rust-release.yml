@@ -1,9 +1,47 @@
-# Create the release commit and git tag and push them.
+# Create and push the release commit and tag, create GitHub release, and publish crates.
 #
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
 #
+# Note: This uses token-based publish for initial publish which Trusted Publishing doesn't work.
+# Otherwise Trusted Publishing is used.
+#
+# Setup (common):
+#
+# 1. Visit https://github.com/<owner>/<repo>/settings/environments
+#    and create "release" environment.
+#
+# 2. If only selected actions are allowed,
+#    Visit https://github.com/<owner>/<repo>/settings/actions
+#    and add the followings to allowed actions:
+#
+#    rust-lang/crates-io-auth-action@*,
+#    taiki-e/*,
+#
+# Setup (initial publish):
+#
+# 1. Visit https://crates.io/settings/tokens
+#    and create an API token with "publish-new" scope.
+#
+# 2. Visit https://github.com/<owner>/<repo>/settings/environments
+#    and create a environment secret named "CARGO_REGISTRY_TOKEN"
+#    with the API token created above.
+#
+# Setup (non-initial publish):
+#
+# 1. Visit https://crates.io/crates/<crate-name>/settings
+#    and add Trusted Publishing setting, like:
+#
+#    Repository: <owner>/<repo>
+#    Workflow: release.yml
+#    Environment: release
+#
+# 2. If you used token-based publish for initial publish,
+#    remove the API token on crates.io and the corresponding secret.
+#
 # Usage:
+#
+# (Please fill `<owner>` with the actual repository owner name.)
 #
 # ```yml
 # on:
@@ -20,10 +58,13 @@
 #
 #   publish:
 #     if: github.repository_owner == '<owner>'
-#     uses: taiki-e/github-actions/.github/workflows/publish-rust.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/rust-release.yml@main
+#     permissions:
+#       contents: write # for taiki-e/create-gh-release-action
+#       id-token: write # for rust-lang/crates-io-auth-action
+#     secrets: inherit
 #     with:
 #       version: ${{ inputs.version }}
-#     secrets: inherit
 # ```
 #
 # Or:
@@ -39,13 +80,18 @@
 #
 #   publish:
 #     if: github.repository_owner == '<owner>'
-#     uses: taiki-e/github-actions/.github/workflows/publish-rust.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/rust-release.yml@main
+#     permissions:
+#       contents: write # for taiki-e/create-gh-release-action
+#       id-token: write # for rust-lang/crates-io-auth-action
+#     secrets: inherit
 #     with:
 #       version: ${{ inputs.version }}
-#     secrets: inherit
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.
+
+# TODO: Remove token-based one by requiring publish of 0.0.0 version on crates.io?
 
 permissions:
   contents: read
@@ -78,10 +124,17 @@ on:
         required: false
         type: string
         default: CHANGELOG.md
+      title:
+        required: false
+        type: string
+        default: $version
       branch:
         required: false
         type: string
         default: main
+      prefix:
+        required: false
+        type: string
 
 env:
   CARGO_INCREMENTAL: 0
@@ -166,7 +219,7 @@ jobs:
           printf '%s\n' "prev-version: ${prev_version}"
           printf '%s\n' "prev-version=${prev_version}" >>"${GITHUB_OUTPUT}"
 
-          # Determine the new version number.
+          # Determine the new version number and tag name.
           case "${version}" in
             major | minor | patch)
               if [[ ! "${prev_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -190,6 +243,8 @@ jobs:
           printf '%s\n' "version: ${version}"
           printf '%s\n' "version=${version}" >>"${GITHUB_OUTPUT}"
           tag="${tag_prefix}${version}"
+          printf '%s\n' "tag: ${tag}"
+          printf '%s\n' "tag=${tag}" >>"${GITHUB_OUTPUT}"
 
           # Make sure the same release has not been created in the past.
           if gh release view "${tag}" &>/dev/null; then
@@ -327,7 +382,8 @@ jobs:
           TAG_PREFIX: ${{ inputs.tag-prefix }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
-      - run: |
+      - name: Build crates to be published
+        run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           crates=()
@@ -356,14 +412,18 @@ jobs:
       has-tags: ${{ steps.check.outputs.has-tags }}
       release-date: ${{ steps.check.outputs.release-date }}
       rev: ${{ steps.check.outputs.rev }}
+      tag: ${{ steps.check.outputs.tag }}
       version: ${{ steps.check.outputs.version }}
       prev-version: ${{ steps.check.outputs.prev-version }}
 
-  publish:
+  release:
     needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: release
+    permissions:
+      contents: write # for taiki-e/create-gh-release-action
+      id-token: write # for rust-lang/crates-io-auth-action
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: taiki-e/install-action@v2
@@ -372,7 +432,8 @@ jobs:
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
-      - id: push-release
+          target: ${{ inputs.target }}
+      - name: Create and push release commit and tag
         run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
@@ -404,8 +465,7 @@ jobs:
           # shellcheck disable=SC2153
           prev_version="${PREV_VERSION}"
           # shellcheck disable=SC2153
-          tag_prefix="${TAG_PREFIX}"
-          tag="${tag_prefix}${version}"
+          tag="${TAG}"
           # shellcheck disable=SC2153
           changelog="${CHANGELOG}"
           # shellcheck disable=SC2153
@@ -550,9 +610,54 @@ jobs:
           PREV_VERSION: ${{ needs.prepare.outputs.prev-version }}
           RELEASE_DATE: ${{ needs.prepare.outputs.release-date }}
           HAS_TAGS: ${{ needs.prepare.outputs.has-tags }}
-          TAG_PREFIX: ${{ inputs.tag-prefix }}
+          TAG: ${{ needs.prepare.outputs.tag }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
           PREPARE_REV: ${{ needs.prepare.outputs.rev }}
           # Re-use CREATE_PR_TOKEN which has superset of the permission needed here.
+          # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.
           PUSH_TOKEN: ${{ secrets.CREATE_PR_TOKEN }}
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          changelog: ${{ inputs.changelog }}
+          title: ${{ inputs.title }}
+          branch: ${{ inputs.branch }}
+          prefix: ${{ inputs.prefix }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: refs/tags/${{ needs.prepare.outputs.tag }}
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+        if: needs.prepare.outputs.has-tags == 'true'
+      - name: Publish crates
+        run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          crates=()
+          while read -rd,; do
+            crates+=("${REPLY}")
+          done <<<"${INPUT_CRATES},"
+          args=()
+          [[ -z "${INPUT_TARGET}" ]] || args+=(--target "${INPUT_TARGET}")
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
+          for i in "${!crates[@]}"; do
+            (
+              set -x
+              cd -- "${crates[${i}]}"
+              # TODO: retry on failure
+              # TODO: handle already published case: https://github.com/rust-lang/cargo/blob/0.80.0/publish.py#L35
+              # TODO: use workspace publishing: https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/#cargo-adds-native-support-for-workspace-publishing
+              cargo publish "${args[@]}"
+            )
+            if [[ $((i + 1)) != "${#crates[@]}" ]]; then
+              sleep 45 # cargo's waiting is sometimes not enough
+            fi
+          done
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ needs.prepare.outputs.has-tags == 'true' && steps.auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN }}
+          INPUT_ARGS: ${{ inputs.args }}
+          INPUT_CRATES: ${{ inputs.crates }}
+          INPUT_TARGET: ${{ inputs.target }}

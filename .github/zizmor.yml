@@ -10,7 +10,3 @@ rules:
       policies:
         taiki-e/*: any
         '*': ref-pin
-  use-trusted-publishing:
-    ignore:
-      # This intensionally uses token-based publish for cases where Trusted Publishing doesn't work.
-      - create-release-token.yml

@@ -64,18 +64,17 @@ jobs:
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           IFS=$'\n\t'
           # Handle target inputs.
-          input_target="${{ inputs.target }}"
           linux_target=''
           apple_target=''
           windows_target=''
-          if [[ -z "${input_target}" ]]; then
-            input_target=x86_64-unknown-linux-gnu,aarch64-apple-darwin,x86_64-pc-windows-msvc
+          if [[ -z "${INPUT_TARGET}" ]]; then
+            INPUT_TARGET=x86_64-unknown-linux-gnu,aarch64-apple-darwin,x86_64-pc-windows-msvc
             # shellcheck disable=SC2046
             lowest_msrv=$(grep -E '^rust-version *=' $(git ls-files '*Cargo.toml') | sed -E 's/^[^"]+"//g; s/".*//g' | LC_ALL=C sort -Vu | head -1)
             case "${lowest_msrv}" in
               # macOS cannot be included by default since cannot be compiled on pre-1.54:
               # https://github.com/rust-lang/rust/issues/105167
-              1.? | 1.[1-4]? | 1.5[0-3]) input_target="${input_target//,aarch64-apple-darwin/}" ;;
+              1.? | 1.[1-4]? | 1.5[0-3]) INPUT_TARGET="${INPUT_TARGET//,aarch64-apple-darwin/}" ;;
             esac
           fi
           while read -rd,; do
@@ -84,7 +83,7 @@ jobs:
               *-windows*) windows_target+=" --target ${REPLY}" ;;
               *) linux_target+=" --target ${REPLY}" ;;
             esac
-          done <<<"${input_target},"
+          done <<<"${INPUT_TARGET},"
           linux_target="${linux_target# }"
           apple_target="${apple_target# }"
           windows_target="${windows_target# }"
@@ -96,6 +95,8 @@ jobs:
           [[ -z "${apple_target}" ]] || matrix+=',"macos-latest"'
           [[ -z "${windows_target}" ]] || matrix+=',"windows-latest"'
           printf '%s\n' "matrix={\"os\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+        env:
+          INPUT_TARGET: ${{ inputs.target }}
     outputs:
       matrix: ${{ steps.prepare.outputs.matrix }}
       linux-target: ${{ steps.prepare.outputs.linux-target }}
@@ -112,26 +113,44 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: taiki-e/github-actions/free-device-space@main
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack
       - run: |
           printf 'ALL_FEATURES=--all-features\n' >>"${GITHUB_ENV}"
         if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
       # Make sure this crate can be built with MSRV and all later versions.
       # However, this takes time, so for PR, set the version interval.
       - run: |
-          # shellcheck disable=SC2206
-          args=(${{ inputs.args }})
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          args=()
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             args+=(--version-step 2)
           fi
-          case "${{ matrix.os }}" in
-            ubuntu-*) args=(${LINUX_TARGET:-}) ;;
-            macos-*) args=(${APPLE_TARGET:-}) ;;
-            windows-*) args=(${WINDOWS_TARGET:-}) ;;
+          case "${OS}" in
+            ubuntu-*) target="${LINUX_TARGET}" ;;
+            macos-*) target="${APPLE_TARGET}" ;;
+            windows-*) target="${WINDOWS_TARGET}" ;;
             *) exit 1 ;;
           esac
-          cargo hack build --workspace --no-private --no-dev-deps --version-range .. ${ALL_FEATURES:-} "${args[@]}"
+          if [[ -n "${target}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${target//[$'\n\t']/ } "
+          fi
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
+          (
+            set -x
+            cargo hack build --workspace --no-private --no-dev-deps --version-range .. ${ALL_FEATURES:-} "${args[@]}"
+          )
         env:
+          INPUT_ARGS: ${{ inputs.args }}
+          OS: ${{ matrix.os }}
           LINUX_TARGET: ${{ needs.prepare.outputs.linux-target }}
           APPLE_TARGET: ${{ needs.prepare.outputs.apple-target }}
           WINDOWS_TARGET: ${{ needs.prepare.outputs.windows-target }}

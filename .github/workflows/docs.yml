@@ -69,6 +69,7 @@ jobs:
       # NB: sync with check-external-types.yml
       - name: Run cargo rustdoc
         run: |
+          IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           retry() {
             for i in {1..10}; do
@@ -81,28 +82,28 @@ jobs:
             "$@"
           }
           # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
-          # shellcheck disable=SC2206
           base_args=(
             --lib
             -Z unstable-options
             -Z rustdoc-map
             -Z rustdoc-scrape-examples
             --config "doc.extern-map.registries.crates-io=\"https://docs.rs\""
-            ${{ inputs.args }}
           )
-          IFS=$'\n\t'
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || base_args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
           base_rustflags=()
           base_rustdocflags=()
           if [[ -n "${RUSTFLAGS:-}" ]]; then
             while read -rd' '; do
-              t="${REPLY# *}"
-              base_rustflags+=("${t%* }")
+              [[ -z "${REPLY}" ]] || base_rustflags+=("${REPLY}")
             done <<<"${RUSTFLAGS} "
           fi
           if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
             while read -rd' '; do
-              t="${REPLY# *}"
-              base_rustdocflags+=("${t%* }")
+              [[ -z "${REPLY}" ]] || base_rustdocflags+=("${REPLY}")
             done <<<"${RUSTDOCFLAGS} "
           fi
           base_rustdocflags+=(
@@ -118,13 +119,12 @@ jobs:
           export DOCS_RS=1
           metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
-          input_target="${{ inputs.target }}"
           base_targets=()
-          if [[ -n "${input_target}" ]]; then
+          if [[ -n "${INPUT_TARGET}" ]]; then
             while read -rd,; do
-              base_targets+=(--target="${REPLY}")
+              base_targets+=(--target "${REPLY}")
               retry rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
-            done <<<"${input_target},"
+            done <<<"${INPUT_TARGET},"
           fi
           # Run cargo rustdoc for public crates with features and rustc/rustdoc/cargo args specified in docs.rs metadata in Cargo.toml.
           # Publishing is unrestricted if null, and forbidden if an empty array.
@@ -133,7 +133,7 @@ jobs:
             pkg_rustflags=("${base_rustflags[@]}")
             pkg_rustdocflags=("${base_rustdocflags[@]}")
             eval "$(jq -r '@sh "MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
-            args+=(--manifest-path="${MANIFEST_PATH}")
+            args+=(--manifest-path "${MANIFEST_PATH}")
             docs_rs_metadata=$(jq '.metadata.docs.rs' <<<"${pkg}")
             if [[ "${docs_rs_metadata}" == "null" ]]; then
               docs_rs_metadata=$(jq '.metadata."docs.rs"' <<<"${pkg}")
@@ -143,15 +143,15 @@ jobs:
             fi
             if ! jq '.targets[] | .kind[]' <<<"${pkg}" | grep -Fq '"proc-macro"'; then
               # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
-              if [[ -z "${input_target}" ]]; then
+              if [[ -z "${INPUT_TARGET}" ]]; then
                 default_target=$(jq -r '."default-target"' <<<"${docs_rs_metadata}")
                 if [[ "${default_target}" != null ]]; then
-                  args+=(--target="${default_target}")
+                  args+=(--target "${default_target}")
                   retry rustup target add "${default_target}" || true # tier 3 targets fail to install rustup target
                 fi
                 if [[ "$(jq '.targets' <<<"${docs_rs_metadata}")" != null ]]; then
                   for target in $(jq -r '.targets[]' <<<"${docs_rs_metadata}"); do
-                    args+=(--target="${target}")
+                    args+=(--target "${target}")
                     retry rustup target add "${target}" || true # tier 3 targets fail to install rustup target
                   done
                 fi
@@ -161,7 +161,7 @@ jobs:
             fi
             if [[ "$(jq '.features' <<<"${docs_rs_metadata}")" != null ]]; then
               for feature in $(jq -r '.features[]' <<<"${docs_rs_metadata}"); do
-                args+=(--features="${feature}")
+                args+=(--features "${feature}")
               done
             fi
             if [[ "$(jq '."all-features"' <<<"${docs_rs_metadata}")" == 'true' ]]; then
@@ -211,3 +211,6 @@ jobs:
               cargo rustdoc "${args[@]}"
             )
           done
+        env:
+          INPUT_ARGS: ${{ inputs.args }}
+          INPUT_TARGET: ${{ inputs.target }}

@@ -71,16 +71,32 @@ jobs:
           toolchain: ${{ inputs.rust }}
           component: miri
       - run: |
-          printf '%s\n' "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
-        if: inputs.target != ''
-      - run: |
           printf 'ALL_FEATURES=--all-features\n' >>"${GITHUB_ENV}"
         if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
-      - run: printf '%s\n' "MIRIFLAGS=${{ inputs.miriflags }} -Zmiri-many-seeds=0..16" >>"${GITHUB_ENV}"
-        if: github.event_name == 'schedule'
-      - run: printf '%s\n' "MIRIFLAGS=${{ inputs.miriflags }}" >>"${GITHUB_ENV}"
-        if: github.event_name != 'schedule'
-      - run: cargo miri test --workspace ${TARGET:-} ${ALL_FEATURES:-} ${{ inputs.args }}
+      - run: printf '%s\n' "MIRIFLAGS=${INPUT_MIRIFLAGS} -Zmiri-many-seeds=0..16" >>"${GITHUB_ENV}"
         env:
+          INPUT_MIRIFLAGS: ${{ inputs.miriflags }}
+        if: github.event_name == 'schedule'
+      - run: printf '%s\n' "MIRIFLAGS=${INPUT_MIRIFLAGS}" >>"${GITHUB_ENV}"
+        env:
+          INPUT_MIRIFLAGS: ${{ inputs.miriflags }}
+        if: github.event_name != 'schedule'
+      - run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          args=()
+          [[ -z "${INPUT_TARGET}" ]] || args+=(--target "${INPUT_TARGET}")
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
+          (
+            set -x
+            cargo miri test --workspace ${ALL_FEATURES:-} "${args[@]}"
+          )
+        env:
+          INPUT_ARGS: ${{ inputs.args }}
+          INPUT_TARGET: ${{ inputs.target }}
           RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout
           RUSTFLAGS: ${{ env.RUSTFLAGS }} -Z randomize-layout

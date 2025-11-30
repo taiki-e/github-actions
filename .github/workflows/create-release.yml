@@ -107,20 +107,30 @@ jobs:
           toolchain: ${{ inputs.rust }}
           target: ${{ inputs.target }}
       - run: |
-          printf '%s\n' "TARGET=--target=${{ inputs.target }}" >>"${GITHUB_ENV}"
-        if: inputs.target != ''
-      - run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           crates=()
           while read -rd,; do
             crates+=("${REPLY}")
-          done <<<"${{ inputs.crates }},"
+          done <<<"${INPUT_CRATES},"
+          args=()
+          [[ -z "${INPUT_TARGET}" ]] || args+=(--target "${INPUT_TARGET}")
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
           for i in "${!crates[@]}"; do
             (
               set -x
               cd -- "${crates[${i}]}"
-              cargo build ${TARGET:-} ${{ inputs.args }}
+              cargo build "${args[@]}"
             )
           done
+        env:
+          INPUT_ARGS: ${{ inputs.args }}
+          INPUT_CRATES: ${{ inputs.crates }}
+          INPUT_TARGET: ${{ inputs.target }}
       - uses: taiki-e/create-gh-release-action@v1
         with:
           changelog: ${{ inputs.changelog }}
@@ -131,10 +141,19 @@ jobs:
       - uses: rust-lang/crates-io-auth-action@v1
         id: auth
       - run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           crates=()
           while read -rd,; do
             crates+=("${REPLY}")
-          done <<<"${{ inputs.crates }},"
+          done <<<"${INPUT_CRATES},"
+          args=()
+          [[ -z "${INPUT_TARGET}" ]] || args+=(--target "${INPUT_TARGET}")
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
           for i in "${!crates[@]}"; do
             (
               set -x
@@ -142,7 +161,7 @@ jobs:
               # TODO: retry on failure
               # TODO: handle already published case: https://github.com/rust-lang/cargo/blob/0.80.0/publish.py#L35
               # TODO: use workspace publishing: https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/#cargo-adds-native-support-for-workspace-publishing
-              cargo publish ${TARGET:-} ${{ inputs.args }}
+              cargo publish "${args[@]}"
             )
             if [[ $((i + 1)) != "${#crates[@]}" ]]; then
               sleep 45 # cargo's waiting is sometimes not enough
@@ -150,3 +169,6 @@ jobs:
           done
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+          INPUT_ARGS: ${{ inputs.args }}
+          INPUT_CRATES: ${{ inputs.crates }}
+          INPUT_TARGET: ${{ inputs.target }}

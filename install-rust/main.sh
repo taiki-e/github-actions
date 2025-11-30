@@ -31,10 +31,10 @@ if [[ -n "${INPUT_COMPONENT:-}" ]]; then
   if [[ "${INPUT_COMPONENT}" =~ (^|,)miri(,|$) ]] && [[ ! "${INPUT_COMPONENT}" =~ (^|,)rust-src(,|$) ]]; then
     INPUT_COMPONENT+=',rust-src'
   fi
-  rustup_args+=("--component=${INPUT_COMPONENT}")
+  rustup_args+=(--component "${INPUT_COMPONENT}")
 fi
 if [[ -n "${INPUT_TARGET:-}" ]]; then
-  rustup_args+=("--target=${INPUT_TARGET}")
+  rustup_args+=(--target "${INPUT_TARGET}")
 fi
 
 if type -P rustup; then

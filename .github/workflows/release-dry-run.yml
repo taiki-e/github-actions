@@ -63,13 +63,14 @@ jobs:
       - name: Prepare
         id: prepare
         run: |
+          IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           pip3 install yq
           export PATH="${HOME}/.local/bin:${PATH}"
-          job=$(yq -c ".jobs.\"${{ inputs.job }}\"" "${{ inputs.workflow }}")
+          job=$(yq -c ".jobs.\"${INPUT_JOB}\"" "${INPUT_WORKFLOW}")
           matrix=$(jq -c '.strategy.matrix' <<<"${job}")
           if [[ "${matrix}" == "null" ]]; then
-            printf '%s\n' "::error::'.jobs.${{ inputs.job }}.strategy.matrix' of ${{ inputs.workflow }} must set"
+            printf '%s\n' "::error::'.jobs.${INPUT_JOB}.strategy.matrix' of ${INPUT_WORKFLOW} must set"
             exit 1
           fi
           printf '%s\n' "matrix=${matrix}" >>"${GITHUB_OUTPUT}"
@@ -120,12 +121,16 @@ jobs:
                 fi
                 printf '%s\n' "zip=${value}" >>"${GITHUB_OUTPUT}"
                 ;;
+              token) ;;
               *)
                 printf '%s\n' "::error::'${KEY}' input option is not supported yet by this reusable workflow"
                 exit 1
                 ;;
             esac
           done
+        env:
+          INPUT_JOB: ${{ inputs.job }}
+          INPUT_WORKFLOW: ${{ inputs.workflow }}
     outputs:
       matrix: ${{ steps.prepare.outputs.matrix }}
       bin: ${{ steps.prepare.outputs.bin }}
@@ -171,15 +176,19 @@ jobs:
       - name: Get target name for artifact
         id: artifact-target
         run: |
-          target="${{ matrix.target }}"
-          if [[ -z "${target}" ]]; then
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          if [[ -z "${TARGET}" ]]; then
             host=$(rustc -vV | grep -E '^host:' | cut -d' ' -f2)
             printf '%s\n' "artifact-target=${host}" >>"${GITHUB_OUTPUT}"
-          elif [[ "${{ matrix.build-tool }}" == 'cargo-zigbuild' ]]; then
-            printf '%s\n' "artifact-target=${target%%.*}" >>"${GITHUB_OUTPUT}"
+          elif [[ "${BUILD_TOOL}" == 'cargo-zigbuild' ]]; then
+            printf '%s\n' "artifact-target=${TARGET%%.*}" >>"${GITHUB_OUTPUT}"
           else
-            printf '%s\n' "artifact-target=${target}" >>"${GITHUB_OUTPUT}"
+            printf '%s\n' "artifact-target=${TARGET}" >>"${GITHUB_OUTPUT}"
           fi
+        env:
+          TARGET: ${{ matrix.target }}
+          BUILD_TOOL: ${{ matrix.build-tool }}
       # For debugging
       - uses: actions/upload-artifact@v5
         with:

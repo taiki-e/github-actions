@@ -116,23 +116,21 @@ jobs:
       - name: Prepare
         id: prepare
         run: |
-          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           # Handle target inputs.
-          input_target="${{ inputs.target }}"
           default_target=''
           other_targets=()
-          if [[ -n "${input_target}" ]]; then
+          if [[ -n "${INPUT_TARGET}" ]]; then
             while read -rd,; do
               if [[ -z "${default_target}" ]]; then
                 default_target="${REPLY}"
               else
                 other_targets+=("${REPLY}")
               fi
-            done <<<"${input_target:?},"
+            done <<<"${INPUT_TARGET:?},"
           fi
           # Handle rust inputs.
-          input_rust="${{ inputs.rust }}"
           matrix=''
           last=''
           add_matrix() {
@@ -154,11 +152,14 @@ jobs:
           while read -rd,; do
             add_matrix "${default_target}" "${REPLY}"
             last="${REPLY}"
-          done <<<"${input_rust:?},"
+          done <<<"${INPUT_RUST:?},"
           for target in "${other_targets[@]}"; do
             add_matrix "${target}" "${last}"
           done
           printf '%s\n' "matrix={\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+        env:
+          INPUT_RUST: ${{ inputs.rust }}
+          INPUT_TARGET: ${{ inputs.target }}
     outputs:
       matrix: ${{ steps.prepare.outputs.matrix }}
 
@@ -174,8 +175,8 @@ jobs:
       - name: Prepare for no-std/minimal-versions/direct-minimal-versions
         id: prepare
         run: |
-          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           metadata=$(cargo metadata --format-version=1 --no-deps)
           has_public=''
           # Publishing is unrestricted if null, and forbidden if an empty array.
@@ -189,51 +190,78 @@ jobs:
           if [[ -n "${has_public}" ]]; then
             printf 'minimal-versions=true\n' >>"${GITHUB_OUTPUT}"
             # -Z direct-minimal-versions requires Cargo 1.70.
-            case "${{ matrix.rust }}" in
+            case "${RUST_TOOLCHAIN}" in
               1.? | 1.[1-6]?) ;;
               *) printf 'direct-minimal-versions=true\n' >>"${GITHUB_OUTPUT}" ;;
             esac
           fi
+        env:
+          RUST_TOOLCHAIN: ${{ matrix.rust }}
         if: inputs.no-std || inputs.minimal-versions || inputs.direct-minimal-versions
       - name: Prepare for doc-nightly-only
         run: |
-          if [[ "${{ inputs.test-args }}" != *"--test"* ]]; then
+          if [[ "${INPUT_ARGS}" != *"--test"* ]]; then
             printf 'TESTS=--tests\n' >>"${GITHUB_ENV}"
           fi
+        env:
+          INPUT_ARGS: ${{ inputs.test-args }}
         if: inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ matrix.rust }}
           component: ${{ inputs.component }}${{ (!contains(inputs.component, 'rust-src') && inputs.careful && startsWith(matrix.rust, 'nightly')) && 'rust-src' || '' }}
           target: ${{ (inputs.no-std && steps.prepare.outputs.no-std == 'true' && matrix.target == '') && inputs.no-std-target || '' }}
-      - uses: taiki-e/install-action@cargo-hack
-      - uses: taiki-e/install-action@cargo-minimal-versions
-        if: inputs.minimal-versions && steps.prepare.outputs.minimal-versions == 'true' || inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true'
-      - uses: taiki-e/install-action@cargo-careful
-        # Skip -windows-gnu because cannot find cannot find crt2.o/rsbegin.o/rsend.o when building std
-        if: inputs.careful && startsWith(matrix.rust, 'nightly') && !(endsWith(matrix.rust, 'i686-pc-windows-gnu') || matrix.target == 'i686-pc-windows-gnu')
+      - uses: taiki-e/install-action@v2
+        with:
+          # Skip cargo-careful on i686-pc-windows-gnu because cannot find cannot find crt2.o/rsbegin.o/rsend.o when building std
+          tool: cargo-hack${{ (inputs.minimal-versions && steps.prepare.outputs.minimal-versions == 'true' || inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true') && ',cargo-minimal-versions' || '' }}${{ inputs.careful && startsWith(matrix.rust, 'nightly') && !(endsWith(matrix.rust, 'i686-pc-windows-gnu') || matrix.target == 'i686-pc-windows-gnu') && ',cargo-careful' || '' }}
       - uses: taiki-e/setup-cross-toolchain-action@v1
         with:
           target: ${{ matrix.target }}
         if: matrix.target != ''
-      - run: printf '%s\n' "TARGET=--target=${{ matrix.target }}" >>"${GITHUB_ENV}"
-        if: matrix.target != ''
-      - run: cargo test --all ${{ inputs.features }} ${TESTS:-} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${BUILD_STD:-} ${{ inputs.test-args }}
-      - run: cargo test --all ${{ inputs.features }} --release ${TESTS:-} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${BUILD_STD:-} ${{ inputs.test-args }}
-      - run: cargo test --all ${{ inputs.features }} --release ${TESTS:-} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${BUILD_STD:-} ${{ inputs.test-args }}
+      - run: printf 'TARGET=--target=%s\n' "${TARGET}" >>"${GITHUB_ENV}"
         env:
+          TARGET: ${{ matrix.target }}
+        if: matrix.target != ''
+      - run: cargo test --all ${FEATURES} ${TESTS:-} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${BUILD_STD:-} ${ARGS}
+        env:
+          ARGS: ${{ inputs.test-args }}
+          FEATURES: ${{ inputs.features }}
+      - run: cargo test --all ${FEATURES} --release ${TESTS:-} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${BUILD_STD:-} ${ARGS}
+        env:
+          ARGS: ${{ inputs.test-args }}
+          FEATURES: ${{ inputs.features }}
+      - run: cargo test --all ${FEATURES} --release ${TESTS:-} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${BUILD_STD:-} ${ARGS}
+        env:
+          ARGS: ${{ inputs.test-args }}
+          FEATURES: ${{ inputs.features }}
           CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
           CARGO_PROFILE_RELEASE_LTO: fat
         if: inputs.test-fat-lto
-      - run: cargo careful test --all ${{ inputs.features }} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${{ inputs.careful-args }}
+      - run: cargo careful test --all ${FEATURES} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${ARGS}
         env:
+          ARGS: ${{ inputs.careful-args }}
+          FEATURES: ${{ inputs.features }}
           RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout
           RUSTFLAGS: ${{ env.RUSTFLAGS }} -Z randomize-layout
         if: inputs.careful && startsWith(matrix.rust, 'nightly') && !(endsWith(matrix.rust, 'i686-pc-windows-gnu') || matrix.target == 'i686-pc-windows-gnu')
-      - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps ${TARGET:-} ${BUILD_STD:-} ${{ inputs.build-args }}
-      - run: cargo hack build --workspace --no-private --feature-powerset ${{ inputs.optional-deps }} --no-dev-deps --target="${{ inputs.no-std-target }}" ${{ inputs.no-std-args }}
+      - run: cargo hack build --workspace --no-private --feature-powerset ${OPTIONAL_DEPS} --no-dev-deps ${TARGET:-} ${BUILD_STD:-} ${ARGS}
+        env:
+          ARGS: ${{ inputs.build-args }}
+          OPTIONAL_DEPS: ${{ inputs.optional-deps }}
+      - run: cargo hack build --workspace --no-private --feature-powerset ${OPTIONAL_DEPS} --no-dev-deps --target "${TARGET}" ${ARGS}
+        env:
+          ARGS: ${{ inputs.no-std-args }}
+          OPTIONAL_DEPS: ${{ inputs.optional-deps }}
+          TARGET: ${{ inputs.no-std-target }}
         if: inputs.no-std && steps.prepare.outputs.no-std == 'true' && matrix.target == ''
-      - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact ${{ inputs.features }} ${TARGET:-} ${BUILD_STD:-} ${{ inputs.minimal-versions-args }}
+      - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact ${FEATURES} ${TARGET:-} ${BUILD_STD:-} ${ARGS}
+        env:
+          ARGS: ${{ inputs.minimal-versions-args }}
+          FEATURES: ${{ inputs.features }}
         if: inputs.minimal-versions && steps.prepare.outputs.minimal-versions == 'true'
-      - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact ${{ inputs.features }} --direct ${TARGET:-} ${BUILD_STD:-} ${{ inputs.direct-minimal-versions-args }}
+      - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact ${FEATURES} --direct ${TARGET:-} ${BUILD_STD:-} ${ARGS}
+        env:
+          ARGS: ${{ inputs.direct-minimal-versions-args }}
+          FEATURES: ${{ inputs.features }}
         if: inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true'

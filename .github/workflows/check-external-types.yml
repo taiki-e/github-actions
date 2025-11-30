@@ -73,6 +73,7 @@ jobs:
       # NB: sync with docs.yml
       - name: Run cargo check-external-types
         run: |
+          IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           retry() {
             for i in {1..10}; do
@@ -85,25 +86,27 @@ jobs:
             "$@"
           }
           # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
-          # shellcheck disable=SC2206
-          base_args=(${{ inputs.args }})
-          IFS=$'\n\t'
+          base_args=()
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || base_args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
           metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
-          input_target="${{ inputs.target }}"
           base_targets=()
-          if [[ -n "${input_target}" ]]; then
+          if [[ -n "${INPUT_TARGET}" ]]; then
             while read -rd,; do
               base_targets+=(--target="${REPLY}")
               retry rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
-            done <<<"${input_target},"
+            done <<<"${INPUT_TARGET},"
           fi
           # Run cargo check-external-types for public crates with features specified in docs.rs metadata in Cargo.toml.
           # Publishing is unrestricted if null, and forbidden if an empty array.
           for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and .targets[].kind[] == "lib")' <<<"${metadata}"); do
             args=("${base_args[@]}")
             eval "$(jq -r '@sh "MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
-            args+=(--manifest-path="${MANIFEST_PATH}")
+            args+=(--manifest-path "${MANIFEST_PATH}")
             docs_rs_metadata=$(jq '.metadata.docs.rs' <<<"${pkg}")
             if [[ "${docs_rs_metadata}" == "null" ]]; then
               docs_rs_metadata=$(jq '.metadata."docs.rs"' <<<"${pkg}")
@@ -113,7 +116,7 @@ jobs:
             fi
             pkg_targets=()
             # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
-            if [[ -z "${input_target}" ]]; then
+            if [[ -z "${INPUT_TARGET}" ]]; then
               default_target=$(jq -r '."default-target"' <<<"${docs_rs_metadata}")
               if [[ "${default_target}" != null ]]; then
                 pkg_targets+=(--target="${default_target}")
@@ -130,7 +133,7 @@ jobs:
             fi
             if [[ "$(jq '.features' <<<"${docs_rs_metadata}")" != null ]]; then
               for feature in $(jq -r '.features[]' <<<"${docs_rs_metadata}"); do
-                args+=(--features="${feature}")
+                args+=(--features "${feature}")
               done
             fi
             if [[ "$(jq '."all-features"' <<<"${docs_rs_metadata}")" == 'true' ]]; then
@@ -158,3 +161,6 @@ jobs:
               )
             fi
           done
+        env:
+          INPUT_ARGS: ${{ inputs.args }}
+          INPUT_TARGET: ${{ inputs.target }}

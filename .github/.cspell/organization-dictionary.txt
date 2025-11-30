@@ -146,6 +146,7 @@ armhf
 binutils
 choco
 connrefused
+cooldown
 dockerfiles
 endgroup
 exitcode
@@ -176,4 +177,5 @@ taplo
 tlsv
 tomlq
 zigbuild
+zizmor
 zstd

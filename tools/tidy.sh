@@ -8,7 +8,7 @@ trap -- 'printf >&2 "%s\n" "${0##*/}: trapped SIGINT"; exit 1' SIGINT
 cd -- "$(dirname -- "$0")"/..
 
 # USAGE:
-#    ./tools/tidy.sh
+#    GH_TOKEN=$(gh auth token) ./tools/tidy.sh
 #
 # Note: This script requires the following tools:
 # - git 1.8+
@@ -17,6 +17,7 @@ cd -- "$(dirname -- "$0")"/..
 # - python 3.6+ and pipx
 # - shfmt
 # - shellcheck
+# - zizmor
 # - cargo, rustfmt (if Rust code exists)
 # - clang-format (if C/C++/Protobuf code exists)
 # - parse-dockerfile <https://github.com/taiki-e/parse-dockerfile> (if Dockerfile exists)
@@ -903,6 +904,18 @@ EOF
         done
       done
     fi
+  fi
+fi
+zizmor_targets=(${workflows[@]+"${workflows[@]}"} ${actions[@]+"${actions[@]}"})
+if [[ -e .github/dependabot.yml ]]; then
+  zizmor_targets+=(.github/dependabot.yml)
+fi
+if [[ ${#zizmor_targets[@]} -gt 0 ]]; then
+  if check_install zizmor; then
+    IFS=' '
+    info "running \`zizmor ${zizmor_targets[*]}\`"
+    IFS=$'\n\t'
+    zizmor "${zizmor_targets[@]}"
   fi
 fi
 printf '\n'

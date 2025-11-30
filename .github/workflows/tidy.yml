@@ -65,14 +65,6 @@ on:
         required: false
         type: string
         default: codegen
-      codegen-script:
-        required: false
-        type: string
-        default: tools/gen.sh
-      codegen-commit-script:
-        required: false
-        type: string
-        default: tools/ci/gen.sh
 
 env:
   CARGO_INCREMENTAL: 0
@@ -106,8 +98,8 @@ jobs:
       - name: Prepare
         id: prepare
         run: |
-          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           retry() {
             for i in {1..10}; do
               if "$@"; then
@@ -121,7 +113,7 @@ jobs:
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
             if ! type -P rustup; then
-              retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 https://sh.rustup.rs | sh -s -- -y --default-toolchain "${{ inputs.rust }}" --no-modify-path --profile minimal
+              retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 https://sh.rustup.rs | sh -s -- -y --default-toolchain "${INPUT_RUST}" --no-modify-path --profile minimal
               export PATH="${HOME}/.cargo/bin:${PATH}"
             fi
             metadata=$(cargo metadata --format-version=1 --no-deps)
@@ -139,20 +131,24 @@ jobs:
           if [[ -n "$(git ls-files '*Dockerfile*')" ]]; then
             printf 'dockerfile=true\n' >>"${GITHUB_OUTPUT}"
           fi
-          if [[ -e "${{ inputs.codegen-script }}" ]]; then
+          if [[ -e tools/gen.sh ]]; then
             pip3 install yq
             export PATH="${HOME}/.local/bin:${PATH}"
-            job=$(yq -c ".jobs.\"${{ inputs.codegen-job }}\"" "${{ inputs.codegen-workflow }}")
+            job=$(yq -c ".jobs.\"${INPUT_CODEGEN_JOB}\"" "${INPUT_CODEGEN_WORKFLOW}")
             if [[ "${job}" == "null" ]]; then
               printf 'codegen=true\n' >>"${GITHUB_OUTPUT}"
-              if [[ -e "${{ inputs.codegen-commit-script }}" ]]; then
+              if [[ -e tools/ci/gen.sh ]]; then
                 printf 'codegen-commit=true\n' >>"${GITHUB_OUTPUT}"
               fi
             fi
-          elif [[ -e "${{ inputs.codegen-commit-script }}" ]]; then
-            printf '%s\n' "::error::'${{ inputs.codegen-commit-script }}' is available but ${{ inputs.codegen-script }} is not available"
+          elif [[ -e tools/ci/gen.sh ]]; then
+            printf '%s\n' "::error::tools/ci/gen.sh is available but tools/gen.sh is not available"
             exit 1
           fi
+        env:
+          INPUT_RUST: ${{ inputs.rust }}
+          INPUT_CODEGEN_JOB: ${{ inputs.codegen-job }}
+          INPUT_CODEGEN_WORKFLOW: ${{ inputs.codegen-workflow }}
     outputs:
       rust: ${{ steps.prepare.outputs.rust }}
       rust-pub: ${{ steps.prepare.outputs.rust-pub }}
@@ -177,15 +173,16 @@ jobs:
           toolchain: ${{ inputs.rust }}
           component: rustfmt
         if: needs.prepare.outputs.rust == 'true'
-      - uses: taiki-e/install-action@shellcheck
-      - uses: taiki-e/install-action@shfmt
-      - uses: taiki-e/install-action@parse-dockerfile
-        if: needs.prepare.outputs.dockerfile == 'true'
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: shellcheck,shfmt,zizmor${{ needs.prepare.outputs.dockerfile == 'true' && ',parse-dockerfile' || '' }}
       - run: cat -- tools/.tidy-check-license-headers
       - run: cat -- .cspell.json
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: tools/tidy.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           [[ ! -f tools/cspell-dict.sh ]] || tools/cspell-dict.sh clean
       - name: Handle diff
@@ -230,6 +227,7 @@ jobs:
           component: clippy
       - name: Run cargo clippy
         run: |
+          IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           retry() {
             for i in {1..10}; do
@@ -241,20 +239,22 @@ jobs:
             done
             "$@"
           }
-          # shellcheck disable=SC2206
-          args=(${{ inputs.clippy-args }})
-          if [[ "${{ inputs.clippy-args }}" != *"-features"* ]]; then
+          args=()
+          if [[ "${INPUT_ARGS}" != *"-features"* ]]; then
             args+=(--all-features)
           fi
-          IFS=$'\n\t'
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
           host=$(rustc -vV | grep -E '^host:' | cut -d' ' -f2)
           # metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
-          input_target="${{ inputs.clippy-target }}"
           run_host=''
           targets=()
           tier3_targets=()
-          if [[ -n "${input_target}" ]]; then
+          if [[ -n "${INPUT_TARGET}" ]]; then
             while read -rd,; do
               if [[ "${REPLY}" == "${host}" ]]; then
                 run_host=1
@@ -264,7 +264,7 @@ jobs:
               else
                 tier3_targets+=(--target="${REPLY}")
               fi
-            done <<<"${input_target},"
+            done <<<"${INPUT_TARGET},"
           else
             run_host=1
           fi
@@ -317,9 +317,12 @@ jobs:
           # for manifest_path in $(jq -r '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and (.targets[].kind[] == "lib" or .targets[].kind[] == "proc-macro")) | .manifest_path' <<<"${metadata}"); do
           #   (
           #     set -x
-          #     cargo test --manifest-path="${manifest_path}" --doc "${args[@]}"
+          #     cargo test --manifest-path "${manifest_path}" --doc "${args[@]}"
           #   )
           # done
+        env:
+          INPUT_ARGS: ${{ inputs.clippy-args }}
+          INPUT_TARGET: ${{ inputs.clippy-target }}
 
   check-external-types:
     needs: prepare
@@ -340,10 +343,23 @@ jobs:
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
-      - uses: taiki-e/install-action@cargo-deny
-      # Workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
-      - uses: taiki-e/install-action@cargo-no-dev-deps
-      - run: cargo no-dev-deps --no-private deny --workspace --all-features ${{ inputs.deny-args }} check
+      - uses: taiki-e/install-action@v2
+        with:
+          # cargo-no-dev-deps is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
+          tool: cargo-deny,cargo-no-dev-deps
+      - run: |
+          args=(--workspace --all-features)
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+          fi
+          (
+            set -x
+            cargo no-dev-deps --no-private deny "${args[@]}" check
+          )
+        env:
+          INPUT_ARGS: ${{ inputs.deny-args }}
 
   docs:
     needs: prepare

@@ -1,32 +1,9 @@
-// This is a dictionary shared by projects under github.com/taiki-e.
+# This is a dictionary shared by projects under github.com/taiki-e.
 
 endo
 taiki
 
-// tool name and its configs or options
-asan
-cdylib
-cflags
-clif
-codegen
-cranelift
-cxxflags
-debuginfo
-dylib
-miri
-miriflags
-msan
-rlib
-rustc
-rustdocflags
-rustflags
-rustsec
-staticlib
-tsan
-xcompile
-Zmiri
-
-// Rust target triple/spec
+# Words in Rust target triple/spec.
 aarch
 amdgcn
 amdhsa
@@ -98,15 +75,21 @@ xous
 xtensa
 zkvm
 
-// Rust other
+# Other Rust-related words.
 aclass
 acqrel
 bufs
 bytecount
+cdylib
 cfgs
+clif
+codegen
+cranelift
 ctypes
+debuginfo
 docsrs
 doctests
+dylib
 elems
 idents
 ilog
@@ -115,6 +98,8 @@ incompat
 inlateout
 lateout
 mclass
+miri
+miriflags
 nand
 nocapture
 nomem
@@ -126,11 +111,17 @@ rchunks
 rclass
 repr
 rfold
+rlib
 rposition
 rsplit
+rustc
+rustdocflags
+rustflags
 rustlib
+rustsec
 seqcst
 splitn
+staticlib
 subsec
 supertrait
 supertraits
@@ -139,14 +130,19 @@ uninit
 unpark
 unparse
 upcastable
+xcompile
+Zmiri
 
-// Other
+# Other words.
 armel
 armhf
+asan
 binutils
+cflags
 choco
 connrefused
 cooldown
+cxxflags
 dockerfiles
 endgroup
 exitcode
@@ -156,6 +152,7 @@ HEALTHCHECK
 libunwind
 machdep
 moreutils
+msan
 noconfirm
 noprofile
 norc
@@ -176,6 +173,7 @@ subcmd
 taplo
 tlsv
 tomlq
+tsan
 zigbuild
 zizmor
 zstd

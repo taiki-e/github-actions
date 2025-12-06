@@ -135,6 +135,11 @@ on:
       prefix:
         required: false
         type: string
+    outputs:
+      ref:
+        value: refs/tags/${{ jobs.prepare.outputs.tag }}
+      rev:
+        value: ${{ jobs.release.outputs.rev }}
 
 env:
   CARGO_INCREMENTAL: 0
@@ -448,6 +453,7 @@ jobs:
           toolchain: ${{ inputs.rust }}
           target: ${{ inputs.target }}
       - name: Create and push release commit and tag
+        id: push
         run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
@@ -597,6 +603,9 @@ jobs:
               git commit -m "Release ${version}"
             )
           fi
+          rev=$(git rev-parse HEAD)
+          printf '%s\n' "rev: ${rev}"
+          printf '%s\n' "rev=${rev}" >>"${GITHUB_OUTPUT}"
 
           prev_credential_helper=$(git config get --global credential.helper || true)
           if [[ -n "${prev_credential_helper}" ]]; then
@@ -675,3 +684,5 @@ jobs:
           INPUT_ARGS: ${{ inputs.args }}
           INPUT_CRATES: ${{ needs.prepare.outputs.crates }}
           INPUT_TARGET: ${{ inputs.target }}
+    outputs:
+      rev: ${{ steps.push.outputs.rev }}

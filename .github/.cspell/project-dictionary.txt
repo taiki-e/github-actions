@@ -1,12 +1,16 @@
 actionarchivecache
+acvf
 binfmt
 BUILDKIT
 buildkitd
 buildx
 cygdrive
 ghcup
+hfuzz
+honggfuzz
 hostedtoolcache
 kotlinc
+libfuzzer
 linuxbrew
 mecab
 monodoc

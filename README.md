@@ -16,6 +16,7 @@ supposed to only be used in infra managed by us.
 
 - [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
 - [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
+- [**fuzz**](.github/workflows/fuzz.yml): Build fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`, and run fuzzing with `cargo afl` on scheduled run.
 - [**miri**](.github/workflows/miri.yml): Run `cargo miri test` in strict mode.
 - [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).
 - [**rust-release**](.github/workflows/rust-release.yml): Create and push the release commit and tag, create GitHub release, and publish crates.

@@ -6,7 +6,11 @@ IFS=$'\n\t'
 trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
 
 bail() {
-  printf >&2 'error: %s\n' "$*"
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    printf '::error::%s\n' "$*"
+  else
+    printf >&2 'error: %s\n' "$*"
+  fi
   exit 1
 }
 

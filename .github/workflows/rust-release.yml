@@ -173,7 +173,7 @@ jobs:
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           bail() {
-            printf >&2 'error: %s\n' "$*"
+            printf '::error::%s\n' "$*"
             exit 1
           }
           normalize_comma_or_space_separated() {
@@ -468,7 +468,7 @@ jobs:
             "$@"
           }
           bail() {
-            printf >&2 'error: %s\n' "$*"
+            printf '::error::%s\n' "$*"
             exit 1
           }
           if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then

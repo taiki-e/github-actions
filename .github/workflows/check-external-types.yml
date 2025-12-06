@@ -85,12 +85,24 @@ jobs:
             done
             "$@"
           }
-          # docs.rs uses -Z rustdoc-scrape-examples since https://github.com/rust-lang/docs.rs/pull/1954
+          normalize_comma_or_space_separated() {
+            # Normalize whitespace characters into space because it's hard to handle single input contains lines with POSIX sed alone.
+            local list="${1//[$'\r\n\t']/ }"
+            if [[ "${list}" == *","* ]]; then
+              # If a comma is contained, consider it is a comma-separated list.
+              # Drop leading and trailing whitespaces in each element.
+              sed -E 's/ *, */,/g; s/^.//' <<<",${list},"
+            else
+              # Otherwise, consider it is a whitespace-separated list.
+              # Convert whitespace characters into comma.
+              sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
+            fi
+          }
           base_args=()
           if [[ -n "${INPUT_ARGS}" ]]; then
             while read -rd' '; do
               [[ -z "${REPLY}" ]] || base_args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
           metadata=$(cargo metadata --format-version=1 --no-deps)
           # Handle target inputs.
@@ -99,7 +111,7 @@ jobs:
             while read -rd,; do
               base_targets+=(--target="${REPLY}")
               retry rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
-            done <<<"${INPUT_TARGET},"
+            done < <(normalize_comma_or_space_separated "${INPUT_TARGET}")
           fi
           # Run cargo check-external-types for public crates with features specified in docs.rs metadata in Cargo.toml.
           # Publishing is unrestricted if null, and forbidden if an empty array.

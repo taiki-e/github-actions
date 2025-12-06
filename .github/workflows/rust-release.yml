@@ -171,6 +171,19 @@ jobs:
             printf >&2 'error: %s\n' "$*"
             exit 1
           }
+          normalize_comma_or_space_separated() {
+            # Normalize whitespace characters into space because it's hard to handle single input contains lines with POSIX sed alone.
+            local list="${1//[$'\r\n\t']/ }"
+            if [[ "${list}" == *","* ]]; then
+              # If a comma is contained, consider it is a comma-separated list.
+              # Drop leading and trailing whitespaces in each element.
+              sed -E 's/ *, */,/g; s/^.//' <<<",${list},"
+            else
+              # Otherwise, consider it is a whitespace-separated list.
+              # Convert whitespace characters into comma.
+              sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
+            fi
+          }
           if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then
             in_place=(-i '')
           else
@@ -377,36 +390,36 @@ jobs:
             set -x
             git show HEAD --shortstat
           )
+
+          crates=$(normalize_comma_or_space_separated "${INPUT_CRATES}")
+          printf '%s\n' "crates=${crates}" >>"${GITHUB_OUTPUT}"
         env:
           VERSION: ${{ inputs.version }}
           TAG_PREFIX: ${{ inputs.tag-prefix }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
+          INPUT_CRATES: ${{ inputs.crates }}
       - name: Build crates to be published
         run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
-          crates=()
-          while read -rd,; do
-            crates+=("${REPLY}")
-          done <<<"${INPUT_CRATES},"
           args=()
           [[ -z "${INPUT_TARGET}" ]] || args+=(--target "${INPUT_TARGET}")
           if [[ -n "${INPUT_ARGS}" ]]; then
             while read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
-          for i in "${!crates[@]}"; do
+          while read -rd,; do
             (
               set -x
-              cd -- "${crates[${i}]}"
+              cd -- "${REPLY}"
               cargo build "${args[@]}"
             )
-          done
+          done <<<"${INPUT_CRATES}"
         env:
           INPUT_ARGS: ${{ inputs.args }}
-          INPUT_CRATES: ${{ inputs.crates }}
+          INPUT_CRATES: ${{ steps.check.outputs.crates }}
           INPUT_TARGET: ${{ inputs.target }}
     outputs:
       has-tags: ${{ steps.check.outputs.has-tags }}
@@ -415,6 +428,7 @@ jobs:
       tag: ${{ steps.check.outputs.tag }}
       version: ${{ steps.check.outputs.version }}
       prev-version: ${{ steps.check.outputs.prev-version }}
+      crates: ${{ steps.check.outputs.crates }}
 
   release:
     needs: prepare
@@ -632,17 +646,17 @@ jobs:
         run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
-          crates=()
-          while read -rd,; do
-            crates+=("${REPLY}")
-          done <<<"${INPUT_CRATES},"
           args=()
           [[ -z "${INPUT_TARGET}" ]] || args+=(--target "${INPUT_TARGET}")
           if [[ -n "${INPUT_ARGS}" ]]; then
             while read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
+          crates=()
+          while read -rd,; do
+            crates+=("${REPLY}")
+          done <<<"${INPUT_CRATES}"
           for i in "${!crates[@]}"; do
             (
               set -x
@@ -659,5 +673,5 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ needs.prepare.outputs.has-tags == 'true' && steps.auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN }}
           INPUT_ARGS: ${{ inputs.args }}
-          INPUT_CRATES: ${{ inputs.crates }}
+          INPUT_CRATES: ${{ needs.prepare.outputs.crates }}
           INPUT_TARGET: ${{ inputs.target }}

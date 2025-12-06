@@ -61,8 +61,21 @@ jobs:
       - name: Prepare
         id: prepare
         run: |
-          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          normalize_comma_or_space_separated() {
+            # Normalize whitespace characters into space because it's hard to handle single input contains lines with POSIX sed alone.
+            local list="${1//[$'\r\n\t']/ }"
+            if [[ "${list}" == *","* ]]; then
+              # If a comma is contained, consider it is a comma-separated list.
+              # Drop leading and trailing whitespaces in each element.
+              sed -E 's/ *, */,/g; s/^.//' <<<",${list},"
+            else
+              # Otherwise, consider it is a whitespace-separated list.
+              # Convert whitespace characters into comma.
+              sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
+            fi
+          }
           # Handle target inputs.
           linux_target=''
           apple_target=''
@@ -83,17 +96,14 @@ jobs:
               *-windows*) windows_target+=" --target ${REPLY}" ;;
               *) linux_target+=" --target ${REPLY}" ;;
             esac
-          done <<<"${INPUT_TARGET},"
-          linux_target="${linux_target# }"
-          apple_target="${apple_target# }"
-          windows_target="${windows_target# }"
-          printf '%s\n' "linux-target=${linux_target}" >>"${GITHUB_OUTPUT}"
-          printf '%s\n' "apple-target=${apple_target}" >>"${GITHUB_OUTPUT}"
-          printf '%s\n' "windows-target=${windows_target}" >>"${GITHUB_OUTPUT}"
+          done < <(normalize_comma_or_space_separated "${INPUT_TARGET}")
           matrix=''
           [[ -z "${linux_target}" ]] || matrix+=',"ubuntu-latest"'
           [[ -z "${apple_target}" ]] || matrix+=',"macos-latest"'
           [[ -z "${windows_target}" ]] || matrix+=',"windows-latest"'
+          printf '%s\n' "linux-target=${linux_target# }" >>"${GITHUB_OUTPUT}"
+          printf '%s\n' "apple-target=${apple_target# }" >>"${GITHUB_OUTPUT}"
+          printf '%s\n' "windows-target=${windows_target# }" >>"${GITHUB_OUTPUT}"
           printf '%s\n' "matrix={\"os\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
         env:
           INPUT_TARGET: ${{ inputs.target }}
@@ -137,12 +147,12 @@ jobs:
           if [[ -n "${target}" ]]; then
             while read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${target//[$'\n\t']/ } "
+            done <<<"${target} "
           fi
           if [[ -n "${INPUT_ARGS}" ]]; then
             while read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
           (
             set -x

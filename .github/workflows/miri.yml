@@ -89,7 +89,7 @@ jobs:
           if [[ -n "${INPUT_ARGS}" ]]; then
             while read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
           (
             set -x

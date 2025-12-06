@@ -239,6 +239,19 @@ jobs:
             done
             "$@"
           }
+          normalize_comma_or_space_separated() {
+            # Normalize whitespace characters into space because it's hard to handle single input contains lines with POSIX sed alone.
+            local list="${1//[$'\r\n\t']/ }"
+            if [[ "${list}" == *","* ]]; then
+              # If a comma is contained, consider it is a comma-separated list.
+              # Drop leading and trailing whitespaces in each element.
+              sed -E 's/ *, */,/g; s/^.//' <<<",${list},"
+            else
+              # Otherwise, consider it is a whitespace-separated list.
+              # Convert whitespace characters into comma.
+              sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
+            fi
+          }
           args=()
           if [[ "${INPUT_ARGS}" != *"-features"* ]]; then
             args+=(--all-features)
@@ -246,7 +259,7 @@ jobs:
           if [[ -n "${INPUT_ARGS}" ]]; then
             while read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
           host=$(rustc -vV | grep -E '^host:' | cut -d' ' -f2)
           # metadata=$(cargo metadata --format-version=1 --no-deps)
@@ -256,7 +269,7 @@ jobs:
           tier3_targets=()
           if [[ -n "${INPUT_TARGET}" ]]; then
             while read -rd,; do
-              if [[ "${REPLY}" == "${host}" ]]; then
+              if [[ "${REPLY}" == "${host}" ]] || [[ "${REPLY}" == 'host' ]]; then
                 run_host=1
               elif rustup target list | cut -d' ' -f1 | grep -Eq "^${REPLY}$"; then
                 retry rustup target add "${REPLY}"
@@ -264,7 +277,7 @@ jobs:
               else
                 tier3_targets+=(--target="${REPLY}")
               fi
-            done <<<"${INPUT_TARGET},"
+            done < <(normalize_comma_or_space_separated "${INPUT_TARGET}")
           else
             run_host=1
           fi
@@ -352,7 +365,7 @@ jobs:
           if [[ -n "${INPUT_ARGS}" ]]; then
             while read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\n\t']/ } "
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
           (
             set -x

@@ -118,6 +118,19 @@ jobs:
         run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          normalize_comma_or_space_separated() {
+            # Normalize whitespace characters into space because it's hard to handle single input contains lines with POSIX sed alone.
+            local list="${1//[$'\r\n\t']/ }"
+            if [[ "${list}" == *","* ]]; then
+              # If a comma is contained, consider it is a comma-separated list.
+              # Drop leading and trailing whitespaces in each element.
+              sed -E 's/ *, */,/g; s/^.//' <<<",${list},"
+            else
+              # Otherwise, consider it is a whitespace-separated list.
+              # Convert whitespace characters into comma.
+              sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
+            fi
+          }
           # Handle target inputs.
           default_target=''
           other_targets=()
@@ -128,7 +141,7 @@ jobs:
               else
                 other_targets+=("${REPLY}")
               fi
-            done <<<"${INPUT_TARGET:?},"
+            done < <(normalize_comma_or_space_separated "${INPUT_TARGET}")
           fi
           # Handle rust inputs.
           matrix=''
@@ -152,7 +165,7 @@ jobs:
           while read -rd,; do
             add_matrix "${default_target}" "${REPLY}"
             last="${REPLY}"
-          done <<<"${INPUT_RUST:?},"
+          done < <(normalize_comma_or_space_separated "${INPUT_RUST:?}")
           for target in "${other_targets[@]}"; do
             add_matrix "${target}" "${last}"
           done

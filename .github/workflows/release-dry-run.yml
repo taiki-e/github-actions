@@ -121,7 +121,7 @@ jobs:
                 fi
                 printf '%s\n' "zip=${value}" >>"${GITHUB_OUTPUT}"
                 ;;
-              token) ;;
+              token | ref) ;;
               *)
                 printf '%s\n' "::error::'${KEY}' input option is not supported yet by this reusable workflow"
                 exit 1

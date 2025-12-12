@@ -50,37 +50,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1
-      - name: Run du -h
-        run: |
-          sudo du -h -d1 / 2>/dev/null || true
-          sudo du -h -d2 /home || true
-          sudo du -h -d2 /opt || true
-          sudo du -h -d2 /usr || true
-          sudo du -h -d1 /usr/local/lib || true
-          sudo du -h -d1 /usr/local/share || true
-          sudo du -h -d1 /var || true
-          sudo du -h -d1 /var/lib || true
-        if: startsWith(matrix.os, 'ubuntu')
-      - run: |
-          xcode-select --print-path
-          du -h -d1 /Applications || true
-        if: startsWith(matrix.os, 'macos')
+      - run: tools/print-dir-size.sh
       - uses: ./free-device-space
-      - name: Run du -h
-        run: |
-          sudo du -h -d1 / 2>/dev/null || true
-          sudo du -h -d2 /home || true
-          sudo du -h -d2 /opt || true
-          sudo du -h -d2 /usr || true
-          sudo du -h -d1 /usr/local/lib || true
-          sudo du -h -d1 /usr/local/share || true
-          sudo du -h -d1 /var || true
-          sudo du -h -d1 /var/lib || true
-        if: startsWith(matrix.os, 'ubuntu')
-      - run: |
-          xcode-select --print-path
-          du -h -d1 /Applications || true
-        if: startsWith(matrix.os, 'macos')
+      - run: tools/print-dir-size.sh
 
   install-rust:
     strategy:

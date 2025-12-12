@@ -81,7 +81,7 @@ jobs:
       # TODO: This is currently skipped for libfuzzer due to https://github.com/rust-fuzz/cargo-fuzz/issues/270.
       # TODO: Honggfuzz
       - name: Cache AFL++ output
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: fuzz/out
           key: afl-out-${{ github.run_id }}

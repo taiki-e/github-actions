@@ -55,7 +55,7 @@ toolchains=(
   beta
   nightly
 )
-
+refs=()
 for toolchain in "${toolchains[@]}"; do
   git checkout -b "${toolchain}"
   sed -E "${in_place[@]}" install-rust/action.yml \
@@ -63,7 +63,8 @@ for toolchain in "${toolchains[@]}"; do
     -e "s/# default: #publish:toolchain/default: ${toolchain}/g"
   git add install-rust/action.yml
   git commit -m "${toolchain}"
-  retry git push origin -f refs/heads/"${toolchain}"
   git checkout main
-  git branch -D "${toolchain}"
+  refs+=(refs/heads/"${toolchain}")
 done
+retry git push origin --atomic -f "${refs[@]}"
+git branch -D "${toolchains[@]}"

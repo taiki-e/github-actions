@@ -36,6 +36,16 @@ on:
         required: false
         type: boolean
         default: true
+      check-external-types-rust:
+        required: false
+        type: string
+        default: nightly-2025-10-18
+      check-external-types-target:
+        required: false
+        type: string
+      check-external-types-args:
+        required: false
+        type: string
       deny:
         required: false
         type: boolean
@@ -341,10 +351,10 @@ jobs:
     needs: prepare
     if: inputs.check-external-types && needs.prepare.outputs.rust-pub-lib == 'true'
     uses: ./.github/workflows/check-external-types.yml
-    # with:
-    #   rust: ${{ inputs.check-external-types-toolchain }}
-    #   target: ${{ inputs.check-external-types-target }}
-    #   args: ${{ inputs.check-external-types-args }}
+    with:
+      rust: ${{ inputs.check-external-types-rust }}
+      target: ${{ inputs.check-external-types-target }}
+      args: ${{ inputs.check-external-types-args }}
 
   deny:
     needs: prepare

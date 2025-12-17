@@ -127,7 +127,7 @@ jobs:
               fi
             fi
             pkg_targets=()
-            # Respect target-related fields specified in docs.rs metadata if inputs.target is empty.
+            # Respect target-related fields specified in docs.rs metadata if the input is empty.
             if [[ -z "${INPUT_TARGET}" ]]; then
               default_target=$(jq -r '."default-target"' <<<"${docs_rs_metadata}")
               if [[ "${default_target}" != null ]]; then

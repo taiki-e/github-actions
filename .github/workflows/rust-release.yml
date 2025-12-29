@@ -9,7 +9,8 @@
 # Setup (common):
 #
 # 1. Visit https://github.com/<owner>/<repo>/settings/environments
-#    and create "release" environment.
+#    and create "release" environment,
+#    and set "Deployment protection rules" as needed.
 #
 # 2. If only selected actions are allowed,
 #    Visit https://github.com/<owner>/<repo>/settings/actions
@@ -30,7 +31,8 @@
 # Setup (non-initial publish):
 #
 # 1. Visit https://crates.io/crates/<crate-name>/settings
-#    and add Trusted Publishing setting, like:
+#    and add Trusted Publishing setting like the following,
+#    and enable "Require trusted publishing for all new versions" as needed.
 #
 #    Repository: <owner>/<repo>
 #    Workflow: release.yml

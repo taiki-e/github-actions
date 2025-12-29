@@ -5,6 +5,7 @@ BUILDKIT
 buildkitd
 buildx
 chromedriver
+cmin
 cygdrive
 ghcup
 hfuzz

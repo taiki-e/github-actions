@@ -1,4 +1,4 @@
-# Build fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`, and run fuzzing with `cargo afl` on scheduled run.
+# Build fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`, and run fuzzing with them on scheduled run.
 #
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
@@ -49,7 +49,7 @@ defaults:
     shell: bash --noprofile --norc -CeEuo pipefail {0}
 
 jobs:
-  fuzz:
+  libfuzzer:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -59,35 +59,86 @@ jobs:
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
-      - run: sudo apt-get -o Acquire::Retries=10 -qq update && sudo apt-get -o Acquire::Retries=10 -o Dpkg::Use-Pty=0 install -y --no-install-recommends binutils-dev libunwind8-dev
       - uses: taiki-e/cache-cargo-install-action@v2
         with:
           tool: cargo-fuzz
+      - name: Build
+        run: cargo fuzz build --features libfuzzer
+      # On scheduled job, run fuzzer $FUZZ_MAX_TOTAL_TIME seconds per target.
+      - name: Cache output
+        uses: actions/cache@v5
+        with:
+          path: fuzz/out
+          key: libfuzzer-out-${{ github.run_id }}
+          restore-keys: libfuzzer-out-
+        if: github.event_name == 'schedule'
+      - name: Fuzzing
+        run: |
+          ulimit -S -c unlimited
+          sudo tee -- /proc/sys/kernel/core_pattern >/dev/null <<<core
+          # shellcheck disable=SC2010
+          for target in $(ls -- fuzz | grep -E '\.rs$' | sed -E 's/\.rs$//'); do
+            mkdir -p -- "fuzz/corpus/${target}"
+            # Increase memory limit to 12GiB to avoid https://github.com/rust-fuzz/cargo-fuzz/issues/270.
+            # (GitHub-hosted runner's memory size is 16GB: https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+            cargo fuzz run --features libfuzzer --release "${target}" "fuzz/corpus/${target}" "fuzz/seeds/${target}" -- -rss_limit_mb=12288 -max_total_time="${FUZZ_MAX_TOTAL_TIME}"
+            cargo fuzz cmin --features libfuzzer --release "${target}"
+            rmdir -- "fuzz/artifacts/${target}" &>/dev/null || true
+            rmdir -- "fuzz/corpus/${target}" &>/dev/null || true
+          done
+          rmdir -- fuzz/artifacts &>/dev/null || true
+          rmdir -- fuzz/corpus &>/dev/null || true
+        if: github.event_name == 'schedule'
+      - name: Archive artifacts
+        id: archive
+        run: |
+          if [[ -d artifacts ]]; then
+            tar acvf ../libfuzzer-artifacts.tar.xz artifacts
+            printf 'has-artifacts=true\n' >>"${GITHUB_OUTPUT}"
+          fi
+          if [[ -d corpus ]]; then
+            tar acvf ../libfuzzer-corpus.tar.xz corpus
+            printf 'has-corpus=true\n' >>"${GITHUB_OUTPUT}"
+          fi
+        working-directory: fuzz
+        if: github.event_name == 'schedule' && always()
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: libfuzzer-artifacts
+          path: libfuzzer-artifacts.tar.xz
+        if: github.event_name == 'schedule' && always() && steps.archive.outputs.has-artifacts == 'true'
+      - name: Upload corpus
+        uses: actions/upload-artifact@v6
+        with:
+          name: libfuzzer-corpus
+          path: libfuzzer-corpus.tar.xz
+        if: github.event_name == 'schedule' && always() && steps.archive.outputs.has-corpus == 'true'
+
+  afl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/github-actions/free-device-space@main
+        if: github.event_name == 'schedule'
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
       # We cannot use cache for cargo-afl because afl.rs requires the cargo-afl binary and afl library to be built with the same compiler version.
       - run: cargo install cargo-afl --debug --locked
-      - uses: taiki-e/cache-cargo-install-action@v2
-        with:
-          # TODO: Pass --no-default-features
-          tool: honggfuzz
-      - run: cargo fuzz build --features libfuzzer
-      - run: cargo afl build --release --features afl
-        working-directory: fuzz
-      - run: |
-          HFUZZ_BUILD_ARGS="--features honggfuzz" \
-            RUSTFLAGS="${RUSTFLAGS:-} -Z sanitizer=address" \
-            cargo hfuzz build
+      - name: Build
+        run: cargo afl build --release --features afl
         working-directory: fuzz
       # On scheduled job, run fuzzer $FUZZ_MAX_TOTAL_TIME seconds per target.
-      # TODO: This is currently skipped for libfuzzer due to https://github.com/rust-fuzz/cargo-fuzz/issues/270.
-      # TODO: Honggfuzz
-      - name: Cache AFL++ output
+      - name: Cache output
         uses: actions/cache@v5
         with:
           path: fuzz/out
           key: afl-out-${{ github.run_id }}
           restore-keys: afl-out-
         if: github.event_name == 'schedule'
-      - name: Fuzzing with AFL++
+      - name: Fuzzing
         run: |
           ulimit -S -c unlimited
           sudo tee -- /proc/sys/kernel/core_pattern >/dev/null <<<core
@@ -103,15 +154,84 @@ jobs:
         working-directory: fuzz
         if: github.event_name == 'schedule'
       - name: Archive artifacts
+        id: archive
         run: |
           if [[ -d out ]]; then
-            tar acvf ../afl-artifacts.tar.gz out
+            tar acvf ../afl-artifacts.tar.xz out
+            printf 'has-artifacts=true\n' >>"${GITHUB_OUTPUT}"
           fi
         working-directory: fuzz
-        if: failure() && github.event_name == 'schedule'
+        if: github.event_name == 'schedule' && always()
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: fuzz-artifacts
-          path: afl-artifacts.tar.gz
-        if: failure() && github.event_name == 'schedule'
+          name: afl-artifacts
+          path: afl-artifacts.tar.xz
+        if: github.event_name == 'schedule' && always() && steps.archive.outputs.has-artifacts == 'true'
+
+  honggfuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/github-actions/free-device-space@main
+        if: github.event_name == 'schedule'
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
+      - run: sudo apt-get -o Acquire::Retries=10 -qq update && sudo apt-get -o Acquire::Retries=10 -o Dpkg::Use-Pty=0 install -y --no-install-recommends binutils-dev libunwind8-dev
+      - uses: taiki-e/cache-cargo-install-action@v2
+        with:
+          # TODO: Pass --no-default-features
+          tool: honggfuzz
+      - name: Build
+        run: |
+          HFUZZ_BUILD_ARGS="--features honggfuzz" \
+            RUSTFLAGS="${RUSTFLAGS:-} -Z sanitizer=address" \
+            cargo hfuzz build
+        working-directory: fuzz
+      # On scheduled job, run fuzzer $FUZZ_MAX_TOTAL_TIME seconds per target.
+      - name: Cache output
+        uses: actions/cache@v5
+        with:
+          path: fuzz/hfuzz_workspace
+          key: honggfuzz-out-${{ github.run_id }}
+          restore-keys: honggfuzz-out-
+        if: github.event_name == 'schedule'
+      - name: Fuzzing
+        run: |
+          ulimit -S -c unlimited
+          sudo tee -- /proc/sys/kernel/core_pattern >/dev/null <<<core
+          # shellcheck disable=SC2010
+          for target in $(ls | grep -E '\.rs$' | sed -E 's/\.rs$//'); do
+            HFUZZ_RUN_ARGS="--exit_upon_crash --run_time ${FUZZ_MAX_TOTAL_TIME}" \
+              HFUZZ_BUILD_ARGS="--features honggfuzz" \
+              RUSTFLAGS="${RUSTFLAGS:-} -Z sanitizer=address" \
+              cargo hfuzz run "${target}"
+            mkdir -p -- "hfuzz_workspace_tmp/${target}"
+            mv -- "hfuzz_workspace/${target}/input" "hfuzz_workspace_tmp/${target}"
+            rmdir -- "hfuzz_workspace/${target}" 2>/dev/null || true
+            if [[ -d "hfuzz_workspace/${target}" ]]; then
+              mv -- "hfuzz_workspace_tmp/${target}/input" "hfuzz_workspace/${target}"
+              exit 1
+            fi
+            mkdir -- "hfuzz_workspace/${target}"
+            mv -- "hfuzz_workspace_tmp/${target}/input" "hfuzz_workspace/${target}"
+          done
+        working-directory: fuzz
+        if: github.event_name == 'schedule'
+      - name: Archive artifacts
+        id: archive
+        run: |
+          if [[ -d hfuzz_workspace ]]; then
+            tar acvf ../honggfuzz-artifacts.tar.xz hfuzz_workspace
+            printf 'has-artifacts=true\n' >>"${GITHUB_OUTPUT}"
+          fi
+        working-directory: fuzz
+        if: github.event_name == 'schedule' && failure()
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: honggfuzz-artifacts
+          path: honggfuzz-artifacts.tar.xz
+        if: github.event_name == 'schedule' && failure()

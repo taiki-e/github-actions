@@ -149,6 +149,7 @@ exitcode
 gsub
 gtar
 HEALTHCHECK
+hpux
 libunwind
 machdep
 minix

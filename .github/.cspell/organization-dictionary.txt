@@ -89,7 +89,6 @@ ctypes
 debuginfo
 docsrs
 doctests
-dylib
 elems
 idents
 ilog

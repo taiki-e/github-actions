@@ -137,6 +137,10 @@ on:
       prefix:
         required: false
         type: string
+      draft:
+        required: false
+        type: boolean
+        default: false
     outputs:
       ref:
         value: refs/tags/${{ jobs.prepare.outputs.tag }}
@@ -648,6 +652,7 @@ jobs:
           title: ${{ inputs.title }}
           branch: ${{ inputs.branch }}
           prefix: ${{ inputs.prefix }}
+          draft: ${{ inputs.draft }}
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: refs/tags/${{ needs.prepare.outputs.tag }}
       - uses: rust-lang/crates-io-auth-action@v1

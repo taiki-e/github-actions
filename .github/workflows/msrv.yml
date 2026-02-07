@@ -82,13 +82,6 @@ jobs:
           windows_target=''
           if [[ -z "${INPUT_TARGET}" ]]; then
             INPUT_TARGET=x86_64-unknown-linux-gnu,aarch64-apple-darwin,x86_64-pc-windows-msvc
-            # shellcheck disable=SC2046
-            lowest_msrv=$(grep -E '^rust-version *=' $(git ls-files '*Cargo.toml') | sed -E 's/^[^"]+"//g; s/".*//g' | LC_ALL=C sort -Vu | head -1)
-            case "${lowest_msrv}" in
-              # macOS cannot be included by default since cannot be compiled on pre-1.54:
-              # https://github.com/rust-lang/rust/issues/105167
-              1.? | 1.[1-4]? | 1.5[0-3]) INPUT_TARGET="${INPUT_TARGET//,aarch64-apple-darwin/}" ;;
-            esac
           fi
           while read -rd,; do
             case "${REPLY}" in
@@ -105,10 +98,14 @@ jobs:
           printf '%s\n' "apple-target=${apple_target# }" >>"${GITHUB_OUTPUT}"
           printf '%s\n' "windows-target=${windows_target# }" >>"${GITHUB_OUTPUT}"
           printf '%s\n' "matrix={\"os\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+          # shellcheck disable=SC2046
+          lowest_msrv=$(grep -E '^rust-version *=' $(git ls-files '*Cargo.toml') | sed -E 's/^[^"]+"//g; s/".*//g' | LC_ALL=C sort -Vu | head -1)
+          printf '%s\n' "lowest-msrv=${lowest_msrv}" >>"${GITHUB_OUTPUT}"
         env:
           INPUT_TARGET: ${{ inputs.target }}
     outputs:
       matrix: ${{ steps.prepare.outputs.matrix }}
+      lowest-msrv: ${{ steps.prepare.outputs.lowest-msrv }}
       linux-target: ${{ steps.prepare.outputs.linux-target }}
       apple-target: ${{ steps.prepare.outputs.apple-target }}
       windows-target: ${{ steps.prepare.outputs.windows-target }}
@@ -138,9 +135,16 @@ jobs:
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             args+=(--version-step 2)
           fi
+          version_range='..'
           case "${OS}" in
             ubuntu-*) target="${LINUX_TARGET}" ;;
-            macos-*) target="${APPLE_TARGET}" ;;
+            macos-*)
+              target="${APPLE_TARGET}"
+              case "${LOWEST_MSRV}" in
+                # cannot be compiled on pre-1.54: https://github.com/rust-lang/rust/issues/105167
+                1.? | 1.[1-4]? | 1.5[0-3]) version_range='1.54..' ;;
+              esac
+              ;;
             windows-*) target="${WINDOWS_TARGET}" ;;
             *) exit 1 ;;
           esac
@@ -156,11 +160,12 @@ jobs:
           fi
           (
             set -x
-            cargo hack build --workspace --no-private --no-dev-deps --version-range .. ${ALL_FEATURES:-} "${args[@]}"
+            cargo hack build --workspace --no-private --no-dev-deps --version-range "${version_range}" ${ALL_FEATURES:-} "${args[@]}"
           )
         env:
           INPUT_ARGS: ${{ inputs.args }}
           OS: ${{ matrix.os }}
+          LOWEST_MSRV: ${{ needs.prepare.outputs.lowest-msrv }}
           LINUX_TARGET: ${{ needs.prepare.outputs.linux-target }}
           APPLE_TARGET: ${{ needs.prepare.outputs.apple-target }}
           WINDOWS_TARGET: ${{ needs.prepare.outputs.windows-target }}

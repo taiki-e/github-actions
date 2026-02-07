@@ -15,6 +15,7 @@ supposed to only be used in infra managed by us.
 ## Reusable workflows
 
 - [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
+- [**clippy**](.github/workflows/clippy.yml): Run `cargo clippy` and apply clippy for doctest.
 - [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
 - [**fuzz**](.github/workflows/fuzz.yml): Build fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`, and run fuzzing with them on scheduled run.
 - [**miri**](.github/workflows/miri.yml): Run `cargo miri test` in strict mode.

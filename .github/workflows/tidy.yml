@@ -71,6 +71,10 @@ on:
         required: false
         type: boolean
         default: false
+      codegen-free-device-space:
+        required: false
+        type: boolean
+        default: false
       codegen-workflow:
         required: false
         type: string
@@ -294,13 +298,15 @@ jobs:
       repository-projects: read # for gh pr edit --add-assignee
     steps:
       - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/github-actions/free-device-space@main
+        if: inputs.codegen-free-device-space
       - uses: taiki-e/github-actions/install-rust@nightly
         if: needs.prepare.outputs.rust == 'true'
       - run: tools/gen.sh
       - name: Handle diff
         id: diff
         run: tools/ci/gen.sh
-        if: (inputs.codegen-automerge == 'true' || needs.prepare.outputs.codegen-commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: (inputs.codegen-automerge || needs.prepare.outputs.codegen-commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
       - id: create-pull-request
         uses: peter-evans/create-pull-request@v8
@@ -312,22 +318,22 @@ jobs:
             This will be auto-merged when CI has passed because this is an auto-generated PR in a defined format and is usually considered no additional review is required.
           branch: update-generated-code
           token: ${{ secrets.CREATE_PR_TOKEN }}
-        if: (inputs.codegen-automerge == 'true' || needs.prepare.outputs.codegen-commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
+        if: (inputs.codegen-automerge || needs.prepare.outputs.codegen-commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Notify PR author by assigning PR
         run: gh pr edit --add-assignee taiki-e "${PR_NUMBER:?}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create-pull-request.outputs.pull-request-number }}
-        if: inputs.codegen-automerge == 'false' && needs.prepare.outputs.codegen-commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
+        if: (!inputs.codegen-automerge) && needs.prepare.outputs.codegen-commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Enable auto-merge for auto-generated PR
         run: gh pr merge --rebase --auto "${PR_NUMBER:?}"
         env:
           GITHUB_TOKEN: ${{ secrets.CREATE_PR_TOKEN }}
           PR_NUMBER: ${{ steps.create-pull-request.outputs.pull-request-number }}
-        if: inputs.codegen-automerge == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false' && steps.create-pull-request.outputs.pull-request-operation == 'created'
+        if: inputs.codegen-automerge && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false' && steps.create-pull-request.outputs.pull-request-operation == 'created'
       - name: Approve auto-generated PR for auto-merge
         run: gh pr review --approve "${PR_NUMBER:?}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create-pull-request.outputs.pull-request-number }}
-        if: inputs.codegen-automerge == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false' && (steps.create-pull-request.outputs.pull-request-operation == 'created' || steps.create-pull-request.outputs.pull-request-operation == 'updated')
+        if: inputs.codegen-automerge && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false' && (steps.create-pull-request.outputs.pull-request-operation == 'created' || steps.create-pull-request.outputs.pull-request-operation == 'updated')

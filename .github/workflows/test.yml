@@ -51,7 +51,7 @@ on:
       careful-args:
         required: false
         type: string
-      doc-nightly-only:
+      doctest-nightly-only:
         required: false
         type: boolean
         default: false
@@ -211,14 +211,14 @@ jobs:
         env:
           RUST_TOOLCHAIN: ${{ matrix.rust }}
         if: inputs.no-std || inputs.minimal-versions || inputs.direct-minimal-versions
-      - name: Prepare for doc-nightly-only
+      - name: Prepare for doctest-nightly-only
         run: |
           if [[ "${INPUT_ARGS}" != *"--test"* ]]; then
             printf 'TESTS=--tests\n' >>"${GITHUB_ENV}"
           fi
         env:
           INPUT_ARGS: ${{ inputs.test-args }}
-        if: inputs.doc-nightly-only && !startsWith(matrix.rust, 'nightly')
+        if: inputs.doctest-nightly-only && !startsWith(matrix.rust, 'nightly')
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ matrix.rust }}

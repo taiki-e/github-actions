@@ -65,9 +65,7 @@ jobs:
         run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
-          pip3 install yq
-          export PATH="${HOME}/.local/bin:${PATH}"
-          job=$(yq -c ".jobs.\"${INPUT_JOB}\"" "${INPUT_WORKFLOW}")
+          job=$(pipx run yq -c ".jobs.\"${INPUT_JOB}\"" "${INPUT_WORKFLOW}")
           matrix=$(jq -c '.strategy.matrix' <<<"${job}")
           if [[ "${matrix}" == "null" ]]; then
             printf '%s\n' "::error::'.jobs.${INPUT_JOB}.strategy.matrix' of ${INPUT_WORKFLOW} must set"

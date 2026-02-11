@@ -150,9 +150,7 @@ jobs:
             printf 'dockerfile=true\n' >>"${GITHUB_OUTPUT}"
           fi
           if [[ -e tools/gen.sh ]]; then
-            pip3 install yq
-            export PATH="${HOME}/.local/bin:${PATH}"
-            job=$(yq -c ".jobs.\"${INPUT_CODEGEN_JOB}\"" "${INPUT_CODEGEN_WORKFLOW}")
+            job=$(pipx run yq -c ".jobs.\"${INPUT_CODEGEN_JOB}\"" "${INPUT_CODEGEN_WORKFLOW}")
             if [[ "${job}" == "null" ]]; then
               printf 'codegen=true\n' >>"${GITHUB_OUTPUT}"
               if [[ -e tools/ci/gen.sh ]]; then

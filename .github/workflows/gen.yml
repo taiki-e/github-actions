@@ -36,6 +36,14 @@ on:
         required: false
         type: string
         default: update-generated-code
+      automerge:
+        required: false
+        type: boolean
+        default: false
+      free-device-space:
+        required: false
+        type: boolean
+        default: false
       install-rust:
         required: false
         type: boolean
@@ -44,11 +52,7 @@ on:
         required: false
         type: string
         default: nightly
-      automerge:
-        required: false
-        type: boolean
-        default: false
-      free-device-space:
+      rust-cache:
         required: false
         type: boolean
         default: false
@@ -92,6 +96,13 @@ jobs:
         with:
           toolchain: ${{ inputs.rust }}
         if: inputs.install-rust
+      - name: Generate Cargo.lock
+        run: cargo generate-lockfile
+        if: inputs.rust-cache
+      - uses: taiki-e/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          cache-all-crates: 'true'
+        if: inputs.rust-cache
       - id: run
         run: |
           bash "${SCRIPT}"

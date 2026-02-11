@@ -304,6 +304,6 @@ jobs:
       repository-projects: read # for gh pr edit --add-assignee
     secrets: inherit
     with:
-      install-rust: ${{ needs.prepare.outputs.rust == 'true' }}
       automerge: ${{ inputs.codegen-automerge }}
       free-device-space: ${{ inputs.codegen-free-device-space }}
+      install-rust: ${{ needs.prepare.outputs.rust == 'true' }}

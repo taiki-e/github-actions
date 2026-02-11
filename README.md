@@ -18,10 +18,11 @@ supposed to only be used in infra managed by us.
 - [**clippy**](.github/workflows/clippy.yml): Run `cargo clippy` and apply clippy for doctest.
 - [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
 - [**fuzz**](.github/workflows/fuzz.yml): Build fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`, and run fuzzing with them on scheduled run.
+- [**gen**](.github/workflows/gen.yml): Run code generator and open PR if new change available.
 - [**miri**](.github/workflows/miri.yml): Run `cargo miri test` in strict mode.
 - [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).
-- [**rust-release**](.github/workflows/rust-release.yml): Create and push the release commit and tag, create GitHub release, and publish crates.
 - [**release-dry-run**](.github/workflows/release-dry-run.yml): Build Rust binaries based on release workflow.
+- [**rust-release**](.github/workflows/rust-release.yml): Create and push the release commit and tag, create GitHub release, and publish crates.
 - [**test**](.github/workflows/test.yml): Run `cargo test` `cargo careful test` + `cargo hack build --feature-powerset` + `cargo minimal-versions build`.
 - [**tidy**](.github/workflows/tidy.yml): Run various checks.
 

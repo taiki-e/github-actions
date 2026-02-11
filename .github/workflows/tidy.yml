@@ -200,6 +200,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: |
+          ruleset=$(gh ruleset list)
+          grep -Eq 'Additional branch protection for non-admin roles\b.*\bactive' <<<"${ruleset}"
+          grep -Eq 'Branch protection for all roles\b.*\bactive' <<<"${ruleset}"
+          grep -Eq 'Tag protection for all roles\b.*\bactive' <<<"${ruleset}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.repository_owner == 'taiki-e'
+      - run: |
           [[ ! -f tools/cspell-dict.sh ]] || tools/cspell-dict.sh clean
       - name: Handle diff
         id: diff

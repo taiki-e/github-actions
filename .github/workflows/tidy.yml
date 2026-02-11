@@ -32,6 +32,10 @@ on:
       clippy-args:
         required: false
         type: string
+      clippy-doctest:
+        required: false
+        type: boolean
+        default: true
       check-external-types:
         required: false
         type: boolean
@@ -234,6 +238,7 @@ jobs:
       rust: ${{ inputs.rust }}
       target: ${{ inputs.clippy-target }}
       args: ${{ inputs.clippy-args }}
+      doctest: ${{ inputs.clippy-doctest }}
 
   check-external-types:
     needs: prepare

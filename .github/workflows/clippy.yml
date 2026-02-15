@@ -8,7 +8,7 @@
 # Usage:
 #
 # ```yml
-#   docs:
+#   clippy:
 #     uses: taiki-e/github-actions/.github/workflows/clippy.yml@main
 # ```
 #

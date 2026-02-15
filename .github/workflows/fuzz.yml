@@ -6,7 +6,7 @@
 # Usage:
 #
 # ```yml
-#   test:
+#   fuzz:
 #     uses: taiki-e/github-actions/.github/workflows/fuzz.yml@main
 # ```
 #

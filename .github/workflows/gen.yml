@@ -8,7 +8,7 @@
 # Usage:
 #
 # ```yml
-#   docs:
+#   gen:
 #     uses: taiki-e/github-actions/.github/workflows/gen.yml@main
 # ```
 #

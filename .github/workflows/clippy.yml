@@ -34,6 +34,14 @@ on:
         required: false
         type: boolean
         default: true
+      unqualified_local_imports:
+        required: false
+        type: boolean
+        default: true
+      fuzzy_provenance_casts:
+        required: false
+        type: boolean
+        default: true
 
 env:
   CARGO_INCREMENTAL: 0
@@ -131,14 +139,20 @@ jobs:
           if [[ -n "${RUSTDOCFLAGS:-}" ]]; then
               printf '%s\n' "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
           fi
-          export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(unqualified_local_imports) -D unqualified_local_imports"
+          if [[ "${INPUT_UNQUALIFIED_LOCAL_IMPORTS}" != 'false' ]]; then
+            export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(unqualified_local_imports) -D unqualified_local_imports"
+          fi
+          strict_provenance_lints=''
+          if [[ "${INPUT_FUZZY_PROVENANCE_CASTS}" != 'false' ]]; then
+            strict_provenance_lints=' -Z crate-attr=feature(strict_provenance_lints) -D fuzzy_provenance_casts'
+          fi
           if [[ -n ${run_host} ]]; then
             # Do not pass --target for the target that same as host as RUSTFLAGS is not applied for host when --target option passed.
             (
               # core/alloc/std sets feature(strict_provenance_lints), so we cannot use
               # -Z crate-attr=feature(strict_provenance_lints) when -Z build-std is needed.
               # shellcheck disable=SC2030
-              export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(strict_provenance_lints) -D fuzzy_provenance_casts"
+              export RUSTFLAGS="${RUSTFLAGS}${strict_provenance_lints}"
               printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
               set -x
               cargo clippy --workspace --all-targets "${args[@]}"
@@ -149,7 +163,7 @@ jobs:
               # core/alloc/std sets feature(strict_provenance_lints), so we cannot use
               # -Z crate-attr=feature(strict_provenance_lints) when -Z build-std is needed.
               # shellcheck disable=SC2030,SC2031
-              export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(strict_provenance_lints) -D fuzzy_provenance_casts"
+              export RUSTFLAGS="${RUSTFLAGS}${strict_provenance_lints}"
               printf '%s\n' "+ RUSTFLAGS='${RUSTFLAGS}' \\"
               set -x
               cargo clippy --workspace --all-targets "${targets[@]}" "${args[@]}"
@@ -235,3 +249,5 @@ jobs:
           INPUT_ARGS: ${{ inputs.args }}
           INPUT_TARGET: ${{ inputs.target }}
           INPUT_DOCTEST: ${{ inputs.doctest }}
+          INPUT_UNQUALIFIED_LOCAL_IMPORTS: ${{ inputs.unqualified_local_imports }}
+          INPUT_FUZZY_PROVENANCE_CASTS: ${{ inputs.fuzzy_provenance_casts }}

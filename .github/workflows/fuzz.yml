@@ -103,13 +103,13 @@ jobs:
         working-directory: fuzz
         if: github.event_name == 'schedule' && always()
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: libfuzzer-artifacts
           path: libfuzzer-artifacts.tar.xz
         if: github.event_name == 'schedule' && always() && steps.archive.outputs.has-artifacts == 'true'
       - name: Upload corpus
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: libfuzzer-corpus
           path: libfuzzer-corpus.tar.xz
@@ -163,7 +163,7 @@ jobs:
         working-directory: fuzz
         if: github.event_name == 'schedule' && always()
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: afl-artifacts
           path: afl-artifacts.tar.xz
@@ -230,7 +230,7 @@ jobs:
         working-directory: fuzz
         if: github.event_name == 'schedule' && failure()
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: honggfuzz-artifacts
           path: honggfuzz-artifacts.tar.xz

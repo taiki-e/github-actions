@@ -188,7 +188,7 @@ jobs:
           TARGET: ${{ matrix.target }}
           BUILD_TOOL: ${{ matrix.build-tool }}
       # For debugging
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.artifact-target.outputs.artifact-target }}
           path: ${{ needs.prepare.outputs.bin }}-${{ steps.artifact-target.outputs.artifact-target }}.*

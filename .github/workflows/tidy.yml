@@ -67,6 +67,10 @@ on:
       docs-args:
         required: false
         type: string
+      codeql:
+        required: false
+        type: boolean
+        default: true
       codegen:
         required: false
         type: boolean
@@ -293,6 +297,16 @@ jobs:
       rust: ${{ inputs.rust }}
       target: ${{ inputs.docs-target }}
       args: ${{ inputs.docs-args }}
+
+  codeql:
+    needs: prepare
+    if: inputs.codeql
+    uses: ./.github/workflows/codeql.yml
+    permissions:
+      contents: read
+      security-events: write # for github/codeql-action/*
+    with:
+      rust: ${{ inputs.rust }}
 
   codegen:
     needs: prepare

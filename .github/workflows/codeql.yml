@@ -1,0 +1,122 @@
+# CodeQL analysis.
+#
+# There is no stability guarantee for this workflow, since it's supposed to only be
+# used in infra managed by us.
+#
+# Note: We also call this workflow from tidy.yml.
+#
+# Usage:
+#
+# ```yml
+#   codeql:
+#     uses: taiki-e/github-actions/.github/workflows/codeql.yml@main
+# ```
+#
+# See "on.workflow_call.inputs" below for input options.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      rust:
+        required: false
+        type: string
+        default: nightly
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+  # Reusable workflows cannot inherit environment variables.
+  ATOMIC_MAYBE_UNINIT_DENY_WARNINGS: 1
+  CARGO_HACK_DENY_WARNINGS: 1
+  CARGO_LLVM_COV_DENY_WARNINGS: 1
+  CARGO_MINIMAL_VERSIONS_DENY_WARNINGS: 1
+  CARGO_NO_DEV_DEPS_DENY_WARNINGS: 1
+  CONST_FN_DENY_WARNINGS: 1
+  PORTABLE_ATOMIC_DENY_WARNINGS: 1
+  SEMIHOSTING_DENY_WARNINGS: 1
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
+
+jobs:
+  prepare:
+    name: codeql (prepare)
+    runs-on: ubuntu-slim
+    timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - name: Prepare
+        id: prepare
+        run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          json='{"language":"actions","build-mode":"none"}'
+          # https://docs.github.com/en/enterprise-cloud@latest/code-security/how-tos/scan-code-for-vulnerabilities/configure-code-scanning/customizing-your-advanced-setup-for-code-scanning#changing-the-languages-that-are-analyzed
+          # https://codeql.github.com/docs/codeql-overview/supported-languages-and-frameworks/
+          if [[ -n "$(git ls-files '*.cpp' '*.c++' '*.cxx' '*.hpp' '*.hh' '*.h++' '*.hxx' '*.c' '*.cc' '*.h')" ]]; then
+            json+=,'{"language":"c-cpp","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.cs')" ]]; then
+            json+=,'{"language":"csharp","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.go')" ]]; then
+            json+=,'{"language":"go","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.java' '*.kt')" ]]; then
+            json+=,'{"language":"java-kotlin","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.js' '*.jsx' '*.mjs' '*.es' '*.es6' '*.htm' '*.html' '*.xhtm' '*.xhtml' '*.ejs' '*.ts' '*.tsx' '*.mts' '*.cts')" ]]; then
+            json+=,'{"language":"javascript-typescript","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.py')" ]]; then
+            json+=,'{"language":"python","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.rb')" ]]; then
+            json+=,'{"language":"ruby","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.rs')" ]]; then
+            json+=,'{"language":"rust","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.swift')" ]]; then
+            json+=,'{"language":"swift","build-mode":"none"}'
+          fi
+          printf 'matrix=%s\n' '{"include":['"${json}"']}' >>"${GITHUB_OUTPUT}"
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+
+  codeql:
+    name: codeql (${{ matrix.language }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write # for github/codeql-action/*
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
+        if: matrix.language == 'rust'
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}

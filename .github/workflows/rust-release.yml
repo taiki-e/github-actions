@@ -178,6 +178,16 @@ jobs:
         run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
           bail() {
             printf '::error::%s\n' "$*"
             exit 1
@@ -217,7 +227,7 @@ jobs:
           printf '%s\n' "release-date=${release_date}" >>"${GITHUB_OUTPUT}"
 
           # Get the current revision.
-          git fetch origin &>/dev/null
+          retry git fetch origin &>/dev/null
           rev=$(git rev-parse HEAD)
           printf '%s\n' "rev: ${rev}"
           printf '%s\n' "rev=${rev}" >>"${GITHUB_OUTPUT}"
@@ -280,7 +290,7 @@ jobs:
           fi
 
           changed_paths=()
-          git fetch origin --tags &>/dev/null
+          retry git fetch origin --tags &>/dev/null
           tags=$(git --no-pager tag | { grep -E "^${tag_prefix}[0-9]+" || true; })
           if [[ -n "${tags}" ]]; then
             printf 'has-tags=true\n' >>"${GITHUB_OUTPUT}"
@@ -498,7 +508,7 @@ jobs:
           release_date="${RELEASE_DATE}"
 
           # Make sure the current revision is same as prepare step.
-          git fetch origin &>/dev/null
+          retry git fetch origin &>/dev/null
           rev=$(git rev-parse HEAD)
           if [[ "${rev}" != "${PREPARE_REV}" ]]; then
             bail "revision difference between prepare step"

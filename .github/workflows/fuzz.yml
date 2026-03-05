@@ -1,4 +1,4 @@
-# Build fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`, and run fuzzing with them on scheduled run.
+# Run fuzzing with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`.
 #
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
@@ -22,7 +22,6 @@ on:
         required: false
         type: string
         default: nightly
-      # TODO: more inputs
 
 env:
   CARGO_INCREMENTAL: 0
@@ -42,7 +41,8 @@ env:
   CONST_FN_DENY_WARNINGS: 1
   PORTABLE_ATOMIC_DENY_WARNINGS: 1
   SEMIHOSTING_DENY_WARNINGS: 1
-  FUZZ_MAX_TOTAL_TIME: 300 # 5 minute
+  FUZZ_MAX_TOTAL_TIME_SCHEDULE: 300 # 5 minute
+  FUZZ_MAX_TOTAL_TIME_NORMAL: 60 # 1 minute
 
 defaults:
   run:
@@ -55,23 +55,24 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: taiki-e/github-actions/free-device-space@main
-        if: github.event_name == 'schedule'
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
+      - run: |
+          if [[ ${{ github.event_name }} == 'schedule' ]]; then
+            printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"
+          else
+            printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_NORMAL}" >>"${GITHUB_ENV}"
+          fi
       - uses: taiki-e/cache-cargo-install-action@v3
         with:
           tool: cargo-fuzz
-      - name: Build
-        run: cargo fuzz build --features libfuzzer
-      # On scheduled job, run fuzzer $FUZZ_MAX_TOTAL_TIME seconds per target.
       - name: Cache output
         uses: actions/cache@v5
         with:
           path: fuzz/out
           key: libfuzzer-out-${{ github.run_id }}
           restore-keys: libfuzzer-out-
-        if: github.event_name == 'schedule'
       - name: Fuzzing
         run: |
           ulimit -S -c unlimited
@@ -88,7 +89,6 @@ jobs:
           done
           rmdir -- fuzz/artifacts &>/dev/null || true
           rmdir -- fuzz/corpus &>/dev/null || true
-        if: github.event_name == 'schedule'
       - name: Archive artifacts
         id: archive
         run: |
@@ -101,19 +101,19 @@ jobs:
             printf 'has-corpus=true\n' >>"${GITHUB_OUTPUT}"
           fi
         working-directory: fuzz
-        if: github.event_name == 'schedule' && always()
+        if: always()
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: libfuzzer-artifacts
           path: libfuzzer-artifacts.tar.xz
-        if: github.event_name == 'schedule' && always() && steps.archive.outputs.has-artifacts == 'true'
+        if: always() && steps.archive.outputs.has-artifacts == 'true'
       - name: Upload corpus
         uses: actions/upload-artifact@v7
         with:
           name: libfuzzer-corpus
           path: libfuzzer-corpus.tar.xz
-        if: github.event_name == 'schedule' && always() && steps.archive.outputs.has-corpus == 'true'
+        if: always() && steps.archive.outputs.has-corpus == 'true'
 
   afl:
     runs-on: ubuntu-latest
@@ -121,23 +121,26 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: taiki-e/github-actions/free-device-space@main
-        if: github.event_name == 'schedule'
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
+      - run: |
+          if [[ ${{ github.event_name }} == 'schedule' ]]; then
+            printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"
+          else
+            printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_NORMAL}" >>"${GITHUB_ENV}"
+          fi
       # We cannot use cache for cargo-afl because afl.rs requires the cargo-afl binary and afl library to be built with the same compiler version.
       - run: cargo install cargo-afl --debug --locked
       - name: Build
         run: cargo afl build --release --features afl
         working-directory: fuzz
-      # On scheduled job, run fuzzer $FUZZ_MAX_TOTAL_TIME seconds per target.
       - name: Cache output
         uses: actions/cache@v5
         with:
           path: fuzz/out
           key: afl-out-${{ github.run_id }}
           restore-keys: afl-out-
-        if: github.event_name == 'schedule'
       - name: Fuzzing
         run: |
           ulimit -S -c unlimited
@@ -152,7 +155,6 @@ jobs:
             fi
           done
         working-directory: fuzz
-        if: github.event_name == 'schedule'
       - name: Archive artifacts
         id: archive
         run: |
@@ -161,13 +163,13 @@ jobs:
             printf 'has-artifacts=true\n' >>"${GITHUB_OUTPUT}"
           fi
         working-directory: fuzz
-        if: github.event_name == 'schedule' && always()
+        if: always()
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: afl-artifacts
           path: afl-artifacts.tar.xz
-        if: github.event_name == 'schedule' && always() && steps.archive.outputs.has-artifacts == 'true'
+        if: always() && steps.archive.outputs.has-artifacts == 'true'
 
   honggfuzz:
     runs-on: ubuntu-latest
@@ -175,29 +177,28 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: taiki-e/github-actions/free-device-space@main
-        if: github.event_name == 'schedule'
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
-      - run: sudo apt-get -o Acquire::Retries=10 -qq update && sudo apt-get -o Acquire::Retries=10 -o Dpkg::Use-Pty=0 install -y --no-install-recommends binutils-dev libunwind8-dev
+      - run: |
+          if [[ ${{ github.event_name }} == 'schedule' ]]; then
+            printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"
+          else
+            printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_NORMAL}" >>"${GITHUB_ENV}"
+          fi
+      - run: |
+          sudo apt-get -o Acquire::Retries=10 -qq update
+          sudo apt-get -o Acquire::Retries=10 -o Dpkg::Use-Pty=0 install -y --no-install-recommends binutils-dev libunwind8-dev
       - uses: taiki-e/cache-cargo-install-action@v3
         with:
           # TODO: Pass --no-default-features
           tool: honggfuzz
-      - name: Build
-        run: |
-          HFUZZ_BUILD_ARGS="--features honggfuzz" \
-            RUSTFLAGS="${RUSTFLAGS:-} -Z sanitizer=address" \
-            cargo hfuzz build
-        working-directory: fuzz
-      # On scheduled job, run fuzzer $FUZZ_MAX_TOTAL_TIME seconds per target.
       - name: Cache output
         uses: actions/cache@v5
         with:
           path: fuzz/hfuzz_workspace
           key: honggfuzz-out-${{ github.run_id }}
           restore-keys: honggfuzz-out-
-        if: github.event_name == 'schedule'
       - name: Fuzzing
         run: |
           ulimit -S -c unlimited
@@ -219,7 +220,6 @@ jobs:
             mv -- "hfuzz_workspace_tmp/${target}/input" "hfuzz_workspace/${target}"
           done
         working-directory: fuzz
-        if: github.event_name == 'schedule'
       - name: Archive artifacts
         id: archive
         run: |
@@ -228,10 +228,10 @@ jobs:
             printf 'has-artifacts=true\n' >>"${GITHUB_OUTPUT}"
           fi
         working-directory: fuzz
-        if: github.event_name == 'schedule' && failure()
+        if: failure()
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: honggfuzz-artifacts
           path: honggfuzz-artifacts.tar.xz
-        if: github.event_name == 'schedule' && failure()
+        if: failure() && steps.archive.outputs.has-artifacts == 'true'

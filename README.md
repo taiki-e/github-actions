@@ -17,7 +17,7 @@ supposed to only be used in infra managed by us.
 - [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
 - [**clippy**](.github/workflows/clippy.yml): Run `cargo clippy` and apply clippy for doctest.
 - [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
-- [**fuzz**](.github/workflows/fuzz.yml): Build fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`, and run fuzzing with them on scheduled run.
+- [**fuzz**](.github/workflows/fuzz.yml): Run fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`.
 - [**gen**](.github/workflows/gen.yml): Run code generator and open PR if new change available.
 - [**miri**](.github/workflows/miri.yml): Run `cargo miri test` in strict mode.
 - [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).

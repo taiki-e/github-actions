@@ -39,7 +39,7 @@
       "type": "pull_request",
       "parameters": {
         "required_approving_review_count": 0,
-        "dismiss_stale_reviews_on_push": false,
+        "dismiss_stale_reviews_on_push": true,
         "required_reviewers": [],
         "require_code_owner_review": false,
         "require_last_push_approval": false,
@@ -63,6 +63,30 @@
           {
             "context": "tidy / tidy",
             "integration_id": 15368
+          },
+          {
+            "context": "tidy / codeql / codeql (actions)",
+            "integration_id": 15368
+          },
+          {
+            "context": "tidy / codeql / codeql (prepare)",
+            "integration_id": 15368
+          },
+          {
+            "context": "CodeQL",
+            "integration_id": 57789
+          }
+        ]
+      }
+    },
+    {
+      "type": "code_scanning",
+      "parameters": {
+        "code_scanning_tools": [
+          {
+            "tool": "CodeQL",
+            "security_alerts_threshold": "high_or_higher",
+            "alerts_threshold": "errors"
           }
         ]
       }

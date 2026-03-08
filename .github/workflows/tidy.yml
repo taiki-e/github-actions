@@ -196,6 +196,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: shellcheck,shfmt,zizmor${{ needs.prepare.outputs.dockerfile == 'true' && ',parse-dockerfile' || '' }}
+          fallback: none
       - run: cat -- tools/.tidy-check-license-headers
       - run: cat -- .cspell.json
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"
@@ -275,6 +276,7 @@ jobs:
         with:
           # cargo-no-dev-deps is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
           tool: cargo-deny,cargo-no-dev-deps
+          fallback: none
       - run: |
           args=(--workspace --all-features)
           if [[ -n "${INPUT_ARGS}" ]]; then

@@ -170,6 +170,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: parse-changelog
+          fallback: none
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}
@@ -464,6 +465,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: parse-changelog
+          fallback: none
       - uses: taiki-e/github-actions/install-rust@main
         with:
           toolchain: ${{ inputs.rust }}

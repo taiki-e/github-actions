@@ -123,6 +123,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-hack
+          fallback: none
       - run: |
           printf 'ALL_FEATURES=--all-features\n' >>"${GITHUB_ENV}"
         if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')

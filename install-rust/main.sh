@@ -42,7 +42,10 @@ if type -P rustup; then
   g retry rustup toolchain add "${toolchain}" --no-self-update "${rustup_args[@]}"
   g rustup default "${toolchain}"
 else
-  retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 https://sh.rustup.rs | sh -s -- -y --default-toolchain "${toolchain}" --no-modify-path "${rustup_args[@]}"
+  retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 -o rustup-init https://sh.rustup.rs
+  chmod +x ./rustup-init
+  retry ./rustup-init -y --default-toolchain "${toolchain}" --no-modify-path "${rustup_args[@]}"
+  rm -- ./rustup-init
   home="${HOME}"
   case "$(uname -s)" in
     MINGW* | MSYS* | CYGWIN* | Windows_NT)

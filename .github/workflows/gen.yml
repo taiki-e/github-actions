@@ -129,7 +129,7 @@ jobs:
 
             This will be auto-merged when CI has passed because this is an auto-generated PR in a defined format and is usually considered no additional review is required.
           branch: ${{ inputs.branch }}
-          token: ${{ secrets.CREATE_PR_TOKEN }}
+          token: ${{ secrets.CREATE_PR_TOKEN }} # zizmor: ignore[secrets-outside-env] # TODO
         if: (inputs.automerge || steps.run.outputs.codegen-commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Notify PR author by assigning PR
         run: gh pr edit --add-assignee taiki-e "${PR_NUMBER:?}"
@@ -140,7 +140,7 @@ jobs:
       - name: Enable auto-merge for auto-generated PR
         run: gh pr merge --rebase --auto "${PR_NUMBER:?}"
         env:
-          GITHUB_TOKEN: ${{ secrets.CREATE_PR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CREATE_PR_TOKEN }} # zizmor: ignore[secrets-outside-env] # TODO
           PR_NUMBER: ${{ steps.create-pull-request.outputs.pull-request-number }}
         if: inputs.automerge && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false' && steps.create-pull-request.outputs.pull-request-operation == 'created'
       - name: Approve auto-generated PR for auto-merge

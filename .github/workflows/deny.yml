@@ -1,0 +1,80 @@
+# Run `cargo deny` in a way that avoids non-ideal behaviors.
+#
+# There is no stability guarantee for this workflow, since it's supposed to only be
+# used in infra managed by us.
+#
+# Note: We also call this workflow from tidy.yml.
+#
+# Usage:
+#
+# ```yml
+#   deny:
+#     uses: taiki-e/github-actions/.github/workflows/deny.yml@main
+# ```
+#
+# See "on.workflow_call.inputs" below for input options.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      rust:
+        required: false
+        type: string
+        default: nightly
+      args:
+        required: false
+        type: string
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+  # Reusable workflows cannot inherit environment variables.
+  ATOMIC_MAYBE_UNINIT_DENY_WARNINGS: 1
+  CARGO_HACK_DENY_WARNINGS: 1
+  CARGO_LLVM_COV_DENY_WARNINGS: 1
+  CARGO_MINIMAL_VERSIONS_DENY_WARNINGS: 1
+  CARGO_NO_DEV_DEPS_DENY_WARNINGS: 1
+  CONST_FN_DENY_WARNINGS: 1
+  PORTABLE_ATOMIC_DENY_WARNINGS: 1
+  SEMIHOSTING_DENY_WARNINGS: 1
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
+
+jobs:
+  deny:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
+      - uses: taiki-e/install-action@v2
+        with:
+          # cargo-no-dev-deps is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
+          tool: cargo-deny,cargo-no-dev-deps
+          fallback: none
+      - run: |
+          args=(--workspace --all-features)
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
+          fi
+          (
+            set -x
+            cargo no-dev-deps --no-private deny "${args[@]}" check
+          )
+        env:
+          INPUT_ARGS: ${{ inputs.args }}

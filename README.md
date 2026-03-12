@@ -16,6 +16,7 @@ supposed to only be used in infra managed by us.
 
 - [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
 - [**clippy**](.github/workflows/clippy.yml): Run `cargo clippy` and apply clippy for doctest.
+- [**deny**](.github/workflows/deny.yml): Run `cargo deny` in a way that avoids non-ideal behaviors.
 - [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
 - [**fuzz**](.github/workflows/fuzz.yml): Run fuzzing code with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`.
 - [**gen**](.github/workflows/gen.yml): Run code generator and open PR if new change available.

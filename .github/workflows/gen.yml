@@ -12,8 +12,7 @@
 #     uses: taiki-e/github-actions/.github/workflows/gen.yml@main
 #     permissions:
 #       contents: write # for creating branch for pr
-#       pull-requests: write # for gh pr edit --add-assignee
-#       repository-projects: read # for gh pr edit --add-assignee
+#       pull-requests: write # unused (used in `automerge: true` case)
 #     secrets: inherit
 # ```
 #
@@ -23,7 +22,6 @@
 #     permissions:
 #       contents: write # for creating branch for pr
 #       pull-requests: write # for gh pr review --approve
-#       repository-projects: read # used in non-automerge case
 #     secrets: inherit
 #     with:
 #       automerge: true
@@ -103,8 +101,7 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write # for creating branch for pr
-      pull-requests: write # for gh pr edit --add-assignee / gh pr review --approve
-      repository-projects: read # for gh pr edit --add-assignee
+      pull-requests: write # for gh pr review --approve
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: taiki-e/github-actions/free-device-space@main
@@ -157,12 +154,6 @@ jobs:
           token: ${{ steps.pr-token.outputs.token }} # zizmor: ignore[secrets-outside-env] # TODO
           branch-token: ${{ secrets.GITHUB_TOKEN }}
         if: (inputs.automerge || steps.run.outputs.codegen-commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
-      - name: Notify PR author by assigning PR
-        run: gh pr edit --add-assignee taiki-e "${PR_NUMBER:?}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.create-pull-request.outputs.pull-request-number }}
-        if: (!inputs.automerge) && steps.run.outputs.codegen-commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Enable auto-merge for auto-generated PR
         run: gh pr merge --rebase --auto "${PR_NUMBER:?}"
         env:

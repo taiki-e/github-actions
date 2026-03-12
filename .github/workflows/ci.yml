@@ -25,7 +25,7 @@ jobs:
   tidy:
     uses: taiki-e/github-actions/.github/workflows/tidy.yml@main
     permissions:
-      contents: read
+      contents: write # for creating branch for pr
       pull-requests: write # for gh pr edit --add-assignee
       repository-projects: read # for gh pr edit --add-assignee
       security-events: write # for github/codeql-action/*

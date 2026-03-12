@@ -59,7 +59,7 @@ jobs:
         with:
           toolchain: ${{ inputs.rust }}
       - run: |
-          if [[ ${{ github.event_name }} == 'schedule' ]]; then
+          if [[ "${GITHUB_EVENT_NAME}" == 'schedule' ]]; then
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"
           else
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_NORMAL}" >>"${GITHUB_ENV}"
@@ -125,7 +125,7 @@ jobs:
         with:
           toolchain: ${{ inputs.rust }}
       - run: |
-          if [[ ${{ github.event_name }} == 'schedule' ]]; then
+          if [[ "${GITHUB_EVENT_NAME}" == 'schedule' ]]; then
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"
           else
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_NORMAL}" >>"${GITHUB_ENV}"
@@ -181,7 +181,7 @@ jobs:
         with:
           toolchain: ${{ inputs.rust }}
       - run: |
-          if [[ ${{ github.event_name }} == 'schedule' ]]; then
+          if [[ "${GITHUB_EVENT_NAME}" == 'schedule' ]]; then
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"
           else
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_NORMAL}" >>"${GITHUB_ENV}"

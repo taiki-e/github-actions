@@ -133,7 +133,7 @@ jobs:
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           args=()
-          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
+          if [[ "${GITHUB_EVENT_NAME}" == 'pull_request' ]]; then
             args+=(--version-step 2)
           fi
           version_range='..'

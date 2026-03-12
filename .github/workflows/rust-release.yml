@@ -8,11 +8,18 @@
 #
 # Setup (common):
 #
-# 1. Visit https://github.com/<owner>/<repo>/settings/environments
+# 1. Visit https://github.com/settings/personal-access-tokens/new
+#    and cerate an PAT with "Read and write" permission on "Contents"
+#    for the target repository.
+#
+# 2. Visit https://github.com/<owner>/<repo>/settings/environments
 #    and create "release" environment,
 #    and set "Deployment protection rules" as needed.
 #
-# 2. If only selected actions are allowed,
+#    Then create a environment secret named "PUSH_TOKEN"
+#    with the API token created above.
+#
+# 3. If only selected actions are allowed,
 #    Visit https://github.com/<owner>/<repo>/settings/actions
 #    and add the followings to allowed actions:
 #
@@ -655,9 +662,8 @@ jobs:
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
           PREPARE_REV: ${{ needs.prepare.outputs.rev }}
-          # Re-use CREATE_PR_TOKEN which has superset of the permission needed here.
           # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.
-          PUSH_TOKEN: ${{ secrets.CREATE_PR_TOKEN }}
+          PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
       - uses: taiki-e/create-gh-release-action@v1
         with:
           changelog: ${{ inputs.changelog }}

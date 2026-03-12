@@ -113,7 +113,7 @@ jobs:
       - name: Generate Cargo.lock
         run: cargo generate-lockfile
         if: inputs.rust-cache
-      - uses: taiki-e/rust-cache@c676846f29d98ff6b0106d3608c7ffd4048af17b # v2.9.0
+      - uses: taiki-e/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           cache-all-crates: 'true'
         if: inputs.rust-cache

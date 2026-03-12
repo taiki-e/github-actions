@@ -9,7 +9,7 @@
 # Setup (common):
 #
 # 1. Visit https://github.com/settings/personal-access-tokens/new
-#    and cerate an PAT with "Read and write" permission on "Contents"
+#    and create an PAT with "Read and write" permission on "Contents"
 #    for the target repository.
 #
 # 2. Visit https://github.com/<owner>/<repo>/settings/environments

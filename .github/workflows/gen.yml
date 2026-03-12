@@ -12,9 +12,21 @@
 #     uses: taiki-e/github-actions/.github/workflows/gen.yml@main
 #     permissions:
 #       contents: write # for creating branch for pr
-#       pull-requests: write # for gh pr edit --add-assignee / gh pr review --approve
+#       pull-requests: write # for gh pr edit --add-assignee
 #       repository-projects: read # for gh pr edit --add-assignee
 #     secrets: inherit
+# ```
+#
+# ```yml
+#   gen:
+#     uses: taiki-e/github-actions/.github/workflows/gen.yml@main
+#     permissions:
+#       contents: write # for creating branch for pr
+#       pull-requests: write # for gh pr review --approve
+#       repository-projects: read # used in non-automerge case
+#     secrets: inherit
+#     with:
+#       automerge: true
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.

@@ -231,7 +231,7 @@ jobs:
       - uses: actions/create-github-app-token@v2
         id: pr-token
         with:
-          app-id: ${{ vars.PR_TOKEN_APP_CLIENT_ID }}
+          app-id: Iv23liTXn5nJSj4JzqMb # https://github.com/apps/taiki-e-automated-pr
           private-key: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] # TODO
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Create PR

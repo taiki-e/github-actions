@@ -137,6 +137,12 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
         if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
+      - uses: actions/create-github-app-token@v2
+        id: pr-token
+        with:
+          app-id: ${{ vars.PR_TOKEN_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] # TODO
+        if: (inputs.automerge || steps.run.outputs.codegen-commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Create PR
         id: create-pull-request
         uses: peter-evans/create-pull-request@v8
@@ -148,7 +154,7 @@ jobs:
             This will be auto-merged when CI has passed because this is an auto-generated PR in a defined format and is usually considered no additional review is required.
           branch: ${{ inputs.branch }}
           # Note that if we use secrets.GITHUB_TOKEN, the opened PR cannot trigger workflows.
-          token: ${{ secrets.CREATE_PR_TOKEN }} # zizmor: ignore[secrets-outside-env] # TODO
+          token: ${{ steps.pr-token.outputs.token }} # zizmor: ignore[secrets-outside-env] # TODO
           branch-token: ${{ secrets.GITHUB_TOKEN }}
         if: (inputs.automerge || steps.run.outputs.codegen-commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Notify PR author by assigning PR
@@ -160,7 +166,7 @@ jobs:
       - name: Enable auto-merge for auto-generated PR
         run: gh pr merge --rebase --auto "${PR_NUMBER:?}"
         env:
-          GITHUB_TOKEN: ${{ secrets.CREATE_PR_TOKEN }} # zizmor: ignore[secrets-outside-env] # TODO
+          GITHUB_TOKEN: ${{ steps.pr-token.outputs.token }} # zizmor: ignore[secrets-outside-env] # TODO
           PR_NUMBER: ${{ steps.create-pull-request.outputs.pull-request-number }}
         if: inputs.automerge && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false' && steps.create-pull-request.outputs.pull-request-operation == 'created'
       - name: Approve auto-generated PR for auto-merge

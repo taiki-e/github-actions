@@ -36,6 +36,14 @@ on:
         required: false
         type: boolean
         default: true
+      unqualified_local_imports:
+        required: false
+        type: boolean
+        default: true
+      fuzzy_provenance_casts:
+        required: false
+        type: boolean
+        default: true
       check-external-types:
         required: false
         type: boolean
@@ -256,6 +264,8 @@ jobs:
       target: ${{ inputs.clippy-target }}
       args: ${{ inputs.clippy-args }}
       doctest: ${{ inputs.clippy-doctest }}
+      unqualified_local_imports: ${{ inputs.unqualified_local_imports }}
+      fuzzy_provenance_casts: ${{ inputs.fuzzy_provenance_casts }}
 
   check-external-types:
     needs: prepare

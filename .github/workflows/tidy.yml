@@ -99,6 +99,10 @@ on:
         required: false
         type: string
         default: codegen
+      all-immutable-release:
+        required: false
+        type: boolean
+        default: true
 
 env:
   CARGO_INCREMENTAL: 0
@@ -213,7 +217,8 @@ jobs:
       - run: tools/tidy.sh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
+      - name: Check ruleset
+        run: |
           ruleset=$(gh ruleset list)
           grep -Eq 'Additional branch protection for non-admin roles\b.*\bactive' <<<"${ruleset}"
           grep -Eq 'Branch protection for all roles\b.*\bactive' <<<"${ruleset}"
@@ -221,6 +226,46 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.repository_owner == 'taiki-e'
+      - name: Check release immutability
+        run: |
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
+          set +x
+          page=1
+          not_immutable=''
+          while true; do
+            releases=$(
+              retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 \
+                -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                -H 'Accept: application/vnd.github+json' \
+                -H 'X-GitHub-Api-Version: 2022-11-28' \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100&page=${page}"
+            )
+            t=$(jq -r '.[] | select(.immutable == false and .draft == false) | .tag_name' <<<"${releases}")
+            if [[ -n "${t}" ]]; then
+              not_immutable+="${t}"$'\n'
+            fi
+            len=$(jq '. | length' <<<"${releases}")
+            if [[ "${len}" -lt 100 ]]; then
+              break
+            fi
+            _=$((page++))
+          done
+          if [[ -n "${not_immutable}" ]]; then
+            printf '%s\n%s' "::error::non-immutable releases found" "${not_immutable}"
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: inputs.all-immutable-release && github.repository_owner == 'taiki-e'
       - run: |
           [[ ! -f tools/cspell-dict.sh ]] || tools/cspell-dict.sh clean
       - name: Handle diff

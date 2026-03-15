@@ -670,7 +670,7 @@ jobs:
           title: ${{ inputs.title }}
           branch: ${{ inputs.branch }}
           prefix: ${{ inputs.prefix }}
-          draft: ${{ inputs.draft }}
+          draft: true
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: refs/tags/${{ needs.prepare.outputs.tag }}
       - uses: rust-lang/crates-io-auth-action@v1
@@ -709,5 +709,10 @@ jobs:
           INPUT_ARGS: ${{ inputs.args }}
           INPUT_CRATES: ${{ needs.prepare.outputs.crates }}
           INPUT_TARGET: ${{ inputs.target }}
+      - run: gh release edit "${TAG}" --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        if: (!inputs.draft)
     outputs:
       rev: ${{ steps.push.outputs.rev }}

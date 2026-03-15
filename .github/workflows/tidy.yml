@@ -260,7 +260,8 @@ jobs:
             _=$((page++))
           done
           if [[ -n "${not_immutable}" ]]; then
-            printf '%s\n%s' "::error::non-immutable releases found" "${not_immutable}"
+            printf '%s\n' "::error::non-immutable releases found"
+            LC_ALL=C sort -Vr <<<"${not_immutable}"
             exit 1
           fi
         env:

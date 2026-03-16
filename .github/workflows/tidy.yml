@@ -221,6 +221,7 @@ jobs:
         run: |
           ruleset=$(gh ruleset list)
           grep -Eq 'Additional branch protection for non-admin roles\b.*\bactive' <<<"${ruleset}"
+          grep -Eq 'Additional tag protection for non-admin roles\b.*\bactive' <<<"${ruleset}"
           grep -Eq 'Branch protection for all roles\b.*\bactive' <<<"${ruleset}"
           grep -Eq 'Tag protection for all roles\b.*\bactive' <<<"${ruleset}"
         env:

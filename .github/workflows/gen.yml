@@ -67,10 +67,6 @@ on:
         required: false
         type: string
         default: nightly
-      rust-cache:
-        required: false
-        type: boolean
-        default: false
 
 env:
   CARGO_INCREMENTAL: 0
@@ -110,13 +106,6 @@ jobs:
         with:
           toolchain: ${{ inputs.rust }}
         if: inputs.install-rust
-      - name: Generate Cargo.lock
-        run: cargo generate-lockfile
-        if: inputs.rust-cache
-      - uses: taiki-e/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
-        with:
-          cache-all-crates: 'true'
-        if: inputs.rust-cache
       - id: run
         run: |
           bash "${SCRIPT}"

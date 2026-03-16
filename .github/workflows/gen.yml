@@ -134,7 +134,7 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
         if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: pr-token
         with:
           app-id: Iv23liTXn5nJSj4JzqMb # https://github.com/apps/taiki-e-automated-pr

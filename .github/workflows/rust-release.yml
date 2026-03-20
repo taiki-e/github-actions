@@ -519,7 +519,9 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment: release
+    environment:
+      name: release
+      deployment: false
     permissions:
       contents: write # for taiki-e/create-gh-release-action
       id-token: write # for rust-lang/crates-io-auth-action

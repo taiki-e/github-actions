@@ -181,11 +181,6 @@ on:
       bin-target:
         required: false
         type: string
-    outputs:
-      ref:
-        value: refs/tags/${{ jobs.prepare.outputs.tag }}
-      rev:
-        value: ${{ jobs.release.outputs.rev }}
 
 env:
   CARGO_INCREMENTAL: 0

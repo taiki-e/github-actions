@@ -52,7 +52,7 @@
 #
 # (Please fill `<owner>` with the actual repository owner name.)
 #
-# ```yml
+# ```yaml
 # on:
 #   workflow_dispatch:
 #     inputs:
@@ -78,7 +78,7 @@
 #
 # Or:
 #
-# ```yml
+# ```yaml
 # on:
 #   workflow_dispatch:
 #     inputs:

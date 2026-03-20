@@ -7,7 +7,7 @@
 #
 # Usage:
 #
-# ```yml
+# ```yaml
 #   docs:
 #     uses: taiki-e/github-actions/.github/workflows/docs.yml@main
 # ```

@@ -7,7 +7,7 @@
 #
 # Usage:
 #
-# ```yml
+# ```yaml
 #   gen:
 #     uses: taiki-e/github-actions/.github/workflows/gen.yml@main
 #     permissions:
@@ -16,7 +16,7 @@
 #     secrets: inherit
 # ```
 #
-# ```yml
+# ```yaml
 #   gen:
 #     uses: taiki-e/github-actions/.github/workflows/gen.yml@main
 #     permissions:

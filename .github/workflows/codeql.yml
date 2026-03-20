@@ -7,7 +7,7 @@
 #
 # Usage:
 #
-# ```yml
+# ```yaml
 #   codeql:
 #     uses: taiki-e/github-actions/.github/workflows/codeql.yml@main
 # ```

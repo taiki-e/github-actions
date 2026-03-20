@@ -7,7 +7,7 @@
 #
 # Usage:
 #
-# ```yml
+# ```yaml
 #   deny:
 #     uses: taiki-e/github-actions/.github/workflows/deny.yml@main
 # ```

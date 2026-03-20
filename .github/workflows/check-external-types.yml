@@ -7,7 +7,7 @@
 #
 # Usage:
 #
-# ```yml
+# ```yaml
 #   check-external-types:
 #     uses: taiki-e/github-actions/.github/workflows/check-external-types.yml@main
 # ```

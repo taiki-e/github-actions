@@ -5,7 +5,7 @@
 #
 # Usage:
 #
-# ```yml
+# ```yaml
 #   miri:
 #     uses: taiki-e/github-actions/.github/workflows/miri.yml@main
 # ```

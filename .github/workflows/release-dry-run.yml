@@ -5,7 +5,7 @@
 #
 # Usage:
 #
-# ```yml
+# ```yaml
 #   release-dry-run:
 #     uses: taiki-e/github-actions/.github/workflows/release-dry-run.yml@main
 # ```

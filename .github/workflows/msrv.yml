@@ -5,7 +5,7 @@
 #
 # Usage:
 #
-# ```yml
+# ```yaml
 #   msrv:
 #     uses: taiki-e/github-actions/.github/workflows/msrv.yml@main
 # ```

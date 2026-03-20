@@ -23,7 +23,7 @@ supposed to only be used in infra managed by us.
 - [**miri**](.github/workflows/miri.yml): Run `cargo miri test` in strict mode.
 - [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).
 - [**release-dry-run**](.github/workflows/release-dry-run.yml): Build Rust binaries based on release workflow.
-- [**rust-release**](.github/workflows/rust-release.yml): Create and push the release commit and tag, create GitHub release, and publish crates.
+- [**rust-release**](.github/workflows/rust-release.yml): Create and push the release commit and tag, publish crates, create GitHub release, and optionally upload binaries.
 - [**test**](.github/workflows/test.yml): Run `cargo test`, `cargo careful test`, `cargo hack build --feature-powerset`, and `cargo minimal-versions build`.
 - [**tidy**](.github/workflows/tidy.yml): Run various checks.
 

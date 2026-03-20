@@ -1,4 +1,4 @@
-# Create and push the release commit and tag, create GitHub release, and publish crates.
+# Create and push the release commit and tag, publish crates, create GitHub release, and optionally upload binaries.
 #
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
@@ -71,6 +71,7 @@
 #     permissions:
 #       contents: write # for taiki-e/create-gh-release-action
 #       id-token: write # for rust-lang/crates-io-auth-action
+#       attestations: write # unused (used when options for uploading binaries are set)
 #     secrets: inherit
 #     with:
 #       version: ${{ inputs.version }}
@@ -93,9 +94,39 @@
 #     permissions:
 #       contents: write # for taiki-e/create-gh-release-action
 #       id-token: write # for rust-lang/crates-io-auth-action
+#       attestations: write # unused (used when options for uploading binaries are set)
 #     secrets: inherit
 #     with:
 #       version: ${{ inputs.version }}
+# ```
+#
+# To upload binaries, you also need to set bin and bin-target:
+#
+# ```yaml
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: Version to be published
+#         required: true
+#         type: string
+#
+#   publish:
+#     if: github.repository_owner == '<owner>'
+#     uses: taiki-e/github-actions/.github/workflows/rust-release.yml@main
+#     permissions:
+#       contents: write # for taiki-e/create-gh-release-action / taiki-e/upload-rust-binary-action
+#       id-token: write # for rust-lang/crates-io-auth-action / actions/attest
+#       attestations: write # for actions/attest
+#     secrets: inherit
+#     with:
+#       version: ${{ inputs.version }}
+#       bin: <bin_name>
+#       bin-target: |
+#         x86_64-unknown-linux-gnu
+#         x86_64-unknown-linux-musl
+#         x86_64-apple-darwin
+#         x86_64-pc-windows-msvc
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.
@@ -144,10 +175,12 @@ on:
       prefix:
         required: false
         type: string
-      draft:
+      bin:
         required: false
-        type: boolean
-        default: false
+        type: string
+      bin-target:
+        required: false
+        type: string
     outputs:
       ref:
         value: refs/tags/${{ jobs.prepare.outputs.tag }}
@@ -422,12 +455,34 @@ jobs:
 
           crates=$(normalize_comma_or_space_separated "${INPUT_CRATES}")
           printf '%s\n' "crates=${crates}" >>"${GITHUB_OUTPUT}"
+
+          if [[ -n "${BIN}" ]]; then
+            if [[ -z "${BIN_TARGET}" ]]; then
+              bail "'bin' input option may only be used together with 'bin-target' input option"
+            fi
+            matrix=''
+            while read -rd, target; do
+              matrix+=',{"target":"'"${target}"'","os":"'
+              case "${target}" in
+                *-linux-gnu*) matrix+=ubuntu-22.04 ;;
+                *-apple-*) matrix+=macos-14 ;;
+                *-windows-*) matrix+=windows-2022 ;;
+                *) matrix+=ubuntu-latest ;;
+              esac
+              matrix+='"}'
+            done < <(normalize_comma_or_space_separated "${BIN_TARGET}")
+            printf '%s\n' "matrix={\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+          elif [[ -n "${BIN_TARGET}" ]]; then
+            bail "'bin-target' input option may only be used together with 'bin' input option"
+          fi
         env:
           VERSION: ${{ inputs.version }}
           TAG_PREFIX: ${{ inputs.tag-prefix }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
           INPUT_CRATES: ${{ inputs.crates }}
+          BIN: ${{ inputs.bin }}
+          BIN_TARGET: ${{ inputs.bin-target }}
       - name: Build crates to be published
         run: |
           IFS=$'\n\t'
@@ -458,6 +513,7 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       prev-version: ${{ steps.check.outputs.prev-version }}
       crates: ${{ steps.check.outputs.crates }}
+      matrix: ${{ steps.check.outputs.matrix }}
 
   release:
     needs: prepare
@@ -713,6 +769,92 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.prepare.outputs.tag }}
-        if: (!inputs.draft)
+        if: inputs.bin == ''
     outputs:
       rev: ${{ steps.push.outputs.rev }}
+
+  upload-assets:
+    name: upload-assets ${{ matrix.target }}
+    if: inputs.bin != ''
+    needs: [prepare, release]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions:
+      contents: write # for taiki-e/upload-rust-binary-action
+      id-token: write # for actions/attest
+      attestations: write # for actions/attest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      # TODO: Use checkout-action's option once https://github.com/taiki-e/checkout-action/issues/3 implemented.
+      - run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
+          bail() {
+            printf '::error::%s\n' "$*"
+            exit 1
+          }
+          retry git fetch origin --tags &>/dev/null
+          git checkout "${REF}"
+          # Make sure the current revision is same as release step.
+          rev=$(git rev-parse HEAD)
+          if [[ "${rev}" != "${RELEASE_REV}" ]]; then
+            bail "revision difference between release step"
+          fi
+        env:
+          REF: refs/tags/${{ needs.prepare.outputs.tag }}
+          RELEASE_REV: ${{ needs.release.outputs.rev }}
+      - uses: taiki-e/github-actions/install-rust@main
+        with:
+          toolchain: ${{ inputs.rust }}
+      - uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ matrix.target }}
+          runner: none
+      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
+        if: contains(matrix.target, '-windows-msvc')
+      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static -C link-self-contained=yes" >>"${GITHUB_ENV}"
+        if: contains(matrix.target, '-linux-musl')
+      # https://doc.rust-lang.org/rustc/platform-support.html
+      - run: printf 'MACOSX_DEPLOYMENT_TARGET=10.12\n' >>"${GITHUB_ENV}"
+        if: matrix.target == 'x86_64-apple-darwin'
+      - run: printf 'MACOSX_DEPLOYMENT_TARGET=11.0\n' >>"${GITHUB_ENV}"
+        if: matrix.target == 'aarch64-apple-darwin' || matrix.target == 'universal-apple-darwin'
+      - id: upload
+        uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: ${{ inputs.bin }}
+          target: ${{ matrix.target }}
+          tar: all
+          zip: windows
+          ref: refs/tags/${{ needs.prepare.outputs.tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/attest@v4
+        with:
+          subject-path: ${{ steps.upload.outputs.archive }}.*
+
+  github-release:
+    if: inputs.bin != ''
+    needs: [prepare, release, upload-assets]
+    runs-on: ubuntu-slim
+    timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
+    permissions:
+      contents: write # for gh release edit
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - run: gh release edit "${REF#refs/tags/}" --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF: refs/tags/${{ needs.prepare.outputs.tag }}

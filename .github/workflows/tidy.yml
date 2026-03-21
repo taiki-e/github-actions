@@ -216,16 +216,95 @@ jobs:
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: tools/tidy.sh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Check ruleset
         run: |
+          set +x
           ruleset=$(gh ruleset list)
-          grep -Eq 'Additional branch protection for non-admin roles\b.*\bactive' <<<"${ruleset}"
-          grep -Eq 'Additional tag protection for non-admin roles\b.*\bactive' <<<"${ruleset}"
-          grep -Eq 'Branch protection for all roles\b.*\bactive' <<<"${ruleset}"
-          grep -Eq 'Tag protection for all roles\b.*\bactive' <<<"${ruleset}"
+          rule_id=$(grep -E 'Additional branch protection for non-admin roles\b.*\bactive\b.*\b([4-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          rule=$(gh ruleset view "${rule_id}")
+          printf '%s\n' "${rule}"
+          grep -Eq '^- code_scanning: ' <<<"${rule}"
+          grep -Eq '^- non_fast_forward$' <<<"${rule}"
+          grep -Eq '^- pull_request: ' <<<"${rule}"
+          grep -Eq '^- required_status_checks: ' <<<"${rule}"
+          rule_id=$(grep -E 'Additional tag protection for non-admin roles\b.*\bactive\b.*\b([4-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          rule=$(gh ruleset view "${rule_id}")
+          printf '%s\n' "${rule}"
+          grep -Eq '^- ref_name: \[exclude: \[\]\] \[include: \[~ALL\]\]' <<<"${rule}"
+          grep -Eq '^- creation$' <<<"${rule}"
+          grep -Eq '^- deletion$' <<<"${rule}"
+          grep -Eq '^- non_fast_forward$' <<<"${rule}"
+          grep -Eq '^- update$' <<<"${rule}"
+          rule_id=$(grep -E 'Branch protection for all roles\b.*\bactive\b.*\b([1-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          rule=$(gh ruleset view "${rule_id}")
+          printf '%s\n' "${rule}"
+          grep -Eq '^This ruleset cannot be bypassed$' <<<"${rule}"
+          grep -Eq '^- deletion$' <<<"${rule}"
+          rule_id=$(grep -E 'Tag protection for all roles\b.*\bactive\b.*\b([3-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          rule=$(gh ruleset view "${rule_id}")
+          printf '%s\n' "${rule}"
+          grep -Eq '^This ruleset cannot be bypassed$' <<<"${rule}"
+          grep -Eq '^- deletion$' <<<"${rule}"
+          grep -Eq '^- non_fast_forward$' <<<"${rule}"
+          grep -Eq '^- update$' <<<"${rule}"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.repository_owner == 'taiki-e'
+      - name: Check tags
+        run: |
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
+          set +x
+          retry git fetch origin --tags &>/dev/null
+          tags=
+          if [[ -z "${tags}" ]]; then
+            exit 0
+          fi
+          all_branches=$(git branch -a | grep -F 'remotes/origin/' | { grep -Fv -e '->' || true; } | sed -E 's|^ *remotes/origin/||g')
+          ruleset=$(gh ruleset list)
+          rule_id1=$(grep -E 'Additional branch protection for non-admin roles\b.*\bactive\b.*\b([4-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          rule_id2=$(grep -E 'Branch protection for all roles\b.*\bactive\b.*\b([1-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          protected_branches=()
+          while IFS='' read -r branch; do
+            if gh ruleset check "${branch}" | { grep -Fq "${rule_id1}" || grep -Fq "${rule_id2}"; }; then
+              protected_branches+=("${branch}")
+            fi
+          done <<<"${all_branches}"
+          while IFS='' read -r tag; do
+            # Refs: https://github.com/zizmorcore/zizmor/blob/v1.23.1/crates/zizmor/src/audit/impostor_commit.rs
+            commit=$(git show refs/tags/"${tag}" --name-only --no-color | grep -E '^commit' | cut -d' ' -f2)
+            ok=''
+            for branch in "${protected_branches[@]}"; do
+              cmp=$(
+                retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 \
+                  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                  -H 'Accept: application/vnd.github+json' \
+                  -H 'X-GitHub-Api-Version: 2022-11-28' \
+                  "https://api.github.com/repos/${GITHUB_REPOSITORY}/compare/refs/heads/${branch}...${commit}"
+              )
+              case "$(jq -r '.status' <<<"${cmp}")" in
+                identical | behind)
+                  ok=1
+                  break
+                  ;;
+              esac
+            done
+            if [[ -z "${ok}" ]]; then
+              printf '%s\n' "::error::${tag} is not contained in any protected branches"
+              exit 1
+            fi
+          done <<<"${tags}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.repository_owner == 'taiki-e'
       - name: Check release immutability
         run: |

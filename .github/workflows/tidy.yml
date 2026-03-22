@@ -250,7 +250,7 @@ jobs:
           grep -Eq '^- update$' <<<"${rule}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: github.repository_owner == 'taiki-e'
+        if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - name: Check tags
         run: |
           IFS=$'\n\t'
@@ -259,12 +259,14 @@ jobs:
               if "$@"; then
                 return 0
               else
+                set -x
                 sleep "${i}"
               fi
             done
             "$@"
           }
           retry git fetch origin --tags &>/dev/null
+          set +x
           tags=$(git tag)
           if [[ -z "${tags}" ]]; then
             exit 0
@@ -282,49 +284,101 @@ jobs:
           IFS=' '
           printf 'info: protected branches: %s\n' "${protected_branches[*]}"
           IFS=$'\n\t'
+          rate_limit=''
           while IFS='' read -r tag; do
+            printf 'info: checking %s...\n' "${tag}"
             # Refs: https://github.com/zizmorcore/zizmor/blob/v1.23.1/crates/zizmor/src/audit/impostor_commit.rs
             commit=$(git show refs/tags/"${tag}" --name-only --no-color | grep -E '^commit' | cut -d' ' -f2)
             ok=''
-            for branch in "${protected_branches[@]}"; do
-              url="https://api.github.com/repos/${GITHUB_REPOSITORY}/compare/refs/heads/${branch}...${commit}"
-              for i in {1..10}; do
-                if [[ "${i}" == '2' ]]; then
-                  printf 'info: getting %s\n' "${url}"
+            code=''
+            if [[ -z "${rate_limit}" ]]; then
+              set +e
+              res=$(
+                curl --proto '=https' -fsSL \
+                  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                  -H 'Accept: application/json' \
+                  "https://github.com/${GITHUB_REPOSITORY}/branch_commits/${commit}" 2>&1
+              )
+              code="$?"
+              set -e
+              set +x
+            fi
+            if [[ "${code}" == "0" ]]; then
+              if [[ -z "${res}" ]]; then
+                printf '%s\n' "::error::${tag} is not contained in any branches"
+                exit 1
+              fi
+              branches="$(jq -r '.branches[] | .branch' <<<"${res}")"
+              if [[ -z "${branches}" ]]; then
+                printf '%s\n' "::error::${tag} is not contained in any branches"
+                exit 1
+              fi
+              while IFS='' read -r branch; do
+                for b in "${protected_branches[@]}"; do
+                  if [[ "${branch}" == "${b}" ]]; then
+                    ok=1
+                    break
+                  fi
+                done
+                if [[ -n "${ok}" ]]; then
+                  break
                 fi
-                set +e
-                cmp=$(
-                  curl --proto '=https' --tlsv1.2 --fail-with-body -sSL \
-                    -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-                    -H 'Accept: application/vnd.github+json' \
-                    -H 'X-GitHub-Api-Version: 2022-11-28' \
-                    "${url}"
-                )
-                code="$?"
-                set -e
-                if [[ "${code}" == '0' ]]; then
-                  break
-                elif [[ "$(jq -r '.documentation_url' <<<"${cmp}")" != "null" ]] && [[ "$(jq -r '.status' <<<"${cmp}")" == "404" ]]; then
-                  break
+              done <<<"${branches}"
+            else
+              if [[ -n "${code}" ]] && [[ "${res}" == *"returned error: 429"* ]]; then
+                # branch_commits API hits its rate limit after fetching 100 commits.
+                rate_limit=1
+              fi
+              similar_name_branches=()
+              other_branches=()
+              for branch in "${protected_branches[@]}"; do
+                if [[ "main" == "${branch}" ]] || [[ "${branch#*/}" == *"${tag#*/}"* ]] || [[ "${tag#*/}" == *"${branch#*/}"* ]]; then
+                  similar_name_branches+=("${branch}")
                 else
-                  sleep "${i}"
+                  other_branches+=("${branch}")
                 fi
               done
-              case "$(jq -r '.status' <<<"${cmp}")" in
-                identical | behind)
-                  ok=1
-                  break
-                  ;;
-              esac
-            done
+              for branch in "${similar_name_branches[@]}" "${other_branches[@]}"; do
+                url="https://api.github.com/repos/${GITHUB_REPOSITORY}/compare/refs/heads/${branch}...${commit}"
+                for i in {1..10}; do
+                  if [[ "${i}" == '2' ]]; then
+                    printf 'info: getting %s\n' "${url}"
+                  fi
+                  set +e
+                  cmp=$(
+                    curl --proto '=https' --tlsv1.2 --fail-with-body -sSL \
+                      -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                      -H 'Accept: application/vnd.github+json' \
+                      -H 'X-GitHub-Api-Version: 2022-11-28' \
+                      "${url}"
+                  )
+                  code="$?"
+                  set -e
+                  if [[ "${code}" == '0' ]]; then
+                    break
+                  elif [[ "$(jq -r '.documentation_url' <<<"${cmp}")" != "null" ]] && [[ "$(jq -r '.status' <<<"${cmp}")" == "404" ]]; then
+                    break
+                  else
+                    sleep "${i}"
+                  fi
+                done
+                case "$(jq -r '.status' <<<"${cmp}")" in
+                  identical | behind)
+                    ok=1
+                    break
+                    ;;
+                esac
+              done
+            fi
             if [[ -z "${ok}" ]]; then
               printf '%s\n' "::error::${tag} is not contained in any protected branches"
               exit 1
             fi
+            printf 'info: done\n'
           done <<<"${tags}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: github.repository_owner == 'taiki-e'
+        if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - name: Check release immutability
         run: |
           retry() {
@@ -365,7 +419,7 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: inputs.all-immutable-release && github.repository_owner == 'taiki-e'
+        if: inputs.all-immutable-release && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: |
           [[ ! -f tools/cspell-dict.sh ]] || tools/cspell-dict.sh clean
       - name: Handle diff

@@ -99,7 +99,7 @@ on:
         required: false
         type: string
         default: codegen
-      all-immutable-release:
+      immutable-release:
         required: false
         type: boolean
         default: true
@@ -251,7 +251,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
-      - name: Check tags
+      - name: Ensure all tags are contained in protected branches
         run: |
           IFS=$'\n\t'
           retry() {
@@ -305,6 +305,7 @@ jobs:
             fi
             if [[ "${code}" == "0" ]]; then
               if [[ -z "${res}" ]]; then
+                # TODO: collect all and emit at the last?
                 printf '%s\n' "::error::${tag} is not contained in any branches"
                 exit 1
               fi
@@ -379,7 +380,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
-      - name: Check release immutability
+      - name: Ensure all releases are immutable
         run: |
           retry() {
             for i in {1..10}; do
@@ -419,7 +420,7 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: inputs.all-immutable-release && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: inputs.immutable-release && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: |
           [[ ! -f tools/cspell-dict.sh ]] || tools/cspell-dict.sh clean
       - name: Handle diff

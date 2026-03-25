@@ -23,6 +23,7 @@
 #    Visit https://github.com/<owner>/<repo>/settings/actions
 #    and add the followings to allowed actions:
 #
+#    actions/attest@*,
 #    rust-lang/crates-io-auth-action@*,
 #    taiki-e/*,
 #
@@ -703,7 +704,7 @@ jobs:
           (
             set -x
             git tag "${tag}"
-            retry git push origin refs/heads/main
+            retry git push origin HEAD
             retry git push origin refs/tags/"${tag}"
           )
         env:

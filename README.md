@@ -14,6 +14,7 @@ supposed to only be used in infra managed by us.
 
 ## Reusable workflows
 
+- [**action-release**](.github/workflows/action-release.yml): Create and push the release commit and tag, and create GitHub release.
 - [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
 - [**clippy**](.github/workflows/clippy.yml): Run `cargo clippy` and apply clippy for doctest.
 - [**deny**](.github/workflows/deny.yml): Run `cargo deny` in a way that avoids non-ideal behaviors.

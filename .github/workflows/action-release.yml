@@ -1,0 +1,429 @@
+# Create and push the release commit and tag, and create GitHub release.
+#
+# There is no stability guarantee for this workflow, since it's supposed to only be
+# used in infra managed by us.
+#
+# Setup:
+#
+# 1. Visit https://github.com/settings/personal-access-tokens/new
+#    and create an PAT with "Read and write" permission on "Contents"
+#    for the target repository.
+#
+# 2. Visit https://github.com/<owner>/<repo>/settings/environments
+#    and create "release" environment,
+#    and set "Deployment protection rules" as needed.
+#
+#    Then create a environment secret named "PUSH_TOKEN"
+#    with the API token created above.
+#
+# 3. If only selected actions are allowed,
+#    Visit https://github.com/<owner>/<repo>/settings/actions
+#    and add the followings to allowed actions:
+#
+#    taiki-e/*,
+#
+# Usage:
+#
+# (Please fill `<owner>` with the actual repository owner name.)
+#
+# ```yaml
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: Version to be increased
+#         required: true
+#         type: choice
+#         options:
+#           - patch
+#           - minor
+#           - major
+#
+#   publish:
+#     if: github.repository_owner == '<owner>'
+#     uses: taiki-e/github-actions/.github/workflows/action-release.yml@main
+#     permissions:
+#       contents: write # for taiki-e/create-gh-release-action
+#     secrets: inherit
+#     with:
+#       version: ${{ inputs.version }}
+# ```
+#
+# Or:
+#
+# ```yaml
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: Version to be published
+#         required: true
+#         type: string
+#
+#   publish:
+#     if: github.repository_owner == '<owner>'
+#     uses: taiki-e/github-actions/.github/workflows/rust-release.yml@main
+#     permissions:
+#       id-token: write # for rust-lang/crates-io-auth-action
+#     secrets: inherit
+#     with:
+#       version: ${{ inputs.version }}
+# ```
+#
+# See "on.workflow_call.inputs" below for input options.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      tag-prefix:
+        required: false
+        type: string
+        default: v
+      changelog:
+        required: false
+        type: string
+        default: CHANGELOG.md
+      title:
+        required: false
+        type: string
+        default: $version
+      branch:
+        required: false
+        type: string
+        default: main
+      prefix:
+        required: false
+        type: string
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: parse-changelog
+          fallback: none
+      - id: check
+        run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
+          bail() {
+            printf '::error::%s\n' "$*"
+            exit 1
+          }
+          normalize_comma_or_space_separated() {
+            # Normalize whitespace characters into space because it's hard to handle single input contains lines with POSIX sed alone.
+            local list="${1//[$'\r\n\t']/ }"
+            if [[ "${list}" == *","* ]]; then
+              # If a comma is contained, consider it is a comma-separated list.
+              # Drop leading and trailing whitespaces in each element.
+              sed -E 's/ *, */,/g; s/^.//' <<<",${list},"
+            else
+              # Otherwise, consider it is a whitespace-separated list.
+              # Convert whitespace characters into comma.
+              sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
+            fi
+          }
+          if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then
+            in_place=(-i '')
+          else
+            in_place=(-i)
+          fi
+
+          # shellcheck disable=SC2153
+          version="${VERSION}"
+          printf '%s\n' "version(input): ${version}"
+          # shellcheck disable=SC2153
+          tag_prefix="${TAG_PREFIX}"
+          printf '%s\n' "tag_prefix: ${tag_prefix}"
+          # shellcheck disable=SC2153
+          changelog="${CHANGELOG}"
+          printf '%s\n' "changelog: ${changelog}"
+
+          # Get the current date.
+          release_date=$(date -u '+%Y-%m-%d')
+          printf '%s\n' "release-date: ${release_date}"
+          printf '%s\n' "release-date=${release_date}" >>"${GITHUB_OUTPUT}"
+
+          # Get the current revision.
+          retry git fetch origin &>/dev/null
+          rev=$(git rev-parse HEAD)
+          printf '%s\n' "rev: ${rev}"
+          printf '%s\n' "rev=${rev}" >>"${GITHUB_OUTPUT}"
+
+          prev_version=$(parse-changelog --title-no-link "${changelog}" | cut -d' ' -f1)
+
+          # Determine the new version number and tag name.
+          case "${version}" in
+            major | minor | patch)
+              if [[ ! "${prev_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                bail "pre-release/build-metadata"
+              fi
+              major="${prev_version%%.*}"
+              minor_patch="${prev_version#*.}"
+              minor="${minor_patch%%.*}"
+              patch="${minor_patch#*.}"
+              case "${version}" in
+                major) version="$((major+1)).0.0" ;;
+                minor) version="${major}.$((minor+1)).0" ;;
+                patch) version="${major}.${minor}.$((patch+1))" ;;
+              esac
+              ;;
+            *) version="${version#v}" ;;
+          esac
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z\.-]+)?(\+[0-9A-Za-z\.-]+)?$ ]]; then
+            bail "invalid version format '${version}'"
+          fi
+          printf '%s\n' "version: ${version}"
+          printf '%s\n' "version=${version}" >>"${GITHUB_OUTPUT}"
+          tag="${tag_prefix}${version}"
+          printf '%s\n' "tag: ${tag}"
+          printf '%s\n' "tag=${tag}" >>"${GITHUB_OUTPUT}"
+
+          # Make sure the same release has not been created in the past.
+          if gh release view "${tag}" &>/dev/null; then
+            bail "tag '${tag}' has already been created and pushed"
+          fi
+          # Make sure that the release was created from an allowed branch.
+          if ! git branch | grep -Eq '\* '"${BRANCH}"'$'; then
+            bail "current branch is not '${BRANCH}'"
+          fi
+
+          changed_paths=()
+          retry git fetch origin --tags &>/dev/null
+          tags=$(git --no-pager tag | { grep -E "^${tag_prefix}[0-9]+" || true; })
+          if [[ -n "${tags}" ]]; then
+            printf 'has-tags=true\n' >>"${GITHUB_OUTPUT}"
+            # Make sure the same release does not exist in changelog.
+            if grep -Eq "^## \\[${version//./\\.}\\]" "${changelog}"; then
+              bail "release ${version} already exist in ${changelog}"
+            fi
+            if grep -Eq "^\\[${version//./\\.}\\]: " "${changelog}"; then
+              bail "link to ${version} already exist in ${changelog}"
+            fi
+
+            # Update changelog.
+            changed_paths+=("${changelog}")
+            remote_url=$(grep -E '^\[Unreleased\]: https://' "${changelog}" | sed -E 's/^\[Unreleased\]: //; s/\.\.\.HEAD$//')
+            prev_tag="${remote_url#*/compare/}"
+            remote_url="${remote_url%/compare/*}"
+            sed -E "${in_place[@]}" \
+              -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
+              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
+            if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
+              bail "failed to update ${changelog}"
+            fi
+            if ! grep -Eq "^\\[${version//./\\.}\\]: " "${changelog}"; then
+              bail "failed to update ${changelog}"
+            fi
+          else
+            # Make sure the release exists in changelog.
+            if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
+              bail "release ${version} does not exist in ${changelog} or has wrong release date"
+            fi
+            if ! grep -Eq "^\\[${version//./\\.}\\]: " "${changelog}"; then
+              bail "link to ${version} does not exist in ${changelog}"
+            fi
+          fi
+          # Make sure that a valid release note for this version exists.
+          # https://github.com/taiki-e/parse-changelog
+          changes=$(parse-changelog "${changelog}" "${version}")
+          if [[ -z "${changes}" ]]; then
+            bail "changelog for ${version} has no body"
+          fi
+          printf '============== CHANGELOG ==============\n'
+          printf '%s\n' "${changes}"
+          printf '=======================================\n'
+
+          if [[ -n "${tags}" ]]; then
+            git -c color.ui=always diff "${changed_paths[@]}"
+            git add "${changed_paths[@]}"
+          fi
+          # Make sure that there is no unintended change.
+          git add -N .
+          git -c color.ui=always diff --exit-code
+
+          (
+            set -x
+            git show HEAD --shortstat
+          )
+        env:
+          VERSION: ${{ inputs.version }}
+          TAG_PREFIX: ${{ inputs.tag-prefix }}
+          CHANGELOG: ${{ inputs.changelog }}
+          BRANCH: ${{ inputs.branch }}
+    outputs:
+      has-tags: ${{ steps.check.outputs.has-tags }}
+      release-date: ${{ steps.check.outputs.release-date }}
+      rev: ${{ steps.check.outputs.rev }}
+      tag: ${{ steps.check.outputs.tag }}
+      version: ${{ steps.check.outputs.version }}
+
+  release:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: release
+      deployment: false
+    permissions:
+      contents: write # for taiki-e/create-gh-release-action
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: parse-changelog
+          fallback: none
+      - name: Create and push release commit and tag
+        id: push
+        run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          retry() {
+            for i in {1..10}; do
+              if "$@"; then
+                return 0
+              else
+                sleep "${i}"
+              fi
+            done
+            "$@"
+          }
+          bail() {
+            printf '::error::%s\n' "$*"
+            exit 1
+          }
+          if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then
+            in_place=(-i '')
+          else
+            in_place=(-i)
+          fi
+
+          git config user.name 'Taiki Endo'
+          git config user.email 'te316e89@gmail.com'
+
+          # shellcheck disable=SC2153
+          version="${VERSION}"
+          # shellcheck disable=SC2153
+          tag="${TAG}"
+          # shellcheck disable=SC2153
+          changelog="${CHANGELOG}"
+          # shellcheck disable=SC2153
+          release_date="${RELEASE_DATE}"
+
+          # Make sure the current revision is same as prepare step.
+          retry git fetch origin &>/dev/null
+          rev=$(git rev-parse HEAD)
+          if [[ "${rev}" != "${PREPARE_REV}" ]]; then
+            bail "revision difference between prepare step"
+          fi
+
+          # Make sure the same release has not been created in the past.
+          if gh release view "${tag}" &>/dev/null; then
+            bail "tag '${tag}' has already been created and pushed"
+          fi
+          # Make sure that the release was created from an allowed branch.
+          if ! git branch | grep -Eq '\* '"${BRANCH}"'$'; then
+            bail "current branch is not '${BRANCH}'"
+          fi
+
+          changed_paths=()
+          if [[ "${HAS_TAGS}" == "true" ]]; then
+            # Update changelog.
+            changed_paths+=("${changelog}")
+            remote_url=$(grep -E '^\[Unreleased\]: https://' "${changelog}" | sed -E 's/^\[Unreleased\]: //; s/\.\.\.HEAD$//')
+            prev_tag="${remote_url#*/compare/}"
+            remote_url="${remote_url%/compare/*}"
+            sed -E "${in_place[@]}" \
+              -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
+              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
+            if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
+              bail "failed to update ${changelog}"
+            fi
+            if ! grep -Eq "^\\[${version//./\\.}\\]: " "${changelog}"; then
+              bail "failed to update ${changelog}"
+            fi
+          fi
+          changes=$(parse-changelog "${changelog}" "${version}")
+          printf '============== CHANGELOG ==============\n'
+          printf '%s\n' "${changes}"
+          printf '=======================================\n'
+
+          if [[ "${HAS_TAGS}" == "true" ]]; then
+            # Create a release commit.
+            (
+              set -x
+              git add "${changed_paths[@]}"
+              git commit -m "Release ${version}"
+            )
+          fi
+
+          prev_credential_helper=$(git config get --global credential.helper || true)
+          if [[ -n "${prev_credential_helper}" ]]; then
+            printf 'credential helper is already set (%s)\n' "${prev_credential_helper}"
+          else
+            (
+              set -x
+              git config --global credential.helper store
+            )
+            protocol="${GITHUB_SERVER_URL%%://*}"
+            hostname="${GITHUB_SERVER_URL#*://}"
+            printf '%s\n' "${protocol}://${GITHUB_ACTOR}:${PUSH_TOKEN}@${hostname}" >~/.git-credentials
+            # Remove credential helper config on exit.
+            trap -- '(set -x; rm -f -- ~/.git-credentials; git config --global --unset credential.helper || true)' EXIT
+          fi
+
+          (
+            set -x
+            git tag "${tag}"
+            retry git push origin HEAD
+            retry git push origin refs/tags/"${tag}"
+
+            major_version_tag="v${version%%.*}"
+            git branch "releases/${major_version_tag}"
+            git tag -f "${major_version_tag}"
+            refs=("refs/heads/releases/${major_version_tag}" "+refs/tags/${major_version_tag}")
+
+            retry git push origin --atomic "${refs[@]}"
+            git branch -d "releases/${major_version_tag}"
+          )
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_DATE: ${{ needs.prepare.outputs.release-date }}
+          HAS_TAGS: ${{ needs.prepare.outputs.has-tags }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          CHANGELOG: ${{ inputs.changelog }}
+          BRANCH: ${{ inputs.branch }}
+          PREPARE_REV: ${{ needs.prepare.outputs.rev }}
+          # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.
+          PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          changelog: ${{ inputs.changelog }}
+          title: ${{ inputs.title }}
+          branch: ${{ inputs.branch }}
+          prefix: ${{ inputs.prefix }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: refs/tags/${{ needs.prepare.outputs.tag }}

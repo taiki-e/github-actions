@@ -21,10 +21,13 @@ espidf
 fortanix
 gnuabi
 gnuabiv
+gnuasan
 gnueabi
 gnueabihf
 gnullvm
+gnumsan
 gnuspe
+gnutsan
 gnux
 helenos
 illumos

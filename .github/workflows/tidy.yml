@@ -503,6 +503,15 @@ jobs:
           GITHUB_TOKEN: ${{ steps.pr-token.outputs.token }} # zizmor: ignore[secrets-outside-env] # TODO
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
 
+  check-external-types:
+    needs: prepare
+    if: inputs.check-external-types && needs.prepare.outputs.rust-pub-lib == 'true'
+    uses: ./.github/workflows/check-external-types.yml
+    with:
+      rust: ${{ inputs.check-external-types-rust }}
+      target: ${{ inputs.check-external-types-target }}
+      args: ${{ inputs.check-external-types-args }}
+
   clippy:
     needs: prepare
     if: inputs.clippy && needs.prepare.outputs.rust == 'true'
@@ -514,32 +523,6 @@ jobs:
       doctest: ${{ inputs.clippy-doctest }}
       unqualified_local_imports: ${{ inputs.unqualified_local_imports }}
       fuzzy_provenance_casts: ${{ inputs.fuzzy_provenance_casts }}
-
-  check-external-types:
-    needs: prepare
-    if: inputs.check-external-types && needs.prepare.outputs.rust-pub-lib == 'true'
-    uses: ./.github/workflows/check-external-types.yml
-    with:
-      rust: ${{ inputs.check-external-types-rust }}
-      target: ${{ inputs.check-external-types-target }}
-      args: ${{ inputs.check-external-types-args }}
-
-  deny:
-    needs: prepare
-    if: inputs.deny && needs.prepare.outputs.rust-pub == 'true'
-    uses: ./.github/workflows/deny.yml
-    with:
-      rust: ${{ inputs.rust }}
-      args: ${{ inputs.deny-args }}
-
-  docs:
-    needs: prepare
-    if: inputs.docs && (needs.prepare.outputs.rust-pub-lib == 'true' || needs.prepare.outputs.rust-pub-proc-macro == 'true')
-    uses: ./.github/workflows/docs.yml
-    with:
-      rust: ${{ inputs.rust }}
-      target: ${{ inputs.docs-target }}
-      args: ${{ inputs.docs-args }}
 
   codeql:
     needs: prepare
@@ -563,3 +546,20 @@ jobs:
       automerge: ${{ inputs.codegen-automerge }}
       free-device-space: ${{ inputs.codegen-free-device-space }}
       install-rust: ${{ needs.prepare.outputs.rust == 'true' }}
+
+  deny:
+    needs: prepare
+    if: inputs.deny && needs.prepare.outputs.rust-pub == 'true'
+    uses: ./.github/workflows/deny.yml
+    with:
+      rust: ${{ inputs.rust }}
+      args: ${{ inputs.deny-args }}
+
+  docs:
+    needs: prepare
+    if: inputs.docs && (needs.prepare.outputs.rust-pub-lib == 'true' || needs.prepare.outputs.rust-pub-proc-macro == 'true')
+    uses: ./.github/workflows/docs.yml
+    with:
+      rust: ${{ inputs.rust }}
+      target: ${{ inputs.docs-target }}
+      args: ${{ inputs.docs-args }}

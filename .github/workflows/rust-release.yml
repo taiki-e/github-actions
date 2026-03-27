@@ -725,7 +725,7 @@ jobs:
           draft: true
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: refs/tags/${{ needs.prepare.outputs.tag }}
-      - uses: rust-lang/crates-io-auth-action@v1
+      - uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
         id: auth
         if: needs.prepare.outputs.has-tags == 'true'
       - name: Publish to crates.io
@@ -837,7 +837,7 @@ jobs:
           zip: windows
           ref: refs/tags/${{ needs.prepare.outputs.tag }}
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/attest@v4
+      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-path: ${{ steps.upload.outputs.archive }}.*
 

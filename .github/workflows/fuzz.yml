@@ -68,7 +68,7 @@ jobs:
         with:
           tool: cargo-fuzz
       - name: Cache output
-        uses: actions/cache@v5
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: fuzz/out
           key: libfuzzer-out-${{ github.run_id }}
@@ -103,13 +103,13 @@ jobs:
         working-directory: fuzz
         if: always()
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: libfuzzer-artifacts
           path: libfuzzer-artifacts.tar.xz
         if: always() && steps.archive.outputs.has-artifacts == 'true'
       - name: Upload corpus
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: libfuzzer-corpus
           path: libfuzzer-corpus.tar.xz
@@ -136,7 +136,7 @@ jobs:
         run: cargo afl build --release --features afl
         working-directory: fuzz
       - name: Cache output
-        uses: actions/cache@v5
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: fuzz/out
           key: afl-out-${{ github.run_id }}
@@ -165,7 +165,7 @@ jobs:
         working-directory: fuzz
         if: always()
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: afl-artifacts
           path: afl-artifacts.tar.xz
@@ -194,7 +194,7 @@ jobs:
           # TODO: Pass --no-default-features
           tool: honggfuzz
       - name: Cache output
-        uses: actions/cache@v5
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: fuzz/hfuzz_workspace
           key: honggfuzz-out-${{ github.run_id }}
@@ -230,7 +230,7 @@ jobs:
         working-directory: fuzz
         if: failure()
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: honggfuzz-artifacts
           path: honggfuzz-artifacts.tar.xz

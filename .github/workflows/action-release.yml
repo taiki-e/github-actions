@@ -168,7 +168,6 @@ jobs:
           printf '%s\n' "release-date=${release_date}" >>"${GITHUB_OUTPUT}"
 
           # Get the current revision.
-          retry git fetch origin &>/dev/null
           rev=$(git rev-parse HEAD)
           printf '%s\n' "rev: ${rev}"
           printf '%s\n' "rev=${rev}" >>"${GITHUB_OUTPUT}"
@@ -334,7 +333,9 @@ jobs:
           release_date="${RELEASE_DATE}"
 
           # Make sure the current revision is same as prepare step.
-          retry git fetch origin &>/dev/null
+          # --unshallow is necessary to successfully push the
+          # "releases/${major_version_tag}" branch in the subsequent step.
+          retry git fetch origin --unshallow &>/dev/null
           rev=$(git rev-parse HEAD)
           if [[ "${rev}" != "${PREPARE_REV}" ]]; then
             bail "revision difference between prepare step"
@@ -399,12 +400,11 @@ jobs:
             set -x
             git tag "${tag}"
             retry git push origin HEAD
-            retry git push origin refs/tags/"${tag}"
 
             major_version_tag="v${version%%.*}"
             git branch "releases/${major_version_tag}"
             git tag -f "${major_version_tag}"
-            refs=("refs/heads/releases/${major_version_tag}" "+refs/tags/${major_version_tag}")
+            refs=("refs/tags/${tag}" "refs/heads/releases/${major_version_tag}" "+refs/tags/${major_version_tag}")
 
             retry git push origin --atomic "${refs[@]}"
             git branch -d "releases/${major_version_tag}"

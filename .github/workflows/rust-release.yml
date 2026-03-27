@@ -264,7 +264,6 @@ jobs:
           printf '%s\n' "release-date=${release_date}" >>"${GITHUB_OUTPUT}"
 
           # Get the current revision.
-          retry git fetch origin &>/dev/null
           rev=$(git rev-parse HEAD)
           printf '%s\n' "rev: ${rev}"
           printf '%s\n' "rev=${rev}" >>"${GITHUB_OUTPUT}"
@@ -571,7 +570,6 @@ jobs:
           release_date="${RELEASE_DATE}"
 
           # Make sure the current revision is same as prepare step.
-          retry git fetch origin &>/dev/null
           rev=$(git rev-parse HEAD)
           if [[ "${rev}" != "${PREPARE_REV}" ]]; then
             bail "revision difference between prepare step"
@@ -730,7 +728,7 @@ jobs:
       - uses: rust-lang/crates-io-auth-action@v1
         id: auth
         if: needs.prepare.outputs.has-tags == 'true'
-      - name: Publish crates
+      - name: Publish to crates.io
         run: |
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR

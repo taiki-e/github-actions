@@ -29,9 +29,9 @@ case "$(uname -s)" in
       # /opt/hostedtoolcache/Python # 1.9G
       # /opt/hostedtoolcache/node # 574M
       /opt/microsoft/msedge # 608M
-      # /opt/pipx # 514M
-      # /opt/pipx/shared # 13M
-      # /opt/pipx/venvs # 502M
+      /opt/pipx             # 514M
+      /opt/pipx/shared      # 13M
+      /opt/pipx/venvs       # 502M
       # /opt/runner-cache # 429M
       # /usr/include/python3.* # 1.7M
       # /usr/lib/apache2 # 4.3M

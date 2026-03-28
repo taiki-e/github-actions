@@ -19,6 +19,7 @@ localedata
 loong
 mecab
 mipsle
+pipx
 rsbegin
 rsend
 sessionmanagerplugin

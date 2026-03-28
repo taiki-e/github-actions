@@ -133,6 +133,11 @@ jobs:
     timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
     steps:
       - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: uv
+          fallback: none
+      - run: mkdir -p -- ~/.config/uv && printf 'exclude-newer = "7 days"\n' >>~/.config/uv/uv.toml
       - name: Prepare
         id: prepare
         run: |
@@ -173,7 +178,7 @@ jobs:
             printf 'dockerfile=true\n' >>"${GITHUB_OUTPUT}"
           fi
           if [[ -e tools/gen.sh ]]; then
-            job=$(pipx run yq -c ".jobs.\"${INPUT_CODEGEN_JOB}\"" "${INPUT_CODEGEN_WORKFLOW}")
+            job=$(uvx yq -c ".jobs.\"${INPUT_CODEGEN_JOB}\"" "${INPUT_CODEGEN_WORKFLOW}")
             if [[ "${job}" == "null" ]]; then
               printf 'codegen=true\n' >>"${GITHUB_OUTPUT}"
             fi
@@ -208,8 +213,9 @@ jobs:
         if: needs.prepare.outputs.rust == 'true'
       - uses: taiki-e/install-action@v2
         with:
-          tool: shellcheck,shfmt,zizmor${{ needs.prepare.outputs.dockerfile == 'true' && ',parse-dockerfile' || '' }}
+          tool: shellcheck,shfmt,uv,zizmor${{ needs.prepare.outputs.dockerfile == 'true' && ',parse-dockerfile' || '' }}
           fallback: none
+      - run: mkdir -p -- ~/.config/uv && printf 'exclude-newer = "7 days"\n' >>~/.config/uv/uv.toml
       # min-release-age requires npm 11+
       - run: sudo npm install --location=global npm@11.11.0
       - run: sudo npm config set min-release-age=7 --location=global

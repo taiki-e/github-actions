@@ -210,6 +210,9 @@ jobs:
         with:
           tool: shellcheck,shfmt,zizmor${{ needs.prepare.outputs.dockerfile == 'true' && ',parse-dockerfile' || '' }}
           fallback: none
+      # min-release-age requires npm 11+
+      - run: sudo npm install --location=global npm@11.11.0
+      - run: sudo npm config set min-release-age=7 --location=global
       - run: cat -- tools/.tidy-check-license-headers
       - run: cat -- .cspell.json
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"

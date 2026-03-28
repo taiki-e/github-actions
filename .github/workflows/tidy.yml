@@ -267,7 +267,7 @@ jobs:
           }
           retry git fetch origin --tags &>/dev/null
           set +x
-          tags=$(git tag)
+          tags=$(git tag | sort -Vr)
           if [[ -z "${tags}" ]]; then
             exit 0
           fi

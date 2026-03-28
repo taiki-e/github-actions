@@ -2,6 +2,10 @@ name: setup-docker
 description: GitHub Action for setup docker.
 
 inputs:
+  buildx:
+    description: Set up buildx
+    required: false
+    default: 'true'
   qemu:
     description: Set up QEMU
     required: false
@@ -16,4 +20,5 @@ runs:
     - run: bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/main.sh"
       shell: bash
       env:
+        INPUT_BUILDX: ${{ inputs.buildx }}
         INPUT_QEMU: ${{ inputs.qemu }}

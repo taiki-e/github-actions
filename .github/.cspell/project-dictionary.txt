@@ -16,12 +16,13 @@ libexec
 libfuzzer
 linuxbrew
 localedata
+loong
 mecab
+mipsle
 rsbegin
 rsend
 sessionmanagerplugin
 shortstat
-tonistiigi
 venvs
 waagent
 xhtm

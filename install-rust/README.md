@@ -1,6 +1,7 @@
 # install-rust
 
 GitHub Action for installing Rust toolchain.
+
 There is no stability guarantee for this action, since it's supposed to only be
 used in infra managed by us.
 

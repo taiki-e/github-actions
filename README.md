@@ -3,6 +3,7 @@
 This repository contains some [actions](https://docs.github.com/en/actions/creating-actions/about-custom-actions)
 and [reusable workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
 used on CIs managed by @taiki-e.
+
 There are no stability guarantees for these actions and workflows, since they're
 supposed to only be used in infra managed by us.
 

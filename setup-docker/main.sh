@@ -83,6 +83,11 @@ case "${INPUT_QEMU}" in
   *)
     qemu_arch=()
     while read -rd, arch; do
+      # Refs:
+      # https://hub.docker.com/r/docker/dockerfile/tags
+      # https://hub.docker.com/r/alpinelinux/build-base/tags
+      # https://hub.docker.com/r/paleozogt/scratch/tags
+      # https://hub.docker.com/r/polyarch/debian-ports/tags
       case "${arch}" in
         386) qemu_arch+=(i386) ;;
         amd64) qemu_arch+=(x86_64) ;;

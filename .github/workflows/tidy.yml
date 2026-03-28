@@ -216,7 +216,7 @@ jobs:
           tool: shellcheck,shfmt,uv,zizmor${{ needs.prepare.outputs.dockerfile == 'true' && ',parse-dockerfile' || '' }}
           fallback: none
       - run: mkdir -p -- ~/.config/uv && printf 'exclude-newer = "7 days"\n' >>~/.config/uv/uv.toml
-      # min-release-age requires npm 11+
+      # min-release-age requires npm 11.10+
       - run: sudo npm install --location=global npm@11.11.0
       - run: sudo npm config set min-release-age=7 --location=global
       - run: cat -- tools/.tidy-check-license-headers

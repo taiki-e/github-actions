@@ -277,7 +277,8 @@ jobs:
           rule_id2=$(grep -E 'Branch protection for all roles\b.*\bactive\b.*\b([1-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
           protected_branches=()
           while IFS='' read -r branch; do
-            if gh ruleset check "${branch}" | { grep -Fq "${rule_id1}" || grep -Fq "${rule_id2}"; }; then
+            rule=$(gh ruleset check "${branch}")
+            if grep -Fq "${rule_id1}" <<<"${rule}" || grep -Fq "${rule_id2}" <<<"${rule}"; then
               protected_branches+=("${branch}")
             fi
           done <<<"${all_branches}"

@@ -236,36 +236,50 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Check ruleset
+        id: ruleset
         run: |
           set +x
+          bail() {
+            printf '::error::%s\n' "$*"
+            exit 1
+          }
           ruleset=$(gh ruleset list)
-          rule_id=$(grep -E 'Additional branch protection for non-admin roles\b.*\bactive\b.*\b([4-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          name='Additional branch protection for non-admin roles'
+          rule_id=$(grep -E "${name}"'\b.*\bactive\b.*\b([4-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          printf 'branch-additional=%s\n' "${rule_id}" >>"${GITHUB_OUTPUT}"
           rule=$(gh ruleset view "${rule_id}")
           printf '%s\n' "${rule}"
-          grep -Eq '^- code_scanning: ' <<<"${rule}"
-          grep -Eq '^- non_fast_forward$' <<<"${rule}"
-          grep -Eq '^- pull_request: ' <<<"${rule}"
-          grep -Eq '^- required_status_checks: ' <<<"${rule}"
-          rule_id=$(grep -E 'Additional tag protection for non-admin roles\b.*\bactive\b.*\b([4-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          grep -Eq '^- code_scanning: ' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- non_fast_forward$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- pull_request: ' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- required_status_checks: ' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          name='Additional tag protection for non-admin roles'
+          rule_id=$(grep -E "${name}"'\b.*\bactive\b.*\b([4-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          printf 'tag-additional=%s\n' "${rule_id}" >>"${GITHUB_OUTPUT}"
           rule=$(gh ruleset view "${rule_id}")
           printf '%s\n' "${rule}"
-          grep -Eq '^- ref_name: \[exclude: \[\]\] \[include: \[~ALL\]\]' <<<"${rule}"
-          grep -Eq '^- creation$' <<<"${rule}"
-          grep -Eq '^- deletion$' <<<"${rule}"
-          grep -Eq '^- non_fast_forward$' <<<"${rule}"
-          grep -Eq '^- update$' <<<"${rule}"
-          rule_id=$(grep -E 'Branch protection for all roles\b.*\bactive\b.*\b([1-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          grep -Eq '^- ref_name: \[exclude: \[\]\] \[include: \[~ALL\]\]' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- creation$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- deletion$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- non_fast_forward$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- update$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          name='Branch protection for all roles'
+          rule_id=$(grep -E "${name}"'\b.*\bactive\b.*\b([1-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          printf 'branch=%s\n' "${rule_id}" >>"${GITHUB_OUTPUT}"
           rule=$(gh ruleset view "${rule_id}")
           printf '%s\n' "${rule}"
-          grep -Eq '^This ruleset cannot be bypassed$' <<<"${rule}"
-          grep -Eq '^- deletion$' <<<"${rule}"
-          rule_id=$(grep -E 'Tag protection for all roles\b.*\bactive\b.*\b([3-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          grep -Eq '^This ruleset cannot be bypassed$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- deletion$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- non_fast_forward$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          name='Tag protection for all roles'
+          rule_id=$(grep -E "${name}"'\b.*\bactive\b.*\b([3-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
+          printf 'tag=%s\n' "${rule_id}" >>"${GITHUB_OUTPUT}"
           rule=$(gh ruleset view "${rule_id}")
           printf '%s\n' "${rule}"
-          grep -Eq '^This ruleset cannot be bypassed$' <<<"${rule}"
-          grep -Eq '^- deletion$' <<<"${rule}"
-          grep -Eq '^- non_fast_forward$' <<<"${rule}"
-          grep -Eq '^- update$' <<<"${rule}"
+          grep -Eq '^This ruleset cannot be bypassed$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- deletion$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- non_fast_forward$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
+          grep -Eq '^- update$' <<<"${rule}" || bail "ruleset check failed for '${name}'"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
@@ -290,13 +304,10 @@ jobs:
             exit 0
           fi
           all_branches=$(git branch -a | grep -F 'remotes/origin/' | { grep -Fv -e '->' || true; } | sed -E 's|^ *remotes/origin/||g')
-          ruleset=$(gh ruleset list)
-          rule_id1=$(grep -E 'Additional branch protection for non-admin roles\b.*\bactive\b.*\b([4-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
-          rule_id2=$(grep -E 'Branch protection for all roles\b.*\bactive\b.*\b([1-9]|[1-9][0-9])' <<<"${ruleset}" | cut -d$'\t' -f1)
           protected_branches=()
           while IFS='' read -r branch; do
             rule=$(gh ruleset check "${branch}")
-            if grep -Fq "${rule_id1}" <<<"${rule}" || grep -Fq "${rule_id2}" <<<"${rule}"; then
+            if grep -Fq "${RULE_ID1}" <<<"${rule}" || grep -Fq "${RULE_ID2}" <<<"${rule}"; then
               protected_branches+=("${branch}")
             fi
           done <<<"${all_branches}"
@@ -398,6 +409,8 @@ jobs:
           done <<<"${tags}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RULE_ID1: ${{ steps.ruleset.outputs.branch-additional }}
+          RULE_ID2: ${{ steps.ruleset.outputs.branch }}
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - name: Ensure all releases are immutable
         run: |

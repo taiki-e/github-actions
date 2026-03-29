@@ -73,7 +73,8 @@
 #       contents: write # for taiki-e/create-gh-release-action
 #       id-token: write # for rust-lang/crates-io-auth-action
 #       attestations: write # unused (used when options for uploading binaries are set)
-#     secrets: inherit
+#     secrets:
+#       PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
 #     with:
 #       version: ${{ inputs.version }}
 # ```
@@ -96,7 +97,8 @@
 #       contents: write # for taiki-e/create-gh-release-action
 #       id-token: write # for rust-lang/crates-io-auth-action
 #       attestations: write # unused (used when options for uploading binaries are set)
-#     secrets: inherit
+#     secrets:
+#       PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
 #     with:
 #       version: ${{ inputs.version }}
 # ```
@@ -119,7 +121,8 @@
 #       contents: write # for taiki-e/create-gh-release-action / taiki-e/upload-rust-binary-action
 #       id-token: write # for rust-lang/crates-io-auth-action / actions/attest
 #       attestations: write # for actions/attest
-#     secrets: inherit
+#     secrets:
+#       PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
 #     with:
 #       version: ${{ inputs.version }}
 #       bin: <bin_name>
@@ -182,6 +185,9 @@ on:
       bin-target:
         required: false
         type: string
+    secrets:
+      PUSH_TOKEN:
+        required: true
 
 env:
   CARGO_INCREMENTAL: 0

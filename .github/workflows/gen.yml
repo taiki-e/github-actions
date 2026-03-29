@@ -13,7 +13,8 @@
 #     permissions:
 #       contents: write # for creating branch for pr
 #       pull-requests: write # unused (used in `automerge: true` case)
-#     secrets: inherit
+#     secrets:
+#       PR_TOKEN_APP_PRIVATE_KEY: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }}
 # ```
 #
 # ```yaml
@@ -22,7 +23,8 @@
 #     permissions:
 #       contents: write # for creating branch for pr
 #       pull-requests: write # for gh pr review --approve
-#     secrets: inherit
+#     secrets:
+#       PR_TOKEN_APP_PRIVATE_KEY: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }}
 #     with:
 #       automerge: true
 # ```
@@ -67,6 +69,9 @@ on:
         required: false
         type: string
         default: nightly
+    secrets:
+      PR_TOKEN_APP_PRIVATE_KEY:
+        required: false
 
 env:
   CARGO_INCREMENTAL: 0

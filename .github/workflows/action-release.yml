@@ -44,7 +44,8 @@
 #     uses: taiki-e/github-actions/.github/workflows/action-release.yml@main
 #     permissions:
 #       contents: write # for taiki-e/create-gh-release-action
-#     secrets: inherit
+#     secrets:
+#       PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
 #     with:
 #       version: ${{ inputs.version }}
 # ```
@@ -65,7 +66,8 @@
 #     uses: taiki-e/github-actions/.github/workflows/rust-release.yml@main
 #     permissions:
 #       id-token: write # for rust-lang/crates-io-auth-action
-#     secrets: inherit
+#     secrets:
+#       PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
 #     with:
 #       version: ${{ inputs.version }}
 # ```
@@ -100,6 +102,9 @@ on:
       prefix:
         required: false
         type: string
+    secrets:
+      PUSH_TOKEN:
+        required: true
 
 defaults:
   run:

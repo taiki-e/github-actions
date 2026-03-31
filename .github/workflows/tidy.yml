@@ -226,8 +226,10 @@ jobs:
           fallback: none
       - run: mkdir -p -- ~/.config/uv && printf 'exclude-newer = "14 days"\n' >>~/.config/uv/uv.toml
       # min-release-age requires npm 11.10+
-      - run: sudo npm install --location=global npm@11.11.0
-      - run: sudo npm config set min-release-age=14 --location=global
+      - run: |
+          sudo npm install --location=global npm@11.11.0
+          sudo npm config set min-release-age=14 --location=global
+          sudo npm config set ignore-scripts=true --location=global
       - run: cat -- tools/.tidy-check-license-headers
       - run: cat -- .cspell.json
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"

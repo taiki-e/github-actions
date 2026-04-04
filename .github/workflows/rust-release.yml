@@ -14,7 +14,7 @@
 #
 # 2. Visit https://github.com/<owner>/<repo>/settings/environments
 #    and create "release" environment,
-#    and set "Deployment protection rules" as needed.
+#    and set "Deployment protection rules" as needed (recommended).
 #
 #    Then create a environment secret named "PUSH_TOKEN"
 #    with the API token created above.
@@ -40,7 +40,7 @@
 #
 # 1. Visit https://crates.io/crates/<crate-name>/settings
 #    and add Trusted Publishing setting like the following,
-#    and enable "Require trusted publishing for all new versions" as needed.
+#    and enable "Require trusted publishing for all new versions" as needed (recommended).
 #
 #    Repository: <owner>/<repo>
 #    Workflow: release.yml
@@ -734,7 +734,6 @@ jobs:
           branch: ${{ inputs.branch }}
           prefix: ${{ inputs.prefix }}
           draft: true
-          token: ${{ secrets.GITHUB_TOKEN }}
           ref: refs/tags/${{ needs.prepare.outputs.tag }}
       - uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
         id: auth
@@ -847,7 +846,6 @@ jobs:
           tar: all
           zip: windows
           ref: refs/tags/${{ needs.prepare.outputs.tag }}
-          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-path: ${{ steps.upload.outputs.archive }}.*

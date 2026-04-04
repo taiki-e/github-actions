@@ -215,23 +215,9 @@ jobs:
       contents: write # for creating branch for pr
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: taiki-e/github-actions/install-rust@main
-        with:
-          toolchain: ${{ inputs.rust }}
-          component: rustfmt
-        if: needs.prepare.outputs.rust == 'true'
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: shellcheck,shfmt,uv,zizmor${{ needs.prepare.outputs.dockerfile == 'true' && ',parse-dockerfile' || '' }}
-          fallback: none
-      - run: mkdir -p -- ~/.config/uv && printf 'exclude-newer = "14 days"\n' >>~/.config/uv/uv.toml
       # min-release-age and allow-git requires npm 11.10+
-      - run: |
-          npm --version
-          sudo npm install --location=global npm@11.11.0
-          sudo npm config set min-release-age=14 --location=global
-          sudo npm config set ignore-scripts=true --location=global
-          sudo npm config set allow-git=none --location=global
+      - run: npm --version
+      - run: sudo npm install --location=global npm@11.11.0
       - run: cat -- tools/.tidy-check-license-headers
       - run: cat -- .cspell.json
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"

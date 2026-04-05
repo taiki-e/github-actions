@@ -59,8 +59,8 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
         with:
           tool: uv
           fallback: none
@@ -124,11 +124,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: taiki-e/github-actions/install-rust@main
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: taiki-e/github-actions/install-rust@504baa777e8f0076810d1e343d5387a2ada13b98 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
-      - uses: taiki-e/setup-cross-toolchain-action@v1
+      - uses: taiki-e/setup-cross-toolchain-action@d62f33b587e73b0004731caebc7d2d46b18a7567 # v1.39.2
         with:
           target: ${{ matrix.target }}
           runner: none
@@ -142,7 +142,7 @@ jobs:
       - run: printf 'MACOSX_DEPLOYMENT_TARGET=11.0\n' >>"${GITHUB_ENV}"
         if: matrix.target == 'aarch64-apple-darwin' || matrix.target == 'universal-apple-darwin'
       - id: build
-        uses: taiki-e/upload-rust-binary-action@v1
+        uses: taiki-e/upload-rust-binary-action@10c1cf6a3da113ad4e60018e386570529aa5f1d3 # v1.30.0
         with:
           dry-run: true
           bin: ${{ needs.prepare.outputs.bin }}

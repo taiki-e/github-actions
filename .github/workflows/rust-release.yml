@@ -208,12 +208,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
         with:
           tool: parse-changelog
           fallback: none
-      - uses: taiki-e/github-actions/install-rust@main
+      - uses: taiki-e/github-actions/install-rust@504baa777e8f0076810d1e343d5387a2ada13b98 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
           target: ${{ inputs.target }}
@@ -527,12 +527,12 @@ jobs:
       contents: write # for taiki-e/create-gh-release-action
       id-token: write # for rust-lang/crates-io-auth-action
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
         with:
           tool: parse-changelog
           fallback: none
-      - uses: taiki-e/github-actions/install-rust@main
+      - uses: taiki-e/github-actions/install-rust@504baa777e8f0076810d1e343d5387a2ada13b98 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
           target: ${{ inputs.target }}
@@ -727,7 +727,7 @@ jobs:
           PREPARE_REV: ${{ needs.prepare.outputs.rev }}
           # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.
           PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
-      - uses: taiki-e/create-gh-release-action@v1
+      - uses: taiki-e/create-gh-release-action@f67cf7b2dadd83d36b981e674a6b08063997ce68 # v1.10.0
         with:
           changelog: ${{ inputs.changelog }}
           title: ${{ inputs.title }}
@@ -793,7 +793,7 @@ jobs:
       id-token: write # for actions/attest
       attestations: write # for actions/attest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       # TODO: Use checkout-action's option once https://github.com/taiki-e/checkout-action/issues/3 implemented.
       - run: |
           IFS=$'\n\t'
@@ -822,10 +822,10 @@ jobs:
         env:
           REF: refs/tags/${{ needs.prepare.outputs.tag }}
           RELEASE_REV: ${{ needs.release.outputs.rev }}
-      - uses: taiki-e/github-actions/install-rust@main
+      - uses: taiki-e/github-actions/install-rust@504baa777e8f0076810d1e343d5387a2ada13b98 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
-      - uses: taiki-e/setup-cross-toolchain-action@v1
+      - uses: taiki-e/setup-cross-toolchain-action@d62f33b587e73b0004731caebc7d2d46b18a7567 # v1.39.2
         with:
           target: ${{ matrix.target }}
           runner: none
@@ -839,7 +839,7 @@ jobs:
       - run: printf 'MACOSX_DEPLOYMENT_TARGET=11.0\n' >>"${GITHUB_ENV}"
         if: matrix.target == 'aarch64-apple-darwin' || matrix.target == 'universal-apple-darwin'
       - id: upload
-        uses: taiki-e/upload-rust-binary-action@v1
+        uses: taiki-e/upload-rust-binary-action@10c1cf6a3da113ad4e60018e386570529aa5f1d3 # v1.30.0
         with:
           bin: ${{ inputs.bin }}
           target: ${{ matrix.target }}
@@ -858,7 +858,7 @@ jobs:
     permissions:
       contents: write # for gh release edit
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - run: gh release edit "${REF#refs/tags/}" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

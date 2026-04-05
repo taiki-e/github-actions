@@ -66,7 +66,7 @@ register_binfmt() {
     sudo mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
   fi
   local url='https://raw.githubusercontent.com/qemu/qemu/f8b2f64e2336a28bf0d50b6ef8a7d8c013e9bcf3/scripts/qemu-binfmt-conf.sh'
-  retry curl --proto '=https' --tlsv1.2 -fsSL -o __qemu-binfmt-conf.sh "${url}"
+  retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 -o __qemu-binfmt-conf.sh "${url}"
   IFS=' '
   sed -Ei "s/i386_magic/qemu_target_list=\"${qemu_arch[*]}\"\\ni386_magic/" ./__qemu-binfmt-conf.sh
   IFS=$'\n\t'

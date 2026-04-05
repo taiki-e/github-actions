@@ -165,7 +165,7 @@ jobs:
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
             if ! type -P rustup; then
-              retry curl --proto '=https' --tlsv1.2 -fsSL -o rustup-init https://sh.rustup.rs
+              retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 -o rustup-init https://sh.rustup.rs
               chmod +x ./rustup-init
               retry ./rustup-init -y --default-toolchain "${INPUT_RUST}" --no-modify-path --profile minimal
               rm -- ./rustup-init
@@ -419,7 +419,7 @@ jobs:
           not_immutable=''
           while true; do
             releases=$(
-              retry curl --proto '=https' --tlsv1.2 -fsSL \
+              retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 \
                 -H "Authorization: Bearer ${GITHUB_TOKEN}" \
                 -H 'Accept: application/vnd.github+json' \
                 -H 'X-GitHub-Api-Version: 2022-11-28' \

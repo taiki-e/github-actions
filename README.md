@@ -11,6 +11,7 @@ supposed to only be used in infra managed by us.
 
 - [**free-device-space**](free-device-space): Free device space.
 - [**install-rust**](install-rust): Install Rust toolchain.
+- [**push**](push): Push branch or tag.
 - [**setup-docker**](setup-docker): Setup docker.
 
 ## Reusable workflows

@@ -1,0 +1,44 @@
+name: push
+description: GitHub Action for pushing branch or tag
+
+inputs:
+  ref:
+    description: |
+      Ref to push (comma or whitespace separated list).
+
+      If only one ref is specified and it does not exist, a new ref will be created
+      from the current branch.
+      If multiple refs are specified, all refs must already exist.
+
+      If multiple refs are specified, they will be pushed in atomic.
+    required: true
+  force:
+    description: |
+      Whether to force push.
+
+      If you want to force push only specific refs, use Git's `+<ref>` syntax instead.
+    required: true
+    default: 'false'
+  separate-first:
+    description: |
+      Whether to separate push of the first ref.
+    required: true
+    default: 'false'
+  token:
+    description: GitHub token for pushing branch or tag.
+    required: false
+    default: ${{ github.token }}
+
+# Note:
+# - inputs.* should be manually mapped to INPUT_* due to https://github.com/actions/runner/issues/665
+# - Use GITHUB_*/RUNNER_* instead of github.*/runner.* due to https://github.com/actions/runner/issues/2185
+runs:
+  using: composite
+  steps:
+    - run: bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/main.sh"
+      shell: bash
+      env:
+        INPUT_REF: ${{ inputs.ref }}
+        INPUT_FORCE: ${{ inputs.force }}
+        INPUT_SEPARATE_FIRST: ${{ inputs.separate-first }}
+        GITHUB_TOKEN: ${{ inputs.token }}

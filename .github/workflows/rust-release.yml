@@ -186,7 +186,9 @@ on:
         required: false
         type: string
     secrets:
-      PUSH_TOKEN:
+      PUSH_TOKEN_APP_CLIENT_ID:
+        required: true
+      PUSH_TOKEN_APP_PRIVATE_KEY:
         required: true
 
 env:
@@ -703,6 +705,11 @@ jobs:
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
           PREPARE_REV: ${{ needs.prepare.outputs.rev }}
+      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+        id: push-token
+        with:
+          app-id: ${{ secrets.PUSH_TOKEN_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PUSH_TOKEN_APP_PRIVATE_KEY }}
       - uses: taiki-e/github-actions/push@9998158fb721dfddd3f42f8d37ac7f1cdbca2f3b # main # zizmor: ignore[stale-action-refs]
         with:
           ref: HEAD,refs/tags/${{ needs.prepare.outputs.tag }}
@@ -710,7 +717,7 @@ jobs:
           separate-first: true
           # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.
           # Also, updating these refs is disallowed for secrets.GITHUB_TOKEN by ruleset.
-          token: ${{ secrets.PUSH_TOKEN }}
+          token: ${{ steps.push-token.outputs.token }}
       - uses: taiki-e/create-gh-release-action@f67cf7b2dadd83d36b981e674a6b08063997ce68 # v1.10.0
         with:
           changelog: ${{ inputs.changelog }}

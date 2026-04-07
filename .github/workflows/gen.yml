@@ -69,6 +69,10 @@ on:
         required: false
         type: string
         default: nightly
+      install-cosign:
+        required: false
+        type: boolean
+        default: false
     secrets:
       PR_TOKEN_APP_PRIVATE_KEY:
         required: false
@@ -111,6 +115,11 @@ jobs:
         with:
           toolchain: ${{ inputs.rust }}
         if: inputs.install-rust
+      - uses: taiki-e/install-action@cf39a74df4a72510be4e5b63348d61067f11e64a # v2.75.0
+        with:
+          tool: cosign
+          fallback: none
+        if: inputs.install-cosign
       - id: run
         run: |
           bash "${SCRIPT}"

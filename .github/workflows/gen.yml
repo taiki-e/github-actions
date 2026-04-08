@@ -137,7 +137,7 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
         if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
-      - uses: taiki-e/github-actions/push@9998158fb721dfddd3f42f8d37ac7f1cdbca2f3b # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/push@a51798e136c6800136ca69a46f936c5fb44483b8 # main # zizmor: ignore[stale-action-refs]
         with:
           ref: refs/heads/${{ inputs.branch }}
           force: true

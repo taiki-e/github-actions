@@ -76,11 +76,6 @@ jobs:
         with:
           toolchain: ${{ inputs.rust }}
           component: clippy
-      - uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
-        with:
-          tool: uv
-          fallback: none
-      - run: mkdir -p -- ~/.config/uv && printf 'exclude-newer = "14 days"\n' >>~/.config/uv/uv.toml
       - name: Run cargo clippy
         run: |
           IFS=$'\n\t'
@@ -112,6 +107,12 @@ jobs:
               sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
             fi
           }
+          python3 -m venv ~/venv
+          ~/venv/bin/pip --version
+          # --uploaded-prior-to requires pip 26.0.
+          ~/venv/bin/pip install --upgrade pip
+          ~/venv/bin/pip install --uploaded-prior-to="$(date -d '-14days' -Idate)" yq
+          tomlq() { ~/venv/bin/tomlq "$@"; }
           args=()
           if [[ "${INPUT_ARGS}" != *"-features"* ]]; then
             args+=(--all-features)
@@ -191,7 +192,7 @@ jobs:
             # Refs:
             # - https://github.com/rust-lang/rust/issues/56232
             # - https://github.com/Nemo157/dotfiles/blob/cee1b90cb23089990fe9bc559b7c2f012d0a59f0/packages/cargo-rustdoc-clippy.sh
-            lints=$(uvx --from yq tomlq -c 'if .workspace then .workspace.lints else null end' Cargo.toml)
+            lints=$(tomlq -c 'if .workspace then .workspace.lints else null end' Cargo.toml)
             if [[ "${lints}" == 'null' ]]; then
               lints='{}'
             fi
@@ -240,7 +241,7 @@ jobs:
             export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} -Z unstable-options --no-run --test-builder /tmp/clippy-wrapper.sh"
             printf '%s\n' "+ RUSTDOCFLAGS='${RUSTDOCFLAGS}' \\"
             for manifest_path in $(jq -r '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .targets[].doctest == true) | .manifest_path' <<<"${metadata}"); do
-              use_workspace_lints=$(uvx --from yq tomlq -c 'if .lints and .lints.workspace then .lints.workspace else false end' "${manifest_path}")
+              use_workspace_lints=$(tomlq -c 'if .lints and .lints.workspace then .lints.workspace else false end' "${manifest_path}")
               if [[ "${use_workspace_lints}" != 'true' ]]; then
                 bail "'.lints.workspace = true must be set'"
               fi

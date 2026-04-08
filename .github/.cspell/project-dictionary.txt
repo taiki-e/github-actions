@@ -11,6 +11,7 @@ ghcup
 hfuzz
 honggfuzz
 hostedtoolcache
+Idate
 kotlinc
 libexec
 libfuzzer
@@ -24,6 +25,7 @@ rsbegin
 rsend
 sessionmanagerplugin
 shortstat
+venv
 venvs
 waagent
 xhtm

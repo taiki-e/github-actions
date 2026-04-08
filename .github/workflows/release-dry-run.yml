@@ -60,11 +60,6 @@ jobs:
     timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
-        with:
-          tool: uv
-          fallback: none
-      - run: mkdir -p -- ~/.config/uv && printf 'exclude-newer = "14 days"\n' >>~/.config/uv/uv.toml
       - name: Prepare
         id: prepare
         run: |
@@ -87,7 +82,13 @@ jobs:
               sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
             fi
           }
-          job=$(uvx yq -c ".jobs.\"${INPUT_JOB}\"" "${INPUT_WORKFLOW}")
+          python3 -m venv ~/venv
+          ~/venv/bin/pip --version
+          # --uploaded-prior-to requires pip 26.0.
+          ~/venv/bin/pip install --upgrade pip
+          ~/venv/bin/pip install --uploaded-prior-to="$(date -d '-14days' -Idate)" yq
+          yq() { ~/venv/bin/yq "$@"; }
+          job=$(yq -c ".jobs.\"${INPUT_JOB}\"" "${INPUT_WORKFLOW}")
           bin=$(jq -r '.with."bin"' <<<"${job}")
           bin_target=$(jq -r '.with."bin-target"' <<<"${job}")
           if [[ "${bin}" == "null" ]]; then

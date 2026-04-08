@@ -38,13 +38,6 @@ case "${INPUT_FORCE}" in
   *) bail "'force' input option must be 'true' or 'false': '${INPUT_FORCE}'" ;;
 esac
 
-separate_first="${INPUT_SEPARATE_FIRST}"
-case "${separate_first}" in
-  false) separate_first='' ;;
-  true) ;;
-  *) bail "'separate-first' input option must be 'true' or 'false': '${INPUT_SEPARATE_FIRST}'" ;;
-esac
-
 if [[ -z "${INPUT_REF}" ]]; then
   bail "'ref' input option must not empty"
 fi
@@ -59,9 +52,6 @@ done < <(normalize_comma_or_space_separated "${INPUT_REF}")
 if [[ ${#refs[@]} -eq 0 ]]; then
   bail "'ref' input option must not empty"
 elif [[ ${#refs[@]} -eq 1 ]]; then
-  if [[ -n "${separate_first}" ]]; then
-    bail "'separate-first' input option requires multiple refs"
-  fi
   ref="${refs[0]#+}"
   if [[ "${ref}" == 'refs/heads/'* ]]; then
     branch="${ref#refs/heads/}"
@@ -91,17 +81,7 @@ EOF
   trap -- '(set -x; git credential-cache exit; git config --local --unset credential.helper || true)' EXIT
 fi
 
-if [[ -n "${separate_first}" ]]; then
-  first="${refs[0]}"
-  refs=("${refs[@]:1}")
-  (
-    set -x
-    retry git push origin "${args[@]}" "${first}"
-    retry git push origin "${args[@]}" "${refs[@]}"
-  )
-else
-  (
-    set -x
-    retry git push origin "${args[@]}" "${refs[@]}"
-  )
-fi
+(
+  set -x
+  retry git push origin "${args[@]}" "${refs[@]}"
+)

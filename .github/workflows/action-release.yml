@@ -399,8 +399,6 @@ jobs:
       - uses: taiki-e/github-actions/push@9998158fb721dfddd3f42f8d37ac7f1cdbca2f3b # main # zizmor: ignore[stale-action-refs]
         with:
           ref: HEAD,${{ steps.commit.outputs.refs }}
-          # Separate push to HEAD from others to trigger workflows.
-          separate_first: true
           # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.
           # Also, updating these refs is disallowed for secrets.GITHUB_TOKEN by ruleset.
           token: ${{ steps.push-token.outputs.token }}

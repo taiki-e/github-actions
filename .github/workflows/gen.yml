@@ -115,7 +115,7 @@ jobs:
         with:
           toolchain: ${{ inputs.rust }}
         if: inputs.install-rust
-      - uses: taiki-e/install-action@cf39a74df4a72510be4e5b63348d61067f11e64a # v2.75.0
+      - uses: taiki-e/install-action@b8be7f5e140177087325943c4a8e169d01c59b3d # v2.75.3
         with:
           tool: cosign
           fallback: none

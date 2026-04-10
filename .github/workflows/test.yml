@@ -219,7 +219,7 @@ jobs:
         env:
           INPUT_ARGS: ${{ inputs.test-args }}
         if: inputs.doctest-nightly-only && !startsWith(matrix.rust, 'nightly')
-      - uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
+      - uses: taiki-e/install-action@b8be7f5e140177087325943c4a8e169d01c59b3d # v2.75.3
         with:
           # Skip cargo-careful on i686-pc-windows-gnu because cannot find cannot find crt2.o/rsbegin.o/rsend.o when building std
           tool: cargo-hack${{ (inputs.minimal-versions && steps.prepare.outputs.minimal-versions == 'true' || inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true') && ',cargo-minimal-versions' || '' }}${{ inputs.careful && startsWith(matrix.rust, 'nightly') && !(endsWith(matrix.rust, 'i686-pc-windows-gnu') || matrix.target == 'i686-pc-windows-gnu') && !(startsWith(matrix.os, 'ubuntu') && contains(matrix.os, '-arm')) && ',cargo-careful' || '' }}

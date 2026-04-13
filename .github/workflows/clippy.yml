@@ -202,7 +202,7 @@ jobs:
             while IFS='' read -r; do
               [[ -n "${REPLY}" ]] || continue
               if [[ "${REPLY}" == 'unexpected_cfgs' ]] || [[ "${REPLY}" == 'unexpected-cfgs' ]]; then
-                check_cfg="$(jq -c 'if (.rust."'"${REPLY}"'" | type == "object") then .rust."'"${REPLY}"'"."check-cfg" else null end' <<<"${lints}")"
+                check_cfg="$(jq -c --arg lint "${REPLY}" 'if (.rust[$lint] | type == "object") then .rust[$lint]."check-cfg" else null end' <<<"${lints}")"
                 if [[ "${check_cfg}" != 'null' ]] && [[ "${check_cfg}" != '[]' ]]; then
                   # TODO: check-cfg
                   clippy_args+=(-A "${REPLY}")

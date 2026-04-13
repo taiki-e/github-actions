@@ -45,7 +45,8 @@
 #     permissions:
 #       contents: write # for taiki-e/create-gh-release-action
 #     secrets:
-#       PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
+#       PUSH_TOKEN_APP_CLIENT_ID: ${{ secrets.PUSH_TOKEN_APP_CLIENT_ID }}
+#       PUSH_TOKEN_APP_PRIVATE_KEY: ${{ secrets.PUSH_TOKEN_APP_PRIVATE_KEY }}
 #     with:
 #       version: ${{ inputs.version }}
 # ```
@@ -67,7 +68,8 @@
 #     permissions:
 #       id-token: write # for rust-lang/crates-io-auth-action
 #     secrets:
-#       PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
+#       PUSH_TOKEN_APP_CLIENT_ID: ${{ secrets.PUSH_TOKEN_APP_CLIENT_ID }}
+#       PUSH_TOKEN_APP_PRIVATE_KEY: ${{ secrets.PUSH_TOKEN_APP_PRIVATE_KEY }}
 #     with:
 #       version: ${{ inputs.version }}
 # ```

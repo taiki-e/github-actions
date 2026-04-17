@@ -54,8 +54,8 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@d34e3b863da529f7c30e571fec0170fbf64fa40c # main # zizmor: ignore[stale-action-refs]
-      - uses: taiki-e/github-actions/install-rust@d34e3b863da529f7c30e571fec0170fbf64fa40c # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
       - run: |
@@ -120,8 +120,8 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@d34e3b863da529f7c30e571fec0170fbf64fa40c # main # zizmor: ignore[stale-action-refs]
-      - uses: taiki-e/github-actions/install-rust@d34e3b863da529f7c30e571fec0170fbf64fa40c # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
       - run: |
@@ -176,8 +176,8 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@d34e3b863da529f7c30e571fec0170fbf64fa40c # main # zizmor: ignore[stale-action-refs]
-      - uses: taiki-e/github-actions/install-rust@d34e3b863da529f7c30e571fec0170fbf64fa40c # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
       - run: |

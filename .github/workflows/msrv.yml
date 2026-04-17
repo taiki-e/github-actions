@@ -119,7 +119,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@d34e3b863da529f7c30e571fec0170fbf64fa40c # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
       - uses: taiki-e/install-action@b8be7f5e140177087325943c4a8e169d01c59b3d # v2.75.3
         with:
           tool: cargo-hack

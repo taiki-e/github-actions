@@ -220,9 +220,6 @@ jobs:
       contents: write # for creating branch for pr
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      # min-release-age and allow-git requires npm 11.10+
-      - run: npm --version
-      - run: sudo npm install --location=global npm@11.11.0
       - run: cat -- tools/.tidy-check-license-headers
       - run: cat -- .cspell.json
       - run: printf 'REMOVE_UNUSED_WORDS=1\n' >>"${GITHUB_ENV}"
@@ -452,7 +449,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: inputs.immutable-release && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: |
-          [[ ! -f tools/cspell-dict.sh ]] || tools/cspell-dict.sh clean
+          [[ ! -f tools/cspell-dict.sh ]] || {
+            # min-release-age and allow-git requires npm 11.10+
+            npm --version
+            sudo npm install --location=global npm@11.11.0
+            tools/cspell-dict.sh clean
+          }
       - name: Handle diff
         id: diff
         run: |

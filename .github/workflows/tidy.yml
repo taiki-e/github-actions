@@ -468,7 +468,7 @@ jobs:
           fi
         if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
-      - uses: taiki-e/github-actions/push@1a696a060e12e4ffb9a7f886c3fd0f5dc8b7c74b # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/push@d34e3b863da529f7c30e571fec0170fbf64fa40c # main # zizmor: ignore[stale-action-refs]
         with:
           ref: refs/heads/update-cspell-dictionary
           force: true

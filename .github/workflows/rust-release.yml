@@ -221,7 +221,7 @@ jobs:
         with:
           tool: parse-changelog
           fallback: none
-      - uses: taiki-e/github-actions/install-rust@504baa777e8f0076810d1e343d5387a2ada13b98 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@804879a18e2a582922d4febbd0f4e20f14582ae6 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
           target: ${{ inputs.target }}
@@ -540,7 +540,7 @@ jobs:
         with:
           tool: parse-changelog
           fallback: none
-      - uses: taiki-e/github-actions/install-rust@504baa777e8f0076810d1e343d5387a2ada13b98 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@804879a18e2a582922d4febbd0f4e20f14582ae6 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
           target: ${{ inputs.target }}
@@ -717,7 +717,7 @@ jobs:
         with:
           client-id: ${{ secrets.PUSH_TOKEN_APP_CLIENT_ID }}
           private-key: ${{ secrets.PUSH_TOKEN_APP_PRIVATE_KEY }}
-      - uses: taiki-e/github-actions/push@a51798e136c6800136ca69a46f936c5fb44483b8 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/push@804879a18e2a582922d4febbd0f4e20f14582ae6 # main # zizmor: ignore[stale-action-refs]
         with:
           ref: HEAD,refs/tags/${{ needs.prepare.outputs.tag }}
           # Separate push to HEAD from others to trigger workflows.
@@ -820,7 +820,7 @@ jobs:
         env:
           REF: refs/tags/${{ needs.prepare.outputs.tag }}
           RELEASE_REV: ${{ needs.release.outputs.rev }}
-      - uses: taiki-e/github-actions/install-rust@504baa777e8f0076810d1e343d5387a2ada13b98 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@804879a18e2a582922d4febbd0f4e20f14582ae6 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
       - uses: taiki-e/setup-cross-toolchain-action@d62f33b587e73b0004731caebc7d2d46b18a7567 # v1.39.2

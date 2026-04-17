@@ -43,8 +43,7 @@ install_qemu() {
   qemu_bin_dir=/usr/bin
   printf '::group::Instal QEMU\n'
   # https://github.com/taiki-e/dockerfiles/pkgs/container/qemu-user
-  qemu_version='10.2'
-  qemu_user_tag=":${qemu_version}"
+  local qemu_user_tag='@sha256:06e15011a88c9495e8e2c35d578dc305bd5ede8a5671689ea552d99ad7c6f746' # 10.2
   retry docker create --name qemu-user "ghcr.io/taiki-e/qemu-user${qemu_user_tag}"
   mkdir -p -- .setup-docker-action-tmp
   for arch in "${qemu_arch[@]}"; do

@@ -182,6 +182,9 @@ on:
       prefix:
         required: false
         type: string
+      commit-prefix:
+        required: false
+        type: string
       bin:
         required: false
         type: string
@@ -688,7 +691,7 @@ jobs:
             (
               set -x
               git add "${changed_paths[@]}"
-              git commit -m "Release ${version}"
+              git commit -m "${COMMIT_PREFIX}Release ${version}"
             )
           fi
           rev=$(git rev-parse HEAD)
@@ -707,6 +710,7 @@ jobs:
           TAG: ${{ needs.prepare.outputs.tag }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
+          COMMIT_PREFIX: ${{ inputs.commit-prefix }}
           PREPARE_REV: ${{ needs.prepare.outputs.rev }}
       - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: push-token

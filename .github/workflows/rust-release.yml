@@ -725,7 +725,7 @@ jobs:
           # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.
           # Also, updating these refs is disallowed for secrets.GITHUB_TOKEN by ruleset.
           token: ${{ steps.push-token.outputs.token }}
-      - uses: taiki-e/create-gh-release-action@f67cf7b2dadd83d36b981e674a6b08063997ce68 # v1.10.0
+      - uses: taiki-e/create-gh-release-action@eba8ea96c86cca8a37f1b56e94b4d13301fba651 # v1.11.0
         with:
           changelog: ${{ inputs.changelog }}
           title: ${{ inputs.title }}
@@ -837,7 +837,7 @@ jobs:
       - run: printf 'MACOSX_DEPLOYMENT_TARGET=11.0\n' >>"${GITHUB_ENV}"
         if: matrix.target == 'aarch64-apple-darwin' || matrix.target == 'universal-apple-darwin'
       - id: upload
-        uses: taiki-e/upload-rust-binary-action@10c1cf6a3da113ad4e60018e386570529aa5f1d3 # v1.30.0
+        uses: taiki-e/upload-rust-binary-action@f0d45ae91ee7b8ee928de7a9d04d893a08bcbec6 # v1.30.2
         with:
           bin: ${{ inputs.bin }}
           target: ${{ matrix.target }}

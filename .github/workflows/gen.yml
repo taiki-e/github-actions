@@ -73,6 +73,10 @@ on:
         required: false
         type: boolean
         default: false
+      pr-token-app-client-id:
+        required: false
+        type: string
+        default: Iv23liTXn5nJSj4JzqMb # https://github.com/apps/taiki-e-automated-pr
     secrets:
       PR_TOKEN_APP_PRIVATE_KEY:
         required: false
@@ -142,10 +146,10 @@ jobs:
           ref: refs/heads/${{ inputs.branch }}
           force: true
         if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
-      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: pr-token
         with:
-          app-id: Iv23liTXn5nJSj4JzqMb # https://github.com/apps/taiki-e-automated-pr
+          client-id: ${{ inputs.pr-token-app-client-id }}
           private-key: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] # TODO
         if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Create or re-open PR

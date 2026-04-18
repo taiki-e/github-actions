@@ -19,11 +19,6 @@ inputs:
       If you want to force push only specific refs, use Git's `+<ref>` syntax instead.
     required: true
     default: 'false'
-  separate-first:
-    description: |
-      Whether to separate push of the first ref.
-    required: true
-    default: 'false'
   token:
     description: GitHub token for pushing branch or tag.
     required: false
@@ -40,5 +35,4 @@ runs:
       env:
         INPUT_REF: ${{ inputs.ref }}
         INPUT_FORCE: ${{ inputs.force }}
-        INPUT_SEPARATE_FIRST: ${{ inputs.separate-first }}
         GITHUB_TOKEN: ${{ inputs.token }}

@@ -112,9 +112,9 @@ jobs:
       pull-requests: write # for gh pr review --approve / gh pr merge --rebase --auto
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@76b2015b78ccf5827d188f9e4aa4bbaac5690356 # main # zizmor: ignore[stale-action-refs]
         if: inputs.free-device-space
-      - uses: taiki-e/github-actions/install-rust@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@76b2015b78ccf5827d188f9e4aa4bbaac5690356 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
         if: inputs.install-rust
@@ -140,7 +140,7 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
         if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
-      - uses: taiki-e/github-actions/push@3c1cac16ef654d1febb66f21f328fa167f0d2fef # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/push@76b2015b78ccf5827d188f9e4aa4bbaac5690356 # main # zizmor: ignore[stale-action-refs]
         with:
           ref: refs/heads/${{ inputs.branch }}
           force: true

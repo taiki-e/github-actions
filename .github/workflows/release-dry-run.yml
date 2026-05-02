@@ -103,7 +103,7 @@ jobs:
               *-linux-gnu*) matrix+=ubuntu-22.04 ;;
               *-apple-*) matrix+=macos-14 ;;
               *-windows-*) matrix+=windows-2022 ;;
-              *) matrix+=ubuntu-latest ;;
+              *) matrix+=ubuntu-24.04 ;;
             esac
             matrix+='"}'
           done < <(normalize_comma_or_space_separated "${bin_target}")

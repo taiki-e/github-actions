@@ -90,7 +90,7 @@ jobs:
             esac
           done < <(normalize_comma_or_space_separated "${INPUT_TARGET}")
           matrix=''
-          [[ -z "${linux_target}" ]] || matrix+=',"ubuntu-latest"'
+          [[ -z "${linux_target}" ]] || matrix+=',"ubuntu-24.04"'
           [[ -z "${apple_target}" ]] || matrix+=',"macos-latest"'
           [[ -z "${windows_target}" ]] || matrix+=',"windows-latest"'
           printf 'linux-target=%s\n' "${linux_target# }" >>"${GITHUB_OUTPUT}"

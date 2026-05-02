@@ -319,9 +319,10 @@ jobs:
               set +e
               res=$(
                 curl --proto '=https' -fsSL \
-                  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                  -H @- \
                   -H 'Accept: application/json' \
-                  "https://github.com/${GITHUB_REPOSITORY}/branch_commits/${commit}" 2>&1
+                  "https://github.com/${GITHUB_REPOSITORY}/branch_commits/${commit}" 2>&1 \
+                  <<<"Authorization: Bearer ${GITHUB_TOKEN}"
               )
               code="$?"
               set -e
@@ -372,10 +373,11 @@ jobs:
                   set +e
                   cmp=$(
                     curl --proto '=https' --tlsv1.2 --fail-with-body -sSL \
-                      -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                      -H @- \
                       -H 'Accept: application/vnd.github+json' \
                       -H 'X-GitHub-Api-Version: 2022-11-28' \
-                      "${url}"
+                      "${url}" \
+                      <<<"Authorization: Bearer ${GITHUB_TOKEN}"
                   )
                   code="$?"
                   set -e
@@ -424,10 +426,11 @@ jobs:
           while true; do
             releases=$(
               retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 \
-                -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                -H @- \
                 -H 'Accept: application/vnd.github+json' \
                 -H 'X-GitHub-Api-Version: 2022-11-28' \
-                "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100&page=${page}"
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100&page=${page}" \
+                <<<"Authorization: Bearer ${GITHUB_TOKEN}"
             )
             t=$(jq -r '.[] | select(.immutable == false and .draft == false) | .tag_name' <<<"${releases}")
             if [[ -n "${t}" ]]; then

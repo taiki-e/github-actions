@@ -62,7 +62,7 @@ jobs:
       - uses: taiki-e/github-actions/install-rust@76b2015b78ccf5827d188f9e4aa4bbaac5690356 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
-      - uses: taiki-e/cache-cargo-install-action@a8b9ecf8e0c0ea09d7481cfc583a5203ecd585b5 # v3.0.5
+      - uses: taiki-e/cache-cargo-install-action@f9eed3e4680f27610dc6d8c67be1b88593f7dade # v3.0.6
         with:
           tool: cargo-check-external-types@0.4.0
       # Refs:

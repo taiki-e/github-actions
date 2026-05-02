@@ -59,7 +59,7 @@ jobs:
       - uses: taiki-e/github-actions/install-rust@76b2015b78ccf5827d188f9e4aa4bbaac5690356 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
-      - uses: taiki-e/install-action@b8be7f5e140177087325943c4a8e169d01c59b3d # v2.75.3
+      - uses: taiki-e/install-action@58e862542551f667fa44c8a2a4a1d64ad477c96a # v2.75.17
         with:
           # cargo-no-dev-deps is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
           tool: cargo-deny,cargo-no-dev-deps

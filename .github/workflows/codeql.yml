@@ -14,8 +14,7 @@
 #
 # See "on.workflow_call.inputs" below for input options.
 
-permissions:
-  contents: read
+permissions: {}
 
 on:
   workflow_call:
@@ -103,7 +102,6 @@ jobs:
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
     timeout-minutes: 60
     permissions:
-      contents: read
       security-events: write # for github/codeql-action/*
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2

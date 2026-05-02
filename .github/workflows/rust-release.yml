@@ -140,8 +140,7 @@
 
 # TODO: Remove token-based one by requiring publish of 0.0.0 version on crates.io?
 
-permissions:
-  contents: read
+permissions: {}
 
 on:
   workflow_call:

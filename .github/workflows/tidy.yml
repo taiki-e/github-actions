@@ -18,8 +18,7 @@
 #
 # See "on.workflow_call.inputs" below for input options.
 
-permissions:
-  contents: read
+permissions: {}
 
 on:
   workflow_call:
@@ -526,7 +525,6 @@ jobs:
     if: inputs.codeql
     uses: ./.github/workflows/codeql.yml
     permissions:
-      contents: read
       security-events: write # for github/codeql-action/*
     with:
       rust: ${{ inputs.rust }}

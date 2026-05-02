@@ -14,8 +14,7 @@
 #
 # See "on.workflow_call.inputs" below for input options.
 
-permissions:
-  contents: read
+permissions: {}
 
 on:
   workflow_call:

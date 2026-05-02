@@ -168,7 +168,7 @@ jobs:
           for target in "${other_targets[@]}"; do
             add_matrix "${target}" "${last}"
           done
-          printf '%s\n' "matrix={\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+          printf 'matrix=%s\n' "{\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
         env:
           INPUT_RUST: ${{ inputs.rust }}
           INPUT_TARGET: ${{ inputs.target }}

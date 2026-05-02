@@ -93,13 +93,13 @@ jobs:
           [[ -z "${linux_target}" ]] || matrix+=',"ubuntu-latest"'
           [[ -z "${apple_target}" ]] || matrix+=',"macos-latest"'
           [[ -z "${windows_target}" ]] || matrix+=',"windows-latest"'
-          printf '%s\n' "linux-target=${linux_target# }" >>"${GITHUB_OUTPUT}"
-          printf '%s\n' "apple-target=${apple_target# }" >>"${GITHUB_OUTPUT}"
-          printf '%s\n' "windows-target=${windows_target# }" >>"${GITHUB_OUTPUT}"
-          printf '%s\n' "matrix={\"os\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+          printf 'linux-target=%s\n' "${linux_target# }" >>"${GITHUB_OUTPUT}"
+          printf 'apple-target=%s\n' "${apple_target# }" >>"${GITHUB_OUTPUT}"
+          printf 'windows-target=%s\n' "${windows_target# }" >>"${GITHUB_OUTPUT}"
+          printf 'matrix=%s\n' "{\"os\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
           # shellcheck disable=SC2046
           lowest_msrv=$(grep -E '^rust-version *=' $(git ls-files '*Cargo.toml') | sed -E 's/^[^"]+"//g; s/".*//g' | LC_ALL=C sort -Vu | head -1)
-          printf '%s\n' "lowest-msrv=${lowest_msrv}" >>"${GITHUB_OUTPUT}"
+          printf 'lowest-msrv=%s\n' "${lowest_msrv}" >>"${GITHUB_OUTPUT}"
         env:
           INPUT_TARGET: ${{ inputs.target }}
     outputs:

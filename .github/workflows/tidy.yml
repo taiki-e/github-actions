@@ -196,7 +196,7 @@ jobs:
               printf 'codegen=true\n' >>"${GITHUB_OUTPUT}"
             fi
           elif [[ -e tools/ci/gen.sh ]]; then
-            printf '%s\n' "::error::tools/ci/gen.sh is available but tools/gen.sh is not available"
+            printf '::error::tools/ci/gen.sh is available but tools/gen.sh is not available\n'
             exit 1
           fi
         env:
@@ -330,12 +330,12 @@ jobs:
             if [[ "${code}" == "0" ]]; then
               if [[ -z "${res}" ]]; then
                 # TODO: collect all and emit at the last?
-                printf '%s\n' "::error::${tag} is not contained in any branches"
+                printf '::error::%s\n' "${tag} is not contained in any branches"
                 exit 1
               fi
               branches="$(jq -r '.branches[] | .branch' <<<"${res}")"
               if [[ -z "${branches}" ]]; then
-                printf '%s\n' "::error::${tag} is not contained in any branches"
+                printf '::error::%s\n' "${tag} is not contained in any branches"
                 exit 1
               fi
               while IFS='' read -r branch; do
@@ -396,7 +396,7 @@ jobs:
               done
             fi
             if [[ -z "${ok}" ]]; then
-              printf '%s\n' "::error::${tag} is not contained in any protected branches"
+              printf '::error::%s\n' "${tag} is not contained in any protected branches"
               exit 1
             fi
             printf 'info: done\n'
@@ -440,7 +440,7 @@ jobs:
             _=$((page++))
           done
           if [[ -n "${not_immutable}" ]]; then
-            printf '%s\n' "::error::non-immutable releases found"
+            printf '::error::non-immutable releases found\n'
             LC_ALL=C sort -Vr <<<"${not_immutable}"
             exit 1
           fi

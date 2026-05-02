@@ -72,11 +72,11 @@ jobs:
       - run: |
           printf 'ALL_FEATURES=--all-features\n' >>"${GITHUB_ENV}"
         if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
-      - run: printf '%s\n' "MIRIFLAGS=${INPUT_MIRIFLAGS} -Zmiri-many-seeds=0..16" >>"${GITHUB_ENV}"
+      - run: printf 'MIRIFLAGS=%s\n' "${INPUT_MIRIFLAGS} -Zmiri-many-seeds=0..16" >>"${GITHUB_ENV}"
         env:
           INPUT_MIRIFLAGS: ${{ inputs.miriflags }}
         if: github.event_name == 'schedule'
-      - run: printf '%s\n' "MIRIFLAGS=${INPUT_MIRIFLAGS}" >>"${GITHUB_ENV}"
+      - run: printf 'MIRIFLAGS=%s\n' "${INPUT_MIRIFLAGS}" >>"${GITHUB_ENV}"
         env:
           INPUT_MIRIFLAGS: ${{ inputs.miriflags }}
         if: github.event_name != 'schedule'

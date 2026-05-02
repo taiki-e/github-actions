@@ -263,23 +263,23 @@ jobs:
 
           # shellcheck disable=SC2153
           version="${VERSION}"
-          printf '%s\n' "version(input): ${version}"
+          printf 'version(input): %s\n' "${version}"
           # shellcheck disable=SC2153
           tag_prefix="${TAG_PREFIX}"
-          printf '%s\n' "tag_prefix: ${tag_prefix}"
+          printf 'tag_prefix: %s\n' "${tag_prefix}"
           # shellcheck disable=SC2153
           changelog="${CHANGELOG}"
-          printf '%s\n' "changelog: ${changelog}"
+          printf 'changelog: %s\n' "${changelog}"
 
           # Get the current date.
           release_date=$(date -u '+%Y-%m-%d')
-          printf '%s\n' "release-date: ${release_date}"
-          printf '%s\n' "release-date=${release_date}" >>"${GITHUB_OUTPUT}"
+          printf 'release-date: %s\n' "${release_date}"
+          printf 'release-date=%s\n' "${release_date}" >>"${GITHUB_OUTPUT}"
 
           # Get the current revision.
           rev=$(git rev-parse HEAD)
-          printf '%s\n' "rev: ${rev}"
-          printf '%s\n' "rev=${rev}" >>"${GITHUB_OUTPUT}"
+          printf 'rev: %s\n' "${rev}"
+          printf 'rev=%s\n' "${rev}" >>"${GITHUB_OUTPUT}"
 
           # Get the previous version.
           metadata=$(cargo metadata --format-version=1 --no-deps)
@@ -299,8 +299,8 @@ jobs:
               bail "not found '#publish:version' in version in ${MANIFEST_PATH}"
             fi
           done
-          printf '%s\n' "prev-version: ${prev_version}"
-          printf '%s\n' "prev-version=${prev_version}" >>"${GITHUB_OUTPUT}"
+          printf 'prev-version: %s\n' "${prev_version}"
+          printf 'prev-version=%s\n' "${prev_version}" >>"${GITHUB_OUTPUT}"
 
           # Determine the new version number and tag name.
           case "${version}" in
@@ -323,11 +323,11 @@ jobs:
           if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z\.-]+)?(\+[0-9A-Za-z\.-]+)?$ ]]; then
             bail "invalid version format '${version}'"
           fi
-          printf '%s\n' "version: ${version}"
-          printf '%s\n' "version=${version}" >>"${GITHUB_OUTPUT}"
+          printf 'version: %s\n' "${version}"
+          printf 'version=%s\n' "${version}" >>"${GITHUB_OUTPUT}"
           tag="${tag_prefix}${version}"
-          printf '%s\n' "tag: ${tag}"
-          printf '%s\n' "tag=${tag}" >>"${GITHUB_OUTPUT}"
+          printf 'tag: %s\n' "${tag}"
+          printf 'tag=%s\n' "${tag}" >>"${GITHUB_OUTPUT}"
 
           # Make sure the same release has not been created in the past.
           if gh release view "${tag}" &>/dev/null; then
@@ -462,7 +462,7 @@ jobs:
           )
 
           crates=$(normalize_comma_or_space_separated "${INPUT_CRATES}")
-          printf '%s\n' "crates=${crates}" >>"${GITHUB_OUTPUT}"
+          printf 'crates=%s\n' "${crates}" >>"${GITHUB_OUTPUT}"
 
           if [[ -n "${BIN}" ]]; then
             if [[ -z "${BIN_TARGET}" ]]; then
@@ -479,7 +479,7 @@ jobs:
               esac
               matrix+='"}'
             done < <(normalize_comma_or_space_separated "${BIN_TARGET}")
-            printf '%s\n' "matrix={\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+            printf 'matrix=%s\n' "{\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
           elif [[ -n "${BIN_TARGET}" ]]; then
             bail "'bin-target' input option may only be used together with 'bin' input option"
           fi
@@ -694,8 +694,8 @@ jobs:
             )
           fi
           rev=$(git rev-parse HEAD)
-          printf '%s\n' "rev: ${rev}"
-          printf '%s\n' "rev=${rev}" >>"${GITHUB_OUTPUT}"
+          printf 'rev: %s\n' "${rev}"
+          printf 'rev=%s\n' "${rev}" >>"${GITHUB_OUTPUT}"
 
           (
             set -x
@@ -824,9 +824,9 @@ jobs:
         with:
           target: ${{ matrix.target }}
           runner: none
-      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
+      - run: printf 'RUSTFLAGS=%s\n' "${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
         if: contains(matrix.target, '-windows-msvc')
-      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static -C link-self-contained=yes" >>"${GITHUB_ENV}"
+      - run: printf 'RUSTFLAGS=%s\n' "${RUSTFLAGS} -C target-feature=+crt-static -C link-self-contained=yes" >>"${GITHUB_ENV}"
         if: contains(matrix.target, '-linux-musl')
       # https://doc.rust-lang.org/rustc/platform-support.html
       - run: printf 'MACOSX_DEPLOYMENT_TARGET=10.12\n' >>"${GITHUB_ENV}"

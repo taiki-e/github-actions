@@ -107,8 +107,8 @@ jobs:
             esac
             matrix+='"}'
           done < <(normalize_comma_or_space_separated "${bin_target}")
-          printf '%s\n' "matrix={\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
-          printf '%s\n' "bin=${bin}" >>"${GITHUB_OUTPUT}"
+          printf 'matrix=%s\n' "{\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+          printf 'bin=%s\n' "${bin}" >>"${GITHUB_OUTPUT}"
         env:
           INPUT_JOB: ${{ inputs.job }}
           INPUT_WORKFLOW: ${{ inputs.workflow }}
@@ -132,9 +132,9 @@ jobs:
         with:
           target: ${{ matrix.target }}
           runner: none
-      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
+      - run: printf 'RUSTFLAGS=%s\n' "${RUSTFLAGS} -C target-feature=+crt-static" >>"${GITHUB_ENV}"
         if: contains(matrix.target, '-windows-msvc')
-      - run: printf '%s\n' "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static -C link-self-contained=yes" >>"${GITHUB_ENV}"
+      - run: printf 'RUSTFLAGS=%s\n' "${RUSTFLAGS} -C target-feature=+crt-static -C link-self-contained=yes" >>"${GITHUB_ENV}"
         if: contains(matrix.target, '-linux-musl')
       # https://doc.rust-lang.org/rustc/platform-support.html
       - run: printf 'MACOSX_DEPLOYMENT_TARGET=10.12\n' >>"${GITHUB_ENV}"

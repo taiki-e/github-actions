@@ -26,13 +26,54 @@ inputs:
 
 # Note:
 # - inputs.* should be manually mapped to INPUT_* due to https://github.com/actions/runner/issues/665
-# - Use GITHUB_*/RUNNER_* instead of github.*/runner.* due to https://github.com/actions/runner/issues/2185
+# - For context containing path, use GITHUB_*/RUNNER_* instead of github.*/runner.* due to https://github.com/actions/runner/issues/2185
 runs:
   using: composite
   steps:
-    - run: bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/main.sh"
-      shell: bash
+    - run: |
+        bail() {
+          printf '::error::%s\n' "$*"
+          exit 1
+        }
+        # See "Secure-execution mode" in https://man7.org/linux/man-pages/man8/ld.so.8.html
+        unset HOSTALIASES GCONV_PATH GETCONF_DIR LOCALDOMAIN LOCPATH RESOLV_HOST_CONF NIS_PATH NLSPATH MALLOC_TRACE RES_OPTIONS TMPDIR TZDIR
+        # See https://perldoc.perl.org/perlrun#ENVIRONMENT
+        unset PERLLIB PERL5LIB PERL5OPT PERL5DB PERL_USE_UNSAFE_INC PERLIO_DEBUG PERL_HASH_SEED PERL_HASH_SEED_DEBUG PERL_INTERNAL_RAND_SEED PERL_RAND_SEED
+        # If /bin/sh is dash, environment variable containing % is not imported, but is fine
+        # because it also means that it will not be exposed to subprocess.
+        if /usr/bin/env | /usr/bin/grep -Eq '^BASH_FUNC_'; then
+          bail 'bash function injection via BASH_FUNC_ environment variable is not allowed for security reasons'
+        fi
+        /bin/bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/main.sh"
+      shell: /bin/sh -eu {0}
       env:
         INPUT_REF: ${{ inputs.ref }}
         INPUT_FORCE: ${{ inputs.force }}
-        GITHUB_TOKEN: ${{ inputs.token }}
+        INPUT_TOKEN: ${{ inputs.token }}
+        INPUT_REPOSITORY: ${{ github.repository }}
+        INPUT_SERVER_URL: ${{ github.server_url }}
+        # for sh/bash
+        ENV: ''
+        BASH_ENV: ''
+        CDPATH: ''
+        SHELLOPTS: ''
+        BASHOPTS: ''
+        # for Linux
+        # See "Secure-execution mode" in https://man7.org/linux/man-pages/man8/ld.so.8.html
+        LD_AUDIT: ''
+        LD_DEBUG: ''
+        LD_DEBUG_OUTPUT: ''
+        LD_DYNAMIC_WEAK: ''
+        LD_HWCAP_MASK: ''
+        LD_LIBRARY_PATH: ''
+        LD_ORIGIN_PATH: ''
+        LD_PRELOAD: ''
+        LD_PROFILE: ''
+        # for macOS
+        DYLD_INSERT_LIBRARIES: ''
+        DYLD_FRAMEWORK_PATH: ''
+        DYLD_LIBRARY_PATH: ''
+        DYLD_FALLBACK_FRAMEWORK_PATH: ''
+        DYLD_FALLBACK_LIBRARY_PATH: ''
+        DYLD_VERSIONED_FRAMEWORK_PATH: ''
+        DYLD_VERSIONED_LIBRARY_PATH: ''

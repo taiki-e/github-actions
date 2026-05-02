@@ -63,11 +63,11 @@ jobs:
           else
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_NORMAL}" >>"${GITHUB_ENV}"
           fi
-      - uses: taiki-e/cache-cargo-install-action@a8b9ecf8e0c0ea09d7481cfc583a5203ecd585b5 # v3.0.5
+      - uses: taiki-e/cache-cargo-install-action@f9eed3e4680f27610dc6d8c67be1b88593f7dade # v3.0.6
         with:
           tool: cargo-fuzz
       - name: Cache output
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: fuzz/out
           key: libfuzzer-out-${{ github.run_id }}
@@ -102,13 +102,13 @@ jobs:
         working-directory: fuzz
         if: always()
       - name: Upload artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: libfuzzer-artifacts
           path: libfuzzer-artifacts.tar.xz
         if: always() && steps.archive.outputs.has-artifacts == 'true'
       - name: Upload corpus
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: libfuzzer-corpus
           path: libfuzzer-corpus.tar.xz
@@ -135,7 +135,7 @@ jobs:
         run: cargo afl build --release --features afl
         working-directory: fuzz
       - name: Cache output
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: fuzz/out
           key: afl-out-${{ github.run_id }}
@@ -164,7 +164,7 @@ jobs:
         working-directory: fuzz
         if: always()
       - name: Upload artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: afl-artifacts
           path: afl-artifacts.tar.xz
@@ -188,12 +188,12 @@ jobs:
       - run: |
           sudo apt-get -o Acquire::Retries=10 -qq update
           sudo apt-get -o Acquire::Retries=10 -o Dpkg::Use-Pty=0 install -y --no-install-recommends binutils-dev libunwind8-dev
-      - uses: taiki-e/cache-cargo-install-action@a8b9ecf8e0c0ea09d7481cfc583a5203ecd585b5 # v3.0.5
+      - uses: taiki-e/cache-cargo-install-action@f9eed3e4680f27610dc6d8c67be1b88593f7dade # v3.0.6
         with:
           # TODO: Pass --no-default-features
           tool: honggfuzz
       - name: Cache output
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: fuzz/hfuzz_workspace
           key: honggfuzz-out-${{ github.run_id }}
@@ -229,7 +229,7 @@ jobs:
         working-directory: fuzz
         if: failure()
       - name: Upload artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: honggfuzz-artifacts
           path: honggfuzz-artifacts.tar.xz

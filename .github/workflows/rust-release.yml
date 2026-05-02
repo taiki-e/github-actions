@@ -220,7 +220,7 @@ jobs:
         with:
           tool: parse-changelog
           fallback: none
-      - uses: taiki-e/github-actions/install-rust@3562a53851d279ba19a6e847929f3ba205c5f15b # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@4d38e728995986ce398f878bbecb604d3d2de6c7 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
           target: ${{ inputs.target }}
@@ -539,7 +539,7 @@ jobs:
         with:
           tool: parse-changelog
           fallback: none
-      - uses: taiki-e/github-actions/install-rust@3562a53851d279ba19a6e847929f3ba205c5f15b # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@4d38e728995986ce398f878bbecb604d3d2de6c7 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
           target: ${{ inputs.target }}
@@ -716,7 +716,7 @@ jobs:
         with:
           client-id: ${{ secrets.PUSH_TOKEN_APP_CLIENT_ID }}
           private-key: ${{ secrets.PUSH_TOKEN_APP_PRIVATE_KEY }}
-      - uses: taiki-e/github-actions/push@3562a53851d279ba19a6e847929f3ba205c5f15b # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/push@4d38e728995986ce398f878bbecb604d3d2de6c7 # main # zizmor: ignore[stale-action-refs]
         with:
           ref: HEAD,refs/tags/${{ needs.prepare.outputs.tag }}
           # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.
@@ -817,7 +817,7 @@ jobs:
         env:
           REF: refs/tags/${{ needs.prepare.outputs.tag }}
           RELEASE_REV: ${{ needs.release.outputs.rev }}
-      - uses: taiki-e/github-actions/install-rust@3562a53851d279ba19a6e847929f3ba205c5f15b # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@4d38e728995986ce398f878bbecb604d3d2de6c7 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
       - uses: taiki-e/setup-cross-toolchain-action@d62f33b587e73b0004731caebc7d2d46b18a7567 # v1.39.2

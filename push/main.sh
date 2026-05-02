@@ -57,7 +57,6 @@ unset INPUT_TOKEN
 unset GIT_TRACE_REDACT GIT_CURL_VERBOSE GIT_TRACE_CURL
 
 sleep=$(resolve_path sleep)
-grep=$(resolve_path grep)
 sed=$(resolve_path sed)
 git=$(resolve_path git)
 openssl=$(resolve_path openssl)
@@ -150,7 +149,7 @@ if [[ ${#refs[@]} -eq 1 ]]; then
   ref="${refs[0]#+}"
   if [[ "${ref}" == 'refs/heads/'* ]]; then
     branch="${ref#refs/heads/}"
-    if ! "${git}" "${common_args[@]}" branch | "${grep}" -Eq '. '"${branch}"'$'; then
+    if ! "${git}" "${common_args[@]}" rev-parse --verify "refs/heads/${branch}" &>/dev/null; then
       g "${git}" "${common_args[@]}" branch -- "${branch}"
     fi
   fi

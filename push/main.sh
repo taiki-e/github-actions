@@ -151,7 +151,7 @@ if [[ ${#refs[@]} -eq 1 ]]; then
   if [[ "${ref}" == 'refs/heads/'* ]]; then
     branch="${ref#refs/heads/}"
     if ! "${git}" "${common_args[@]}" branch | "${grep}" -Eq '. '"${branch}"'$'; then
-      "${git}" "${common_args[@]}" branch "${branch}"
+      g "${git}" "${common_args[@]}" branch "${branch}"
     fi
   fi
 fi

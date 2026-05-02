@@ -162,7 +162,7 @@ jobs:
             target="$1"
             rust="$2"
             case "${target}" in
-              x86_64-unknown-linux-gnu) matrix+=',{"rust":"'"${rust}"'","os":"ubuntu-24.04"}' ;;
+              x86_64-unknown-linux-gnu) matrix+=',{"rust":"'"${rust}"'"}' ;;
               aarch64-unknown-linux-gnu) matrix+=',{"rust":"'"${rust}"'","os":"ubuntu-24.04-arm"}' ;;
               armv7*-linux-gnueabihf | thumbv7*-linux-gnueabihf) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'","os":"ubuntu-24.04-arm"}' ;;
               aarch64-apple-darwin) matrix+=',{"rust":"'"${rust}"'","os":"macos-latest"}' ;;
@@ -171,7 +171,7 @@ jobs:
               x86_64-pc-windows-* | i686-pc-windows-*) matrix+=',{"rust":"'"${rust}-${target}"'","os":"windows-latest"}' ;;
               aarch64-pc-windows-msvc) matrix+=',{"rust":"'"${rust}"'","os":"windows-11-arm"}' ;;
               arm64ec-pc-windows-msvc) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'","os":"windows-11-arm"}' ;;
-              *) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'","os":"ubuntu-24.04"}' ;;
+              *) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'"}' ;;
             esac
           }
           while read -rd,; do
@@ -193,7 +193,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os || 'ubuntu-24.04' }}
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2

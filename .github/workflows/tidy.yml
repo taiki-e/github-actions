@@ -484,7 +484,7 @@ jobs:
       - name: Create or re-open PR
         run: |
           if ! gh pr create --head taiki-e:"${BRANCH:?}" --title "${TITLE:?}" --body "${BODY}" 2>&1 | tee -- /tmp/create.log; then
-            if grep -Eq 'pull request for branch ".*" into branch ".*" already exists' /tmp/create.log; then
+            if grep -Eq 'pull request.* already exists' /tmp/create.log; then
               # close and re-open if already exists because token used to push cannot trigger workflow
               gh pr close "${BRANCH}"
               gh pr reopen "${BRANCH}"

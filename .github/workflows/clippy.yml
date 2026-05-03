@@ -108,9 +108,9 @@ jobs:
           }
           python3 -m venv ~/venv
           ~/venv/bin/pip --version
-          # --uploaded-prior-to requires pip 26.0.
+          # --uploaded-prior-to with duration in days requires pip 26.1.
           ~/venv/bin/pip install --upgrade pip
-          ~/venv/bin/pip install --uploaded-prior-to="$(date -d '-14days' -Idate)" yq
+          ~/venv/bin/pip install --uploaded-prior-to=P14D yq
           tomlq() { ~/venv/bin/tomlq "$@"; }
           args=()
           if [[ "${INPUT_ARGS}" != *"-features"* ]]; then

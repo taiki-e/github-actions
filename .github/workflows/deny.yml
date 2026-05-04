@@ -56,7 +56,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/install-rust@64a5e89adfdfca57adaa05dce4b0fbb0b63ba448 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ inputs.rust }}
       - uses: taiki-e/install-action@58e862542551f667fa44c8a2a4a1d64ad477c96a # v2.75.17

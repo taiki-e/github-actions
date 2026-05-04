@@ -397,7 +397,7 @@ jobs:
         with:
           client-id: ${{ secrets.PUSH_TOKEN_APP_CLIENT_ID }}
           private-key: ${{ secrets.PUSH_TOKEN_APP_PRIVATE_KEY }}
-      - uses: taiki-e/github-actions/push@64a5e89adfdfca57adaa05dce4b0fbb0b63ba448 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/push@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
         with:
           ref: HEAD,${{ steps.commit.outputs.refs }}
           # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.

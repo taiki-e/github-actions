@@ -95,10 +95,12 @@ done
 # Prevents the leak of the token as much as possible, even in
 # compromised environments (or environments that were previously compromised and only incompletely repaired).
 # Ignore some configs and config overrides to prevent malicious config (e.g., malicious fsmonitor) and/or hooks.
-# BASH_FUNC_*/ENV/BASH_ENV/CDPATH/SHELLOPTS/BASHOPTS/LD_*/DYLD_*/PERL* environment variables and profile/rc files, which also affect
+# BASH_FUNC_*/ENV/BASH_ENV/CDPATH/SHELLOPTS/BASHOPTS/LD_*/DYLD_* environment variables and profile/rc files, which also affect
 # non-git programs are handled in action.yml.
 unset GIT_DIR GIT_WORK_TREE GIT_EXEC_PATH GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
 unset GIT_SSH_COMMAND GIT_SSH GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS
+# See https://perldoc.perl.org/perlrun#ENVIRONMENT
+unset PERLLIB PERL5LIB PERL5OPT PERL5DB PERL_USE_UNSAFE_INC PERLIO_DEBUG PERL_HASH_SEED PERL_HASH_SEED_DEBUG PERL_INTERNAL_RAND_SEED PERL_RAND_SEED
 
 # They normally do nothing, and in compromised environments (or environments that were previously
 # compromised and only incompletely repaired) they can lead to arbitrary code execution.

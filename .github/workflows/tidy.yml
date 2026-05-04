@@ -168,7 +168,7 @@ jobs:
           yq() { ~/venv/bin/yq "$@"; }
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
-            if ! type -P rustup; then
+            if ! type -P rustup >/dev/null; then
               retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 -o rustup-init https://sh.rustup.rs
               chmod +x ./rustup-init
               retry ./rustup-init -y --default-toolchain "${INPUT_RUST}" --no-modify-path --profile minimal

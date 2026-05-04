@@ -45,7 +45,8 @@ runs:
           bail 'bash function injection via BASH_FUNC_ environment variable is not allowed for security reasons'
         fi
         /bin/bash --noprofile --norc "${GITHUB_ACTION_PATH:?}/main.sh"
-      shell: /bin/sh -eu {0}
+      # TODO: Using /bin/sh on Windows causes "Second path fragment must not be a drive or UNC name. (Parameter 'expression')" error.
+      shell: ${{ runner.os == 'Windows' && 'sh -eu {0}' || 'sh -eu {0}' }}
       env:
         INPUT_REF: ${{ inputs.ref }}
         INPUT_FORCE: ${{ inputs.force }}

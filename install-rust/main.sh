@@ -37,7 +37,7 @@ if [[ -n "${INPUT_TARGET:-}" ]]; then
   rustup_args+=(--target "${INPUT_TARGET}")
 fi
 
-if type -P rustup; then
+if type -P rustup >/dev/null; then
   # --no-self-update is necessary because the windows environment cannot self-update rustup.exe.
   g retry rustup toolchain add "${toolchain}" --no-self-update "${rustup_args[@]}"
   g rustup default "${toolchain}"

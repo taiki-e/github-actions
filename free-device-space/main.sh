@@ -4,6 +4,11 @@ set -CeEuo pipefail
 IFS=$'\n\t'
 trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
 
+(
+  set -x
+  df -h
+)
+
 dirs=()
 case "$(uname -s)" in
   Linux)
@@ -190,3 +195,8 @@ if [[ ${#dirs[@]} -gt 0 ]]; then
     )
   done
 fi
+
+(
+  set -x
+  df -h
+)

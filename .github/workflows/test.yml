@@ -245,7 +245,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           component: ${{ inputs.component }}${{ (!contains(inputs.component, 'rust-src') && inputs.careful && startsWith(matrix.rust, 'nightly')) && 'rust-src' || '' }}
           target: ${{ (inputs.no-std && steps.prepare.outputs.no-std == 'true' && matrix.target == '') && inputs.no-std-target || '' }}
-      - uses: taiki-e/setup-cross-toolchain-action@d62f33b587e73b0004731caebc7d2d46b18a7567 # v1.39.2
+      - uses: taiki-e/setup-cross-toolchain-action@129361238c06ff2cc1c4ca5c5d2217af441ffdf6 # v1.40.1
         with:
           target: ${{ matrix.target }}
         if: matrix.target != ''

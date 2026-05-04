@@ -240,7 +240,7 @@ jobs:
         with:
           tool: cargo-careful
         if: inputs.careful && startsWith(matrix.rust, 'nightly') && startsWith(matrix.os, 'ubuntu') && contains(matrix.os, '-arm')
-      - uses: taiki-e/github-actions/install-rust@68753a4331ec78cb842512fd16ae32da0c066e31 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/install-rust@64a5e89adfdfca57adaa05dce4b0fbb0b63ba448 # main # zizmor: ignore[stale-action-refs]
         with:
           toolchain: ${{ matrix.rust }}
           component: ${{ inputs.component }}${{ (!contains(inputs.component, 'rust-src') && inputs.careful && startsWith(matrix.rust, 'nightly')) && 'rust-src' || '' }}

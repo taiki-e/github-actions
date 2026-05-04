@@ -72,6 +72,10 @@ on:
         required: false
         type: boolean
         default: false
+      install-parse-changelog:
+        required: false
+        type: boolean
+        default: false
       pr-token-app-client-id:
         required: false
         type: string
@@ -123,6 +127,11 @@ jobs:
           tool: cosign
           fallback: none
         if: inputs.install-cosign
+      - uses: taiki-e/install-action@58e862542551f667fa44c8a2a4a1d64ad477c96a # v2.75.17
+        with:
+          tool: parse-changelog
+          fallback: none
+        if: inputs.install-parse-changelog
       - id: run
         run: |
           bash "${SCRIPT}"

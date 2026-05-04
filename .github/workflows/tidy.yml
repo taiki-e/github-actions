@@ -525,7 +525,9 @@ jobs:
 
   codeql:
     needs: prepare
-    if: inputs.codeql
+    # codeql-action pins default CodeQL bundle version, so the value of running it is limited if
+    # there are no code changes.
+    if: inputs.codeql && github.event_name != 'schedule'
     uses: ./.github/workflows/codeql.yml
     permissions:
       security-events: write # for github/codeql-action/*

@@ -61,7 +61,14 @@ else
         fi
       fi
       canonicalize_windows_path() {
-        sed -E 's/^\/cygdrive\//\//; s/^\/c\//C:\\/; s/\//\\/g' <<<"$1"
+        local t="$1"
+        if [[ "${t}" == '/cygdrive/'* ]]; then
+          t="${t#/cygdrive}"
+        fi
+        if [[ "${t}" == '/c/'* ]]; then
+          t="${t/\/c\//C:\\}"
+        fi
+        printf '%s\n' "${t//\//\\}"
       }
       ;;
     *)

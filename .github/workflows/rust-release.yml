@@ -283,6 +283,7 @@ jobs:
           prev_version=''
           public_packages=''
           # Publishing is unrestricted if null, and forbidden if an empty array.
+          # TODO: this assumes --workspace, but should respect default and package input option
           for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
             eval "$(jq -r '@sh "name=\(.name) ACTUAL_VERSION=\(.version) manifest_path=\(.manifest_path)"' <<<"${pkg}")"
             public_packages+="${name}:${manifest_path},"

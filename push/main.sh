@@ -82,7 +82,7 @@ fi
 
 repository_url="${INPUT_SERVER_URL}/${INPUT_REPOSITORY}"
 
-# Since we currently do not support checking out other repositories, this should always be enforced.
+# Since we currently do not support pushing to other repositories, this should always be enforced.
 # https://github.blog/security/application-security/improving-git-protocol-security-github/
 export GIT_ALLOW_PROTOCOL=https:ssh
 
@@ -114,11 +114,22 @@ common_args=(-c core.hooksPath=/dev/null -c core.fsmonitor=false)
 # https://github.blog/open-source/git/highlights-from-git-2-54/#h-config-based-hooks
 # So, disable them individually. This is not resistant to TOCTOU attacks, but AFAIK,
 # Git 2.54 unfortunately does not provide an appropriate mechanism to prevent them.
-# https://git-scm.com/docs/githooks
 hooks=(
-  reference-transaction # ref update
-  post-index-change     # index update
+  # List from https://git-scm.com/docs/githooks
+  # (Last checked: 2.54.0. am, receive-pack, send-email, fsmonitor, and p4 related hooks omitted.)
+  # pre-commit # commit
+  # pre-merge-commit # merge
+  # prepare-commit-msg # commit
+  # commit-msg # commit/merge
+  # post-commit # commit
+  # pre-rebase # rebase
+  # post-checkout # checkout/switch
+  # post-merge # pull
   pre-push              # push
+  reference-transaction # any ref update
+  # pre-auto-gc # gc
+  # post-rewrite # commit/rebase
+  post-index-change # any index update
 )
 for hook in "${hooks[@]}"; do
   # git hook list fails on old version or on no hook available.
@@ -172,9 +183,9 @@ printf '::group::%s\n' "${cmd}"
 # to mitigate the risk of token leaks caused by compromised global/local config.
 # Since there is an interval between the command being displayed in /proc/*/cmdline and
 # the config being resolved, it is technically possible for a malicious url.*.insteadOf to inject
-# local/global config, causing a malicious repository hosted on the same host to be checked out
-# (though this is hard because we specify SHA in refspec). Anyway, thanks to credential helper's
-# hostname verification, sending credentials to a malicious host should be prevented.
+# local/global config, causing a malicious repository hosted on the same host to be pushed.
+# Anyway, thanks to credential helper's hostname verification, sending credentials to a malicious
+# host should be prevented.
 retry_push() {
   for i in {1..10}; do
     rand=$(openssl rand -hex 64)

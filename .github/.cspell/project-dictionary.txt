@@ -31,7 +31,6 @@ NLSPATH
 PERLIO
 PERLLIB
 pipx
-refspec
 RESOLV
 rsbegin
 rsend

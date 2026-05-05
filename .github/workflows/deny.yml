@@ -56,13 +56,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/install-rust@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
-        with:
-          toolchain: ${{ inputs.rust }}
-      - uses: taiki-e/install-action@58e862542551f667fa44c8a2a4a1d64ad477c96a # v2.75.17
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
           # cargo-no-dev-deps is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
-          tool: cargo-deny,cargo-no-dev-deps
+          tool: rust@${{ inputs.rust }},cargo-deny,cargo-no-dev-deps
           fallback: none
       - run: |
           args=(--workspace --all-features)

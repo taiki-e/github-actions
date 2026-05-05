@@ -9,7 +9,6 @@ CDPATH
 chromedriver
 cmdline
 cmin
-cygdrive
 DYLD
 GCONV
 GETCONF

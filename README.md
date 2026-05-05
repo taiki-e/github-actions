@@ -10,7 +10,7 @@ supposed to only be used in infra managed by us.
 ## Actions
 
 - [**free-device-space**](free-device-space): Free device space.
-- [**install-rust**](install-rust): Install Rust toolchain.
+- [**install-rust**](install-rust): \[Deprecated] Install Rust toolchain.
 - [**push**](push): Push branch or tag.
 - [**setup-docker**](setup-docker): Setup docker.
 
@@ -39,6 +39,8 @@ These actions were previously included in this repository but have been moved in
 - **create-release**: moved into the
   [**create-gh-release-action**][create-gh-release-action] repository.
 - **install**: moved into the
+  [**install-action**][install-action] repository.
+- **install-rust**: merged into the
   [**install-action**][install-action] repository.
 - **upload-rust-binary**: moved into the
   [**upload-rust-binary-action**][upload-rust-binary-action] repository.

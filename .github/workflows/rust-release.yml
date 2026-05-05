@@ -216,14 +216,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/install-action@58e862542551f667fa44c8a2a4a1d64ad477c96a # v2.75.17
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
-          tool: parse-changelog
+          tool: rust@${{ inputs.rust }}+${{ inputs.target }},parse-changelog
           fallback: none
-      - uses: taiki-e/github-actions/install-rust@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
-        with:
-          toolchain: ${{ inputs.rust }}
-          target: ${{ inputs.target }}
       - id: check
         run: |
           IFS=$'\n\t'
@@ -535,14 +531,10 @@ jobs:
       id-token: write # for rust-lang/crates-io-auth-action
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/install-action@58e862542551f667fa44c8a2a4a1d64ad477c96a # v2.75.17
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
-          tool: parse-changelog
+          tool: rust@${{ inputs.rust }}+${{ inputs.target }},parse-changelog
           fallback: none
-      - uses: taiki-e/github-actions/install-rust@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
-        with:
-          toolchain: ${{ inputs.rust }}
-          target: ${{ inputs.target }}
       - name: Create commit and tag
         id: commit
         run: |
@@ -817,9 +809,10 @@ jobs:
         env:
           REF: refs/tags/${{ needs.prepare.outputs.tag }}
           RELEASE_REV: ${{ needs.release.outputs.rev }}
-      - uses: taiki-e/github-actions/install-rust@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
-          toolchain: ${{ inputs.rust }}
+          tool: rust@${{ inputs.rust }}
+          fallback: none
       - uses: taiki-e/setup-cross-toolchain-action@129361238c06ff2cc1c4ca5c5d2217af441ffdf6 # v1.40.1
         with:
           target: ${{ matrix.target }}

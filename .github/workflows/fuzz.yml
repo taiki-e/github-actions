@@ -54,9 +54,10 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: taiki-e/github-actions/free-device-space@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
-      - uses: taiki-e/github-actions/install-rust@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
-          toolchain: ${{ inputs.rust }}
+          tool: rust@${{ inputs.rust }}
+          fallback: none
       - run: |
           if [[ "${GITHUB_EVENT_NAME}" == 'schedule' ]]; then
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"
@@ -120,9 +121,10 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: taiki-e/github-actions/free-device-space@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
-      - uses: taiki-e/github-actions/install-rust@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
-          toolchain: ${{ inputs.rust }}
+          tool: rust@${{ inputs.rust }}
+          fallback: none
       - run: |
           if [[ "${GITHUB_EVENT_NAME}" == 'schedule' ]]; then
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"
@@ -176,9 +178,10 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: taiki-e/github-actions/free-device-space@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
-      - uses: taiki-e/github-actions/install-rust@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
-          toolchain: ${{ inputs.rust }}
+          tool: rust@${{ inputs.rust }}
+          fallback: none
       - run: |
           if [[ "${GITHUB_EVENT_NAME}" == 'schedule' ]]; then
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_SCHEDULE}" >>"${GITHUB_ENV}"

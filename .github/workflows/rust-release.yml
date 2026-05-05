@@ -255,6 +255,7 @@ jobs:
             fi
           }
 
+          git() { command git -c core.fsmonitor=false "$@"; }
           git config user.name 'Taiki Endo'
           git config user.email 'te316e89@gmail.com'
 
@@ -591,6 +592,7 @@ jobs:
             exit 1
           }
 
+          git() { command git -c core.fsmonitor=false "$@"; }
           git config user.name 'Taiki Endo'
           git config user.email 'te316e89@gmail.com'
 
@@ -812,6 +814,9 @@ jobs:
             printf '::error::%s\n' "$*"
             exit 1
           }
+
+          git() { command git -c core.fsmonitor=false "$@"; }
+
           retry git fetch origin --tags &>/dev/null
           git checkout "${REF}"
           # Make sure the current revision is same as release step.

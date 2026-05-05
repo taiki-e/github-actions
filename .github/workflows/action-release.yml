@@ -103,6 +103,12 @@ on:
       prefix:
         required: false
         type: string
+      commit-prefix:
+        required: false
+        type: string
+      post-commit-script:
+        required: false
+        type: string
     secrets:
       PUSH_TOKEN_APP_CLIENT_ID:
         required: true
@@ -142,6 +148,9 @@ jobs:
             exit 1
           }
 
+          git config user.name 'Taiki Endo'
+          git config user.email 'te316e89@gmail.com'
+
           # shellcheck disable=SC2153
           version="${VERSION}"
           printf 'version(input): %s\n' "${version}"
@@ -162,6 +171,7 @@ jobs:
           printf 'rev: %s\n' "${rev}"
           printf 'rev=%s\n' "${rev}" >>"${GITHUB_OUTPUT}"
 
+          # Get the previous version.
           prev_version=$(parse-changelog --title-no-link "${changelog}" | cut -d' ' -f1)
 
           # Determine the new version number and tag name.
@@ -187,13 +197,13 @@ jobs:
           fi
           printf 'version: %s\n' "${version}"
           printf 'version=%s\n' "${version}" >>"${GITHUB_OUTPUT}"
-          tag="${tag_prefix}${version}"
-          printf 'tag: %s\n' "${tag}"
-          printf 'tag=%s\n' "${tag}" >>"${GITHUB_OUTPUT}"
+          export TAG="${tag_prefix}${version}" # export for post-commit-script
+          printf 'tag: %s\n' "${TAG}"
+          printf 'tag=%s\n' "${TAG}" >>"${GITHUB_OUTPUT}"
 
           # Make sure the same release has not been created in the past.
-          if gh release view "${tag}" &>/dev/null; then
-            bail "tag '${tag}' has already been created and pushed"
+          if gh release view "${TAG}" &>/dev/null; then
+            bail "tag '${TAG}' has already been created and pushed"
           fi
           # Make sure that the release was created from an allowed branch.
           if ! git branch | grep -Eq '\* '"${BRANCH}"'$'; then
@@ -220,7 +230,7 @@ jobs:
             remote_url="${remote_url%/compare/*}"
             sed -Ei \
               -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
-              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
+              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${TAG}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${TAG}#" "${changelog}"
             if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
               bail "failed to update ${changelog}"
             fi
@@ -246,23 +256,48 @@ jobs:
           printf '%s\n' "${changes}"
           printf '=======================================\n'
 
-          if [[ -n "${tags}" ]]; then
-            git -c color.ui=always diff "${changed_paths[@]}"
-            git add "${changed_paths[@]}"
-          fi
-          # Make sure that there is no unintended change.
-          git add -N .
-          git -c color.ui=always diff --exit-code
-
           (
             set -x
             git show HEAD --shortstat
           )
+
+          if [[ -n "${tags}" ]]; then
+            (
+              set -x
+              git -c color.ui=always diff "${changed_paths[@]}"
+              git add "${changed_paths[@]}"
+              git commit -m "${COMMIT_PREFIX}Release ${version}"
+            )
+          fi
+          # Make sure that there is no unintended change.
+          (
+            set -x
+            git add -N .
+            git -c color.ui=always diff --exit-code
+          )
+
+          major_version_tag="v${version%%.*}"
+          refs="refs/tags/${TAG},refs/heads/releases/${major_version_tag},+refs/tags/${major_version_tag}"
+          (
+            set -x
+            git tag "${TAG}"
+            git branch "releases/${major_version_tag}"
+            git tag -f "${major_version_tag}"
+          )
+          if [[ -n "${POST_COMMIT_SCRIPT}" ]]; then
+            additional_refs=$(bash "${COMMIT_SCRIPT}")
+            if [[ -n "${additional_refs}" ]]; then
+              refs+=",${additional_refs}"
+            fi
+          fi
+          printf 'refs: %s\n' "${refs}"
         env:
           VERSION: ${{ inputs.version }}
           TAG_PREFIX: ${{ inputs.tag-prefix }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
+          COMMIT_PREFIX: ${{ inputs.commit-prefix }}
+          POST_COMMIT_SCRIPT: ${{ inputs.post-commit-script }}
     outputs:
       has-tags: ${{ steps.check.outputs.has-tags }}
       release-date: ${{ steps.check.outputs.release-date }}
@@ -311,24 +346,23 @@ jobs:
           # shellcheck disable=SC2153
           version="${VERSION}"
           # shellcheck disable=SC2153
-          tag="${TAG}"
-          # shellcheck disable=SC2153
           changelog="${CHANGELOG}"
           # shellcheck disable=SC2153
           release_date="${RELEASE_DATE}"
 
-          # Make sure the current revision is same as prepare step.
           # --unshallow is necessary to successfully push the
           # "releases/${major_version_tag}" branch in the subsequent step.
           retry git fetch origin --unshallow &>/dev/null
+
+          # Make sure the current revision is same as prepare step.
           rev=$(git rev-parse HEAD)
           if [[ "${rev}" != "${PREPARE_REV}" ]]; then
             bail "revision difference between prepare step"
           fi
 
           # Make sure the same release has not been created in the past.
-          if gh release view "${tag}" &>/dev/null; then
-            bail "tag '${tag}' has already been created and pushed"
+          if gh release view "${TAG}" &>/dev/null; then
+            bail "tag '${TAG}' has already been created and pushed"
           fi
           # Make sure that the release was created from an allowed branch.
           if ! git branch | grep -Eq '\* '"${BRANCH}"'$'; then
@@ -344,7 +378,7 @@ jobs:
             remote_url="${remote_url%/compare/*}"
             sed -Ei \
               -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
-              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
+              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${TAG}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${TAG}#" "${changelog}"
             if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
               bail "failed to update ${changelog}"
             fi
@@ -362,18 +396,26 @@ jobs:
             (
               set -x
               git add "${changed_paths[@]}"
-              git commit -m "Release ${version}"
+              git commit -m "${COMMIT_PREFIX}Release ${version}"
             )
           fi
 
           major_version_tag="v${version%%.*}"
-          printf 'refs=%s\n' "refs/tags/${tag},refs/heads/releases/${major_version_tag},+refs/tags/${major_version_tag}" >>"${GITHUB_OUTPUT}"
+          refs="refs/tags/${TAG},refs/heads/releases/${major_version_tag},+refs/tags/${major_version_tag}"
           (
             set -x
-            git tag "${tag}"
+            git tag "${TAG}"
             git branch "releases/${major_version_tag}"
             git tag -f "${major_version_tag}"
           )
+          if [[ -n "${POST_COMMIT_SCRIPT}" ]]; then
+            additional_refs=$(bash "${COMMIT_SCRIPT}")
+            if [[ -n "${additional_refs}" ]]; then
+              refs+=",${additional_refs}"
+            fi
+          fi
+          printf 'refs: %s\n' "${refs}"
+          printf 'refs=%s\n' "${refs}" >>"${GITHUB_OUTPUT}"
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
           RELEASE_DATE: ${{ needs.prepare.outputs.release-date }}
@@ -381,7 +423,9 @@ jobs:
           TAG: ${{ needs.prepare.outputs.tag }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
+          COMMIT_PREFIX: ${{ inputs.commit-prefix }}
           PREPARE_REV: ${{ needs.prepare.outputs.rev }}
+          POST_COMMIT_SCRIPT: ${{ inputs.post-commit-script }}
       - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: push-token
         with:

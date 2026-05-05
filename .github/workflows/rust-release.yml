@@ -327,13 +327,13 @@ jobs:
           fi
           printf 'version: %s\n' "${version}"
           printf 'version=%s\n' "${version}" >>"${GITHUB_OUTPUT}"
-          tag="${tag_prefix}${version}"
-          printf 'tag: %s\n' "${tag}"
-          printf 'tag=%s\n' "${tag}" >>"${GITHUB_OUTPUT}"
+          TAG="${tag_prefix}${version}"
+          printf 'tag: %s\n' "${TAG}"
+          printf 'tag=%s\n' "${TAG}" >>"${GITHUB_OUTPUT}"
 
           # Make sure the same release has not been created in the past.
-          if gh release view "${tag}" &>/dev/null; then
-            bail "tag '${tag}' has already been created and pushed"
+          if gh release view "${TAG}" &>/dev/null; then
+            bail "tag '${TAG}' has already been created and pushed"
           fi
           # Make sure that the release was created from an allowed branch.
           if ! git branch | grep -Eq '\* '"${BRANCH}"'$'; then
@@ -360,7 +360,7 @@ jobs:
             remote_url="${remote_url%/compare/*}"
             sed -Ei \
               -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
-              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
+              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${TAG}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${TAG}#" "${changelog}"
             if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
               bail "failed to update ${changelog}"
             fi
@@ -468,6 +468,11 @@ jobs:
             set -x
             git add -N .
             git -c color.ui=always diff --exit-code
+          )
+
+          (
+            set -x
+            git tag "${TAG}"
           )
 
           args=''
@@ -594,8 +599,6 @@ jobs:
           # shellcheck disable=SC2153
           prev_version="${PREV_VERSION}"
           # shellcheck disable=SC2153
-          tag="${TAG}"
-          # shellcheck disable=SC2153
           changelog="${CHANGELOG}"
           # shellcheck disable=SC2153
           release_date="${RELEASE_DATE}"
@@ -607,8 +610,8 @@ jobs:
           fi
 
           # Make sure the same release has not been created in the past.
-          if gh release view "${tag}" &>/dev/null; then
-            bail "tag '${tag}' has already been created and pushed"
+          if gh release view "${TAG}" &>/dev/null; then
+            bail "tag '${TAG}' has already been created and pushed"
           fi
           # Make sure that the release was created from an allowed branch.
           if ! git branch | grep -Eq '\* '"${BRANCH}"'$'; then
@@ -624,7 +627,7 @@ jobs:
             remote_url="${remote_url%/compare/*}"
             sed -Ei \
               -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
-              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
+              -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${TAG}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${TAG}#" "${changelog}"
             if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
               bail "failed to update ${changelog}"
             fi
@@ -715,7 +718,7 @@ jobs:
 
           (
             set -x
-            git tag "${tag}"
+            git tag "${TAG}"
           )
         env:
           VERSION: ${{ needs.prepare.outputs.version }}

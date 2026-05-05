@@ -104,6 +104,10 @@ on:
         required: false
         type: string
         default: codegen
+      ruleset:
+        required: false
+        type: boolean
+        default: true
       immutable-release:
         required: false
         type: boolean
@@ -276,7 +280,7 @@ jobs:
             '^- update$'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: inputs.ruleset && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - name: Ensure all tags are contained in protected branches
         run: |
           IFS=$'\n\t'
@@ -407,7 +411,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RULE_ID1: ${{ steps.ruleset.outputs.branch-additional }}
           RULE_ID2: ${{ steps.ruleset.outputs.branch }}
-        if: github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: inputs.ruleset && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - name: Ensure all releases are immutable
         run: |
           retry() {

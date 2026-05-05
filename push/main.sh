@@ -16,7 +16,7 @@ retry() {
     if "$@"; then
       return 0
     else
-      "${sleep}" "${i}"
+      sleep "${i}"
     fi
   done
   "$@"
@@ -40,11 +40,11 @@ normalize_comma_or_space_separated() {
   if [[ "${list}" == *","* ]]; then
     # If a comma is contained, consider it is a comma-separated list.
     # Drop leading and trailing whitespaces in each element.
-    "${sed}" -E 's/ *, */,/g; s/^.//; s/,,$/,/' <<<",${list},"
+    sed -E 's/ *, */,/g; s/^.//; s/,,$/,/' <<<",${list},"
   else
     # Otherwise, consider it is a whitespace-separated list.
     # Convert whitespace characters into comma.
-    "${sed}" -E 's/ +/,/g; s/^.//' <<<" ${list} "
+    sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
   fi
 }
 
@@ -56,10 +56,15 @@ unset INPUT_TOKEN
 # This prevents tokens from being exposed to log when tracing is activated.
 unset GIT_TRACE_REDACT GIT_TRACE2_REDACT GIT_CURL_VERBOSE GIT_TRACE_CURL
 
+# Use binaries available at standard location to prevent path interception.
 sleep=$(resolve_path sleep)
+sleep() { "${sleep}" "$1"; }
 sed=$(resolve_path sed)
+sed() { "${sed}" "$@"; }
 git=$(resolve_path git)
+git() { "${git}" "$@"; }
 openssl=$(resolve_path openssl)
+openssl() { "${openssl}" "$@"; }
 
 if [[ -z "${INPUT_REF}" ]]; then
   bail "'ref' input option must not empty"
@@ -117,7 +122,7 @@ hooks=(
 )
 for hook in "${hooks[@]}"; do
   # git hook list fails on old version or on no hook available.
-  names=$("${git}" "${common_args[@]}" hook list "${hook}" 2>/dev/null || true)
+  names=$(git "${common_args[@]}" hook list "${hook}" 2>/dev/null || true)
   if [[ -n "${names}" ]]; then
     while IFS= read -r name; do
       common_args+=(-c "hook.${name}.enabled=false")
@@ -151,14 +156,14 @@ if [[ ${#refs[@]} -eq 1 ]]; then
   ref="${refs[0]#+}"
   if [[ "${ref}" == 'refs/heads/'* ]]; then
     branch="${ref#refs/heads/}"
-    if ! "${git}" "${common_args[@]}" rev-parse --verify "refs/heads/${branch}" &>/dev/null; then
-      g "${git}" "${common_args[@]}" branch -- "${branch}"
+    if ! git "${common_args[@]}" rev-parse --verify "refs/heads/${branch}" &>/dev/null; then
+      g git "${common_args[@]}" branch -- "${branch}"
     fi
   fi
 fi
 
 IFS=' '
-cmd="${git} ${common_args[*]} ${args[*]} origin ${refs[*]}"
+cmd="git ${common_args[*]} ${args[*]} origin ${refs[*]}"
 IFS=$'\n\t'
 printf '::group::%s\n' "${cmd}"
 # In url.*.insteadOf, global/local config is preferred over -c when URL is the same.
@@ -172,16 +177,16 @@ printf '::group::%s\n' "${cmd}"
 # hostname verification, sending credentials to a malicious host should be prevented.
 retry_push() {
   for i in {1..10}; do
-    rand=$("${openssl}" rand -hex 64)
+    rand=$(openssl rand -hex 64)
     if INPUT_TOKEN="${token}" \
       "$@" -c "url.${repository_url}.insteadOf=${rand}" \
       "${args[@]}" "${rand}" "${refs[@]}" 2>&1; then
       return 0
     else
-      "${sleep}" "${i}"
+      sleep "${i}"
     fi
   done
-  rand=$("${openssl}" rand -hex 64)
+  rand=$(openssl rand -hex 64)
   INPUT_TOKEN="${token}" \
     "$@" -c "url.${repository_url}.insteadOf=${rand}" \
     "${args[@]}" "${rand}" "${refs[@]}" 2>&1
@@ -190,7 +195,7 @@ retry_push() {
 # shellcheck disable=SC2016
 INPUT_PROTOCOL="${protocol}" \
   INPUT_HOSTNAME="${hostname}" \
-  retry_push "${git}" "${common_args[@]}" \
+  retry_push git "${common_args[@]}" \
   -c credential.helper= \
   -c 'credential.helper=!f() {
 protocol=""

@@ -53,7 +53,7 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@687f1ee9ec5513d2014ec25f5fb66d705341b89a # main # zizmor: ignore[stale-action-refs]
       - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
           tool: rust@${{ inputs.rust }}
@@ -120,7 +120,7 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@687f1ee9ec5513d2014ec25f5fb66d705341b89a # main # zizmor: ignore[stale-action-refs]
       - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
           tool: rust@${{ inputs.rust }}
@@ -177,7 +177,7 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@25cafb86f855d6018b89ad694321e8795fe8318f # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@687f1ee9ec5513d2014ec25f5fb66d705341b89a # main # zizmor: ignore[stale-action-refs]
       - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
           tool: rust@${{ inputs.rust }}

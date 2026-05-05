@@ -26,7 +26,7 @@ See [action.yml](action.yml)
 Equivalent to:
 
 ```yaml
-- uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+- uses: taiki-e/install-action@v2
   with:
     tool: rust@stable + rustfmt + clippy + x86_64-unknown-linux-musl
 ```

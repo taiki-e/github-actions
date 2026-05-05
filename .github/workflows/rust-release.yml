@@ -162,10 +162,13 @@ on:
       args:
         required: false
         type: string
-      crates:
+      package:
         required: false
         type: string
-        default: '.'
+      workspace:
+        required: false
+        type: boolean
+        default: false
       changelog:
         required: false
         type: string
@@ -251,11 +254,9 @@ jobs:
               sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
             fi
           }
-          if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then
-            in_place=(-i '')
-          else
-            in_place=(-i)
-          fi
+
+          git config user.name 'Taiki Endo'
+          git config user.email 'te316e89@gmail.com'
 
           # shellcheck disable=SC2153
           version="${VERSION}"
@@ -280,23 +281,27 @@ jobs:
           # Get the previous version.
           metadata=$(cargo metadata --format-version=1 --no-deps)
           prev_version=''
+          public_packages=''
           # Publishing is unrestricted if null, and forbidden if an empty array.
           for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
-            eval "$(jq -r '@sh "NAME=\(.name) ACTUAL_VERSION=\(.version) MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
+            eval "$(jq -r '@sh "name=\(.name) ACTUAL_VERSION=\(.version) manifest_path=\(.manifest_path)"' <<<"${pkg}")"
+            public_packages+="${name}:${manifest_path},"
             if [[ -z "${prev_version}" ]]; then
               prev_version="${ACTUAL_VERSION}"
             fi
             # Make sure that the version number of all publishable workspace members matches.
             if [[ "${ACTUAL_VERSION}" != "${prev_version}" ]]; then
-              bail "publishable workspace members must be version '${prev_version}', but package '${NAME}' is version '${ACTUAL_VERSION}'"
+              bail "publishable workspace members must be version '${prev_version}', but package '${name}' is version '${ACTUAL_VERSION}'"
             fi
             # Make sure that the version marker is available.
-            if ! grep -Eq "^version = \"${prev_version}\" #publish:version" "${MANIFEST_PATH}"; then
-              bail "not found '#publish:version' in version in ${MANIFEST_PATH}"
+            if ! grep -Eq "^version = \"${prev_version}\" #publish:version" "${manifest_path}"; then
+              bail "not found '#publish:version' in version in ${manifest_path}"
             fi
           done
           printf 'prev-version: %s\n' "${prev_version}"
           printf 'prev-version=%s\n' "${prev_version}" >>"${GITHUB_OUTPUT}"
+          printf 'public-packages: %s\n' "${public_packages}"
+          printf 'public-packages=%s\n' "${public_packages}" >>"${GITHUB_OUTPUT}"
 
           # Determine the new version number and tag name.
           case "${version}" in
@@ -352,7 +357,7 @@ jobs:
             remote_url=$(grep -E '^\[Unreleased\]: https://' "${changelog}" | sed -E 's/^\[Unreleased\]: //; s/\.\.\.HEAD$//')
             prev_tag="${remote_url#*/compare/}"
             remote_url="${remote_url%/compare/*}"
-            sed -E "${in_place[@]}" \
+            sed -Ei \
               -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
               -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
             if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
@@ -389,16 +394,16 @@ jobs:
             fi
           done
           changed_paths+=("${docs[@]}")
-          # Publishing is unrestricted if null, and forbidden if an empty array.
-          for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
-            eval "$(jq -r '@sh "NAME=\(.name) MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
-            changed_paths+=("${MANIFEST_PATH}")
+          while read -rd, name; do
+            manifest_path="${name#*:}"
+            name="${name%:*}"
+            changed_paths+=("${manifest_path}")
             # Update version in Cargo.toml.
-            sed -E "${in_place[@]}" "s/^version = \"${prev_version}\" #publish:version/version = \"${version}\" #publish:version/g" "${MANIFEST_PATH}"
+            sed -Ei "s/^version = \"${prev_version}\" #publish:version/version = \"${version}\" #publish:version/g" "${manifest_path}"
             # Update '=' requirement in Cargo.toml.
             for manifest in $(git ls-files '*Cargo.toml'); do
-              if grep -Eq "^${NAME} = \\{ version = \"=${prev_version}\"" "${manifest}"; then
-                sed -E "${in_place[@]}" "s/^${NAME} = \\{ version = \"=${prev_version}\"/${NAME} = { version = \"=${version}\"/g" "${manifest}"
+              if grep -Eq "^${name} = \\{ version = \"=${prev_version}\"" "${manifest}"; then
+                sed -Ei "s/^${name} = \\{ version = \"=${prev_version}\"/${name} = { version = \"=${version}\"/g" "${manifest}"
                 changed_paths+=("${manifest}")
               fi
             done
@@ -407,11 +412,11 @@ jobs:
               # TODO: handle pre-release
               if [[ "${version}" == "0.0."* ]]; then
                 # 0.0.x -> 0.0.y
-                if grep -Eq "^${NAME} = \"${prev_version}\"" "${path}"; then
-                  sed -E "${in_place[@]}" "s/^${NAME} = \"${prev_version}\"/${NAME} = \"${version}\"/g" "${path}"
+                if grep -Eq "^${name} = \"${prev_version}\"" "${path}"; then
+                  sed -Ei "s/^${name} = \"${prev_version}\"/${name} = \"${version}\"/g" "${path}"
                 fi
-                if grep -Eq "^${NAME} = \\{ version = \"${prev_version}\"" "${path}"; then
-                  sed -E "${in_place[@]}" "s/^${NAME} = \\{ version = \"${prev_version}\"/${NAME} = { version = \"${version}\"/g" "${path}"
+                if grep -Eq "^${name} = \\{ version = \"${prev_version}\"" "${path}"; then
+                  sed -Ei "s/^${name} = \\{ version = \"${prev_version}\"/${name} = { version = \"${version}\"/g" "${path}"
                 fi
               elif [[ "${version}" == "0."* ]]; then
                 prev_major_minor="${prev_version%.*}"
@@ -419,11 +424,11 @@ jobs:
                 if [[ "${prev_major_minor}" != "${major_minor}" ]]; then
                   # 0.x -> 0.y
                   # 0.x.* -> 0.y
-                  if grep -Eq "^${NAME} = \"${prev_major_minor}(\\.[0-9]+)?\"" "${path}"; then
-                    sed -E "${in_place[@]}" "s/^${NAME} = \"${prev_major_minor}(\\.[0-9]+)?\"/${NAME} = \"${major_minor}\"/g" "${path}"
+                  if grep -Eq "^${name} = \"${prev_major_minor}(\\.[0-9]+)?\"" "${path}"; then
+                    sed -Ei "s/^${name} = \"${prev_major_minor}(\\.[0-9]+)?\"/${name} = \"${major_minor}\"/g" "${path}"
                   fi
-                  if grep -Eq "^${NAME} = \\{ version = \"${prev_major_minor}(\\.[0-9]+)?\"" "${path}"; then
-                    sed -E "${in_place[@]}" "s/^${NAME} = \\{ version = \"${prev_major_minor}(\\.[0-9]+)?\"/${NAME} = { version = \"${major_minor}\"/g" "${path}"
+                  if grep -Eq "^${name} = \\{ version = \"${prev_major_minor}(\\.[0-9]+)?\"" "${path}"; then
+                    sed -Ei "s/^${name} = \\{ version = \"${prev_major_minor}(\\.[0-9]+)?\"/${name} = { version = \"${major_minor}\"/g" "${path}"
                   fi
                 fi
               else
@@ -433,32 +438,58 @@ jobs:
                   # x -> y
                   # x.* -> y
                   # x.*.* -> y
-                  if grep -Eq "^${NAME} = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"" "${path}"; then
-                    sed -E "${in_place[@]}" "s/^${NAME} = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"/${NAME} = \"${major}\"/g" "${path}"
+                  if grep -Eq "^${name} = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"" "${path}"; then
+                    sed -Ei "s/^${name} = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"/${name} = \"${major}\"/g" "${path}"
                   fi
-                  if grep -Eq "^${NAME} = \\{ version = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"" "${path}"; then
-                    sed -E "${in_place[@]}" "s/^${NAME} = \\{ version = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"/${NAME} = { version = \"${major}\"/g" "${path}"
+                  if grep -Eq "^${name} = \\{ version = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"" "${path}"; then
+                    sed -Ei "s/^${name} = \\{ version = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"/${name} = { version = \"${major}\"/g" "${path}"
                   fi
                 fi
               fi
             done
-          done
-
-          if [[ -n "${tags}" ]]; then
-            git -c color.ui=always diff "${changed_paths[@]}"
-            git add "${changed_paths[@]}"
-          fi
-          # Make sure that there is no unintended change.
-          git add -N .
-          git -c color.ui=always diff --exit-code
+          done <<<"${public_packages}"
 
           (
             set -x
             git show HEAD --shortstat
           )
 
-          crates=$(normalize_comma_or_space_separated "${INPUT_CRATES}")
-          printf 'crates=%s\n' "${crates}" >>"${GITHUB_OUTPUT}"
+          if [[ -n "${tags}" ]]; then
+            (
+              set -x
+              git -c color.ui=always diff "${changed_paths[@]}"
+              git add "${changed_paths[@]}"
+              git commit -m "${COMMIT_PREFIX}Release ${version}"
+            )
+          fi
+          # Make sure that there is no unintended change.
+          (
+            set -x
+            git add -N .
+            git -c color.ui=always diff --exit-code
+          )
+
+          args=''
+          if [[ -n "${INPUT_TARGET}" ]]; then
+            args+="--target,${INPUT_TARGET},"
+          fi
+          if [[ -n "${INPUT_PACKAGE}" ]]; then
+            package=$(normalize_comma_or_space_separated "${INPUT_PACKAGE}")
+            if [[ -n "${package}" ]]; then
+              while read -rd,; do
+                args+="-p,${REPLY},"
+              done <<<"${package}"
+            fi
+          fi
+          if [[ "${INPUT_WORKSPACE}" == 'true' ]]; then
+            args+='--workspace,'
+          fi
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+="${REPLY},"
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
+          fi
+          printf 'args=%s\n' "${args}" >>"${GITHUB_OUTPUT}"
 
           if [[ -n "${BIN}" ]]; then
             if [[ -z "${BIN_TARGET}" ]]; then
@@ -484,7 +515,11 @@ jobs:
           TAG_PREFIX: ${{ inputs.tag-prefix }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
-          INPUT_CRATES: ${{ inputs.crates }}
+          COMMIT_PREFIX: ${{ inputs.commit-prefix }}
+          INPUT_TARGET: ${{ inputs.target }}
+          INPUT_PACKAGE: ${{ inputs.package }}
+          INPUT_WORKSPACE: ${{ inputs.workspace }}
+          INPUT_ARGS: ${{ inputs.args }}
           BIN: ${{ inputs.bin }}
           BIN_TARGET: ${{ inputs.bin-target }}
       - name: Build crates to be published
@@ -492,23 +527,17 @@ jobs:
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           args=()
-          [[ -z "${INPUT_TARGET}" ]] || args+=(--target "${INPUT_TARGET}")
           if [[ -n "${INPUT_ARGS}" ]]; then
-            while read -rd' '; do
-              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
+            while read -rd,; do
+              args+=("${REPLY}")
+            done <<<"${INPUT_ARGS}"
           fi
-          while read -rd,; do
-            (
-              set -x
-              cd -- "${REPLY}"
-              cargo build "${args[@]}"
-            )
-          done <<<"${INPUT_CRATES}"
+          (
+            set -x
+            cargo publish --dry-run "${args[@]}"
+          )
         env:
-          INPUT_ARGS: ${{ inputs.args }}
-          INPUT_CRATES: ${{ steps.check.outputs.crates }}
-          INPUT_TARGET: ${{ inputs.target }}
+          INPUT_ARGS: ${{ steps.check.outputs.args }}
     outputs:
       has-tags: ${{ steps.check.outputs.has-tags }}
       release-date: ${{ steps.check.outputs.release-date }}
@@ -516,7 +545,8 @@ jobs:
       tag: ${{ steps.check.outputs.tag }}
       version: ${{ steps.check.outputs.version }}
       prev-version: ${{ steps.check.outputs.prev-version }}
-      crates: ${{ steps.check.outputs.crates }}
+      public-packages: ${{ steps.check.outputs.public-packages }}
+      args: ${{ steps.check.outputs.args }}
       matrix: ${{ steps.check.outputs.matrix }}
 
   release:
@@ -554,11 +584,6 @@ jobs:
             printf '::error::%s\n' "$*"
             exit 1
           }
-          if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then
-            in_place=(-i '')
-          else
-            in_place=(-i)
-          fi
 
           git config user.name 'Taiki Endo'
           git config user.email 'te316e89@gmail.com'
@@ -589,8 +614,6 @@ jobs:
             bail "current branch is not '${BRANCH}'"
           fi
 
-          metadata=$(cargo metadata --format-version=1 --no-deps)
-
           changed_paths=()
           if [[ "${HAS_TAGS}" == "true" ]]; then
             # Update changelog.
@@ -598,7 +621,7 @@ jobs:
             remote_url=$(grep -E '^\[Unreleased\]: https://' "${changelog}" | sed -E 's/^\[Unreleased\]: //; s/\.\.\.HEAD$//')
             prev_tag="${remote_url#*/compare/}"
             remote_url="${remote_url%/compare/*}"
-            sed -E "${in_place[@]}" \
+            sed -Ei \
               -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
               -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
             if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
@@ -622,16 +645,16 @@ jobs:
             fi
           done
           changed_paths+=("${docs[@]}")
-          # Publishing is unrestricted if null, and forbidden if an empty array.
-          for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
-            eval "$(jq -r '@sh "NAME=\(.name) MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
-            changed_paths+=("${MANIFEST_PATH}")
+          while read -rd, name; do
+            manifest_path="${name#*:}"
+            name="${name%:*}"
+            changed_paths+=("${manifest_path}")
             # Update version in Cargo.toml.
-            sed -E "${in_place[@]}" "s/^version = \"${prev_version}\" #publish:version/version = \"${version}\" #publish:version/g" "${MANIFEST_PATH}"
+            sed -Ei "s/^version = \"${prev_version}\" #publish:version/version = \"${version}\" #publish:version/g" "${manifest_path}"
             # Update '=' requirement in Cargo.toml.
             for manifest in $(git ls-files '*Cargo.toml'); do
-              if grep -Eq "^${NAME} = \\{ version = \"=${prev_version}\"" "${manifest}"; then
-                sed -E "${in_place[@]}" "s/^${NAME} = \\{ version = \"=${prev_version}\"/${NAME} = { version = \"=${version}\"/g" "${manifest}"
+              if grep -Eq "^${name} = \\{ version = \"=${prev_version}\"" "${manifest}"; then
+                sed -Ei "s/^${name} = \\{ version = \"=${prev_version}\"/${name} = { version = \"=${version}\"/g" "${manifest}"
                 changed_paths+=("${manifest}")
               fi
             done
@@ -640,11 +663,11 @@ jobs:
               # TODO: handle pre-release
               if [[ "${version}" == "0.0."* ]]; then
                 # 0.0.x -> 0.0.y
-                if grep -Eq "^${NAME} = \"${prev_version}\"" "${path}"; then
-                  sed -E "${in_place[@]}" "s/^${NAME} = \"${prev_version}\"/${NAME} = \"${version}\"/g" "${path}"
+                if grep -Eq "^${name} = \"${prev_version}\"" "${path}"; then
+                  sed -Ei "s/^${name} = \"${prev_version}\"/${name} = \"${version}\"/g" "${path}"
                 fi
-                if grep -Eq "^${NAME} = \\{ version = \"${prev_version}\"" "${path}"; then
-                  sed -E "${in_place[@]}" "s/^${NAME} = \\{ version = \"${prev_version}\"/${NAME} = { version = \"${version}\"/g" "${path}"
+                if grep -Eq "^${name} = \\{ version = \"${prev_version}\"" "${path}"; then
+                  sed -Ei "s/^${name} = \\{ version = \"${prev_version}\"/${name} = { version = \"${version}\"/g" "${path}"
                 fi
               elif [[ "${version}" == "0."* ]]; then
                 prev_major_minor="${prev_version%.*}"
@@ -652,11 +675,11 @@ jobs:
                 if [[ "${prev_major_minor}" != "${major_minor}" ]]; then
                   # 0.x -> 0.y
                   # 0.x.* -> 0.y
-                  if grep -Eq "^${NAME} = \"${prev_major_minor}(\\.[0-9]+)?\"" "${path}"; then
-                    sed -E "${in_place[@]}" "s/^${NAME} = \"${prev_major_minor}(\\.[0-9]+)?\"/${NAME} = \"${major_minor}\"/g" "${path}"
+                  if grep -Eq "^${name} = \"${prev_major_minor}(\\.[0-9]+)?\"" "${path}"; then
+                    sed -Ei "s/^${name} = \"${prev_major_minor}(\\.[0-9]+)?\"/${name} = \"${major_minor}\"/g" "${path}"
                   fi
-                  if grep -Eq "^${NAME} = \\{ version = \"${prev_major_minor}(\\.[0-9]+)?\"" "${path}"; then
-                    sed -E "${in_place[@]}" "s/^${NAME} = \\{ version = \"${prev_major_minor}(\\.[0-9]+)?\"/${NAME} = { version = \"${major_minor}\"/g" "${path}"
+                  if grep -Eq "^${name} = \\{ version = \"${prev_major_minor}(\\.[0-9]+)?\"" "${path}"; then
+                    sed -Ei "s/^${name} = \\{ version = \"${prev_major_minor}(\\.[0-9]+)?\"/${name} = { version = \"${major_minor}\"/g" "${path}"
                   fi
                 fi
               else
@@ -666,16 +689,16 @@ jobs:
                   # x -> y
                   # x.* -> y
                   # x.*.* -> y
-                  if grep -Eq "^${NAME} = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"" "${path}"; then
-                    sed -E "${in_place[@]}" "s/^${NAME} = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"/${NAME} = \"${major}\"/g" "${path}"
+                  if grep -Eq "^${name} = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"" "${path}"; then
+                    sed -Ei "s/^${name} = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"/${name} = \"${major}\"/g" "${path}"
                   fi
-                  if grep -Eq "^${NAME} = \\{ version = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"" "${path}"; then
-                    sed -E "${in_place[@]}" "s/^${NAME} = \\{ version = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"/${NAME} = { version = \"${major}\"/g" "${path}"
+                  if grep -Eq "^${name} = \\{ version = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"" "${path}"; then
+                    sed -Ei "s/^${name} = \\{ version = \"${prev_major}(\\.[0-9]+(\\.[0-9]+)?)?\"/${name} = { version = \"${major}\"/g" "${path}"
                   fi
                 fi
               fi
             done
-          done
+          done <<<"${PUBLIC_PACKAGES}"
 
           if [[ "${HAS_TAGS}" == "true" ]]; then
             # Create a release commit.
@@ -696,6 +719,7 @@ jobs:
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
           PREV_VERSION: ${{ needs.prepare.outputs.prev-version }}
+          PUBLIC_PACKAGES: ${{ needs.prepare.outputs.public-packages }}
           RELEASE_DATE: ${{ needs.prepare.outputs.release-date }}
           HAS_TAGS: ${{ needs.prepare.outputs.has-tags }}
           TAG: ${{ needs.prepare.outputs.tag }}
@@ -730,34 +754,19 @@ jobs:
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           args=()
-          [[ -z "${INPUT_TARGET}" ]] || args+=(--target "${INPUT_TARGET}")
           if [[ -n "${INPUT_ARGS}" ]]; then
-            while read -rd' '; do
-              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
-            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
+            while read -rd,; do
+              args+=("${REPLY}")
+            done <<<"${INPUT_ARGS}"
           fi
-          crates=()
-          while read -rd,; do
-            crates+=("${REPLY}")
-          done <<<"${INPUT_CRATES}"
-          for i in "${!crates[@]}"; do
-            (
-              set -x
-              cd -- "${crates[${i}]}"
-              # TODO: retry on failure
-              # TODO: handle already published case: https://github.com/rust-lang/cargo/blob/0.80.0/publish.py#L35
-              # TODO: use workspace publishing: https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/#cargo-adds-native-support-for-workspace-publishing
-              cargo publish "${args[@]}"
-            )
-            if [[ $((i + 1)) != "${#crates[@]}" ]]; then
-              sleep 45 # cargo's waiting is sometimes not enough
-            fi
-          done
+          # TODO: retry on failure
+          (
+            set -x
+            cargo publish --no-verify "${args[@]}"
+          )
         env:
           CARGO_REGISTRY_TOKEN: ${{ needs.prepare.outputs.has-tags == 'true' && steps.auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN }}
-          INPUT_ARGS: ${{ inputs.args }}
-          INPUT_CRATES: ${{ needs.prepare.outputs.crates }}
-          INPUT_TARGET: ${{ inputs.target }}
+          INPUT_ARGS: ${{ needs.prepare.outputs.args }}
       - run: gh release edit "${TAG}" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

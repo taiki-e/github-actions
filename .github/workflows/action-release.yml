@@ -141,11 +141,6 @@ jobs:
             printf '::error::%s\n' "$*"
             exit 1
           }
-          if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then
-            in_place=(-i '')
-          else
-            in_place=(-i)
-          fi
 
           # shellcheck disable=SC2153
           version="${VERSION}"
@@ -223,7 +218,7 @@ jobs:
             remote_url=$(grep -E '^\[Unreleased\]: https://' "${changelog}" | sed -E 's/^\[Unreleased\]: //; s/\.\.\.HEAD$//')
             prev_tag="${remote_url#*/compare/}"
             remote_url="${remote_url%/compare/*}"
-            sed -E "${in_place[@]}" \
+            sed -Ei \
               -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
               -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
             if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then
@@ -309,11 +304,6 @@ jobs:
             printf '::error::%s\n' "$*"
             exit 1
           }
-          if { sed --help 2>&1 || true; } | grep -Eq -e '-i extension'; then
-            in_place=(-i '')
-          else
-            in_place=(-i)
-          fi
 
           git config user.name 'Taiki Endo'
           git config user.email 'te316e89@gmail.com'
@@ -352,7 +342,7 @@ jobs:
             remote_url=$(grep -E '^\[Unreleased\]: https://' "${changelog}" | sed -E 's/^\[Unreleased\]: //; s/\.\.\.HEAD$//')
             prev_tag="${remote_url#*/compare/}"
             remote_url="${remote_url%/compare/*}"
-            sed -E "${in_place[@]}" \
+            sed -Ei \
               -e "s/^## \\[Unreleased\\]/## [Unreleased]\\n\\n## [${version}] - ${release_date}/" \
               -e "s#^\[Unreleased\]: https://.*#[Unreleased]: ${remote_url}/compare/${tag}...HEAD\\n[${version}]: ${remote_url}/compare/${prev_tag}...${tag}#" "${changelog}"
             if ! grep -Eq "^## \\[${version//./\\.}\\] - ${release_date}$" "${changelog}"; then

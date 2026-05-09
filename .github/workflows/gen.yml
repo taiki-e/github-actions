@@ -124,7 +124,7 @@ jobs:
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
           fi
-      - uses: taiki-e/github-actions/free-device-space@83af36203026c96d42a05f879243ee7d2bb77ee0 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@daf550b807efeb6fcd612a0743fe0803f313f4aa # main # zizmor: ignore[stale-action-refs]
         if: inputs.free-device-space
       - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
@@ -158,7 +158,7 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
         if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
-      - uses: taiki-e/github-actions/push@83af36203026c96d42a05f879243ee7d2bb77ee0 # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/push@daf550b807efeb6fcd612a0743fe0803f313f4aa # main # zizmor: ignore[stale-action-refs]
         with:
           ref: refs/heads/${{ inputs.branch }}
           force: true

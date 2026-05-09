@@ -80,18 +80,6 @@ on:
         required: false
         type: boolean
         default: true
-      codegen:
-        required: false
-        type: boolean
-        default: true
-      codegen-automerge:
-        required: false
-        type: boolean
-        default: false
-      codegen-free-device-space:
-        required: false
-        type: boolean
-        default: false
       codegen-workflow:
         required: false
         type: string

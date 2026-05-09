@@ -202,13 +202,14 @@ retry_push() {
     "$@" -c "url.${repository_url}.insteadOf=${rand}" \
     "${args[@]}" "${rand}" "${refs[@]}" 2>&1
 }
+# https://git-scm.com/docs/gitcredentials#_custom_helpers
 # The first credential.helper= is needed to ignore existing credential helpers.
 # shellcheck disable=SC2016
 INPUT_PROTOCOL="${protocol}" \
   INPUT_HOSTNAME="${hostname}" \
   retry_push git "${common_args[@]}" \
   -c credential.helper= \
-  -c 'credential.helper=!f() {
+  -c credential."${repository_url}".helper='!f() {
 protocol=""
 host=""
 while IFS= read -r line; do

@@ -116,13 +116,21 @@ jobs:
       pull-requests: write # for gh pr review --approve / gh pr merge --rebase --auto
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - name: Prepare
+        id: prepare
+        run: |
+          IFS=$'\n\t'
+          trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
+          if [[ -n "$(git ls-files '*.rs')" ]]; then
+            printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
+          fi
       - uses: taiki-e/github-actions/free-device-space@83af36203026c96d42a05f879243ee7d2bb77ee0 # main # zizmor: ignore[stale-action-refs]
         if: inputs.free-device-space
       - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
           tool: rust@${{ inputs.rust }}
           fallback: none
-        if: inputs.install-rust
+        if: inputs.install-rust || steps.prepare.outputs.rust == 'true'
       - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
         with:
           tool: cosign

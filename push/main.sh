@@ -212,12 +212,12 @@ INPUT_PROTOCOL="${protocol}" \
   -c credential."${repository_url}".helper='!f() {
 protocol=""
 host=""
-while IFS= read -r line; do
+while IFS= read -r line || [ -n "${line}" ]; do
+  [ -n "${line}" ] || continue
   case "${line}" in
     protocol=*) protocol="${line#protocol=}" ;;
     host=*) host="${line#host=}" ;;
   esac
-  [ -n "${line}" ] || break
 done
 if [ "${protocol}" = "${INPUT_PROTOCOL}" ] && [ "${host}" = "${INPUT_HOSTNAME}" ]; then
   printf "protocol=%s\nhost=%s\nusername=x-access-token\npassword=%s\n" "${INPUT_PROTOCOL}" "${INPUT_HOSTNAME}" "${INPUT_TOKEN}"

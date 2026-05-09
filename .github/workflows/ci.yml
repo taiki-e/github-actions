@@ -24,13 +24,10 @@ jobs:
   tidy:
     uses: ./.github/workflows/tidy.yml
     permissions:
-      contents: write # for creating branch for pr
-      pull-requests: write # unused (used in `codegen-automerge: true` case)
       security-events: write # for github/codeql-action/*
-    secrets:
-      PR_TOKEN_APP_PRIVATE_KEY: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }}
 
   free-device-space:
+    needs: tidy
     strategy:
       fail-fast: false
       matrix:
@@ -57,6 +54,7 @@ jobs:
       - run: tools/print-dir-size.sh
 
   install-rust:
+    needs: tidy
     strategy:
       fail-fast: false
       matrix:
@@ -86,6 +84,7 @@ jobs:
           rustup target list
 
   setup-docker:
+    needs: tidy
     strategy:
       fail-fast: false
       matrix:
@@ -99,6 +98,7 @@ jobs:
       - uses: ./setup-docker
 
   cspell-dict:
+    needs: tidy
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:

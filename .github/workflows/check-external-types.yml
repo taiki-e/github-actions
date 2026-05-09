@@ -100,7 +100,7 @@ jobs:
           }
           base_args=()
           if [[ -n "${INPUT_ARGS}" ]]; then
-            while read -rd' '; do
+            while IFS= read -rd' '; do
               [[ -z "${REPLY}" ]] || base_args+=("${REPLY}")
             done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
@@ -108,7 +108,7 @@ jobs:
           # Handle target inputs.
           base_targets=()
           if [[ -n "${INPUT_TARGET}" ]]; then
-            while read -rd,; do
+            while IFS= read -rd,; do
               base_targets+=(--target="${REPLY}")
               retry rustup target add "${REPLY}" || true # tier 3 targets fail to install rustup target
             done < <(normalize_comma_or_space_separated "${INPUT_TARGET}")

@@ -97,7 +97,7 @@ jobs:
             bail "'.jobs.${INPUT_JOB}.with.bin-target' of ${INPUT_WORKFLOW} must set"
           fi
           matrix=''
-          while read -rd, target; do
+          while IFS= read -rd, target; do
             matrix+=',{"target":"'"${target}"'","os":"'
             case "${target}" in
               *-linux-gnu*) matrix+=ubuntu-22.04 ;;

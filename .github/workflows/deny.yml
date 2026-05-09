@@ -64,7 +64,7 @@ jobs:
       - run: |
           args=(--workspace --all-features)
           if [[ -n "${INPUT_ARGS}" ]]; then
-            while read -rd' '; do
+            while IFS= read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
             done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi

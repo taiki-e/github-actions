@@ -117,7 +117,7 @@ jobs:
             args+=(--all-features)
           fi
           if [[ -n "${INPUT_ARGS}" ]]; then
-            while read -rd' '; do
+            while IFS= read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
             done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
@@ -128,7 +128,7 @@ jobs:
           targets=()
           tier3_targets=()
           if [[ -n "${INPUT_TARGET}" ]]; then
-            while read -rd,; do
+            while IFS= read -rd,; do
               if [[ "${REPLY}" == "${host}" ]] || [[ "${REPLY}" == 'host' ]]; then
                 run_host=1
               elif rustup target list | cut -d' ' -f1 | grep -Eq "^${REPLY}$"; then
@@ -198,7 +198,7 @@ jobs:
             clippy_args=(
               -D warnings
             )
-            while IFS='' read -r; do
+            while IFS= read -r; do
               [[ -n "${REPLY}" ]] || continue
               if [[ "${REPLY}" == 'unexpected_cfgs' ]] || [[ "${REPLY}" == 'unexpected-cfgs' ]]; then
                 check_cfg="$(jq -c --arg lint "${REPLY}" 'if (.rust[$lint] | type == "object") then .rust[$lint]."check-cfg" else null end' <<<"${lints}")"
@@ -210,15 +210,15 @@ jobs:
               fi
               clippy_args+=(-D "${REPLY}")
             done <<<"$(jq -r 'if .rust then .rust | to_entries[] | select((.value == "allow" or ((.value | type == "object") and .value.level == "allow")) | not) | .key else empty end' <<<"${lints}")"
-            while IFS='' read -r; do
+            while IFS= read -r; do
               [[ -n "${REPLY}" ]] || continue
               clippy_args+=(-A "${REPLY}")
             done <<<"$(jq -r 'if .rust then .rust | to_entries[] | select(.value == "allow" or ((.value | type == "object") and .value.level == "allow")) | .key else empty end' <<<"${lints}")"
-            while IFS='' read -r; do
+            while IFS= read -r; do
               [[ -n "${REPLY}" ]] || continue
               clippy_args+=(-D "clippy::${REPLY}")
             done <<<"$(jq -r 'if .clippy then .clippy | to_entries[] | select((.value == "allow" or ((.value | type == "object") and .value.level == "allow")) | not) | .key else empty end' <<<"${lints}")"
-            while IFS='' read -r; do
+            while IFS= read -r; do
               [[ -n "${REPLY}" ]] || continue
               clippy_args+=(-A "clippy::${REPLY}")
             done <<<"$(jq -r 'if .clippy then .clippy | to_entries[] | select(.value == "allow" or ((.value | type == "object") and .value.level == "allow")) | .key else empty end' <<<"${lints}")"

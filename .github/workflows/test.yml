@@ -148,7 +148,7 @@ jobs:
               INPUT_TARGET=x86_64-unknown-linux-gnu,x86_64-pc-windows-msvc
             fi
           fi
-          while read -rd,; do
+          while IFS= read -rd,; do
             if [[ -z "${default_target}" ]]; then
               default_target="${REPLY}"
             else
@@ -174,7 +174,7 @@ jobs:
               *) matrix+=',{"rust":"'"${rust}"'","target":"'"${target}"'"}' ;;
             esac
           }
-          while read -rd,; do
+          while IFS= read -rd,; do
             add_matrix "${default_target}" "${REPLY}"
             last="${REPLY}"
           done < <(normalize_comma_or_space_separated "${INPUT_RUST:?}")

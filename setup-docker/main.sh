@@ -188,7 +188,7 @@ case "${INPUT_QEMU}" in
   false) ;;
   *)
     qemu_arch=()
-    while read -rd, arch; do
+    while IFS= read -rd, arch; do
       # Refs:
       # https://hub.docker.com/r/docker/dockerfile/tags
       # https://hub.docker.com/r/alpinelinux/build-base/tags

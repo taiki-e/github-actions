@@ -70,7 +70,7 @@ if [[ -z "${INPUT_REF}" ]]; then
   bail "'ref' input option must not empty"
 fi
 refs=()
-while read -rd, ref; do
+while IFS= read -rd, ref; do
   if [[ -z "${ref}" ]]; then
     bail "'ref' input option must not empty"
   fi

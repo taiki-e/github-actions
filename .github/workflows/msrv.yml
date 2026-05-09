@@ -95,7 +95,7 @@ jobs:
               INPUT_TARGET=x86_64-unknown-linux-gnu,x86_64-pc-windows-msvc
             fi
           fi
-          while read -rd,; do
+          while IFS= read -rd,; do
             case "${REPLY}" in
               *-apple-*) apple_target+=" --target ${REPLY}" ;;
               *-windows*) windows_target+=" --target ${REPLY}" ;;
@@ -162,12 +162,12 @@ jobs:
             *) exit 1 ;;
           esac
           if [[ -n "${target}" ]]; then
-            while read -rd' '; do
+            while IFS= read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
             done <<<"${target} "
           fi
           if [[ -n "${INPUT_ARGS}" ]]; then
-            while read -rd' '; do
+            while IFS= read -rd' '; do
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
             done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi

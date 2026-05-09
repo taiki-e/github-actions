@@ -283,7 +283,7 @@ jobs:
           fi
           all_branches=$(git branch -a | grep -F 'remotes/origin/' | { grep -Fv -e '->' || true; } | sed -E 's|^ *remotes/origin/||g')
           protected_branches=()
-          while IFS='' read -r branch; do
+          while IFS= read -r branch; do
             rule=$(gh ruleset check "${branch}")
             if grep -Fq "${RULE_ID1}" <<<"${rule}" || grep -Fq "${RULE_ID2}" <<<"${rule}"; then
               protected_branches+=("${branch}")
@@ -293,7 +293,7 @@ jobs:
           printf 'info: protected branches: %s\n' "${protected_branches[*]}"
           IFS=$'\n\t'
           rate_limit=''
-          while IFS='' read -r tag; do
+          while IFS= read -r tag; do
             printf 'info: checking %s...\n' "${tag}"
             # Refs: https://github.com/zizmorcore/zizmor/blob/v1.23.1/crates/zizmor/src/audit/impostor_commit.rs
             commit=$(git show refs/tags/"${tag}" --name-only --no-color | grep -E '^commit' | cut -d' ' -f2)
@@ -323,7 +323,7 @@ jobs:
                 printf '::error::%s\n' "${tag} is not contained in any branches"
                 exit 1
               fi
-              while IFS='' read -r branch; do
+              while IFS= read -r branch; do
                 for b in "${protected_branches[@]}"; do
                   if [[ "${branch}" == "${b}" ]]; then
                     ok=1

@@ -101,7 +101,7 @@ jobs:
             matrix+=',{"target":"'"${target}"'","os":"'
             case "${target}" in
               *-linux-gnu*) matrix+=ubuntu-22.04 ;;
-              *-apple-*) matrix+=macos-14 ;;
+              *-apple-*) matrix+=macos-15 ;;
               *-windows-*) matrix+=windows-2022 ;;
               *) matrix+=ubuntu-24.04 ;;
             esac

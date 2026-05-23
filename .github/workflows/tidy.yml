@@ -237,11 +237,33 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+        with:
+          # cargo-no-dev-deps is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
+          tool: rust@${{ inputs.rust }},cargo-deny,cargo-no-dev-deps
+          fallback: none
+        if: inputs.deny && needs.prepare.outputs.rust-pub == 'true'
       - run: cat -- tools/.tidy-check-license-headers
       - run: cat -- .cspell.json
       - run: tools/tidy.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # TODO: move to tools/tidy.sh?
+      - name: Run cargo-deny
+        run: |
+          args=(--workspace --all-features)
+          if [[ -n "${INPUT_ARGS}" ]]; then
+            while IFS= read -rd' '; do
+              [[ -z "${REPLY}" ]] || args+=("${REPLY}")
+            done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
+          fi
+          (
+            set -x
+            cargo no-dev-deps --no-private deny "${args[@]}" check
+          )
+        env:
+          INPUT_ARGS: ${{ inputs.deny-args }}
+        if: inputs.deny && needs.prepare.outputs.rust-pub == 'true'
       - name: Check ruleset
         id: ruleset
         run: |
@@ -518,14 +540,6 @@ jobs:
         uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
         with:
           category: /language:${{ matrix.language }}
-
-  deny:
-    needs: prepare
-    if: inputs.deny && needs.prepare.outputs.rust-pub == 'true'
-    uses: ./.github/workflows/deny.yml
-    with:
-      rust: ${{ inputs.rust }}
-      args: ${{ inputs.deny-args }}
 
   docs:
     needs: prepare

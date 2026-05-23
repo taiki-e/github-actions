@@ -65,11 +65,7 @@
             "integration_id": 15368
           },
           {
-            "context": "tidy / codeql / codeql (actions)",
-            "integration_id": 15368
-          },
-          {
-            "context": "tidy / codeql / codeql (prepare)",
+            "context": "tidy / codeql (actions)",
             "integration_id": 15368
           },
           {

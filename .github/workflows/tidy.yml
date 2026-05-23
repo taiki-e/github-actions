@@ -188,6 +188,37 @@ jobs:
             printf '::error::tools/ci/gen.sh is available but tools/gen.sh is not available\n'
             exit 1
           fi
+          json='{"language":"actions","build-mode":"none"}'
+          # https://docs.github.com/en/enterprise-cloud@latest/code-security/how-tos/scan-code-for-vulnerabilities/configure-code-scanning/customizing-your-advanced-setup-for-code-scanning#changing-the-languages-that-are-analyzed
+          # https://codeql.github.com/docs/codeql-overview/supported-languages-and-frameworks/
+          if [[ -n "$(git ls-files '*.cpp' '*.c++' '*.cxx' '*.hpp' '*.hh' '*.h++' '*.hxx' '*.c' '*.cc' '*.h')" ]]; then
+            json+=,'{"language":"c-cpp","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.cs')" ]]; then
+            json+=,'{"language":"csharp","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.go')" ]]; then
+            json+=,'{"language":"go","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.java' '*.kt')" ]]; then
+            json+=,'{"language":"java-kotlin","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.js' '*.jsx' '*.mjs' '*.es' '*.es6' '*.htm' '*.html' '*.xhtm' '*.xhtml' '*.ejs' '*.ts' '*.tsx' '*.mts' '*.cts')" ]]; then
+            json+=,'{"language":"javascript-typescript","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.py')" ]]; then
+            json+=,'{"language":"python","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.rb')" ]]; then
+            json+=,'{"language":"ruby","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.rs')" ]]; then
+            json+=,'{"language":"rust","build-mode":"none"}'
+          fi
+          if [[ -n "$(git ls-files '*.swift')" ]]; then
+            json+=,'{"language":"swift","build-mode":"none"}'
+          fi
+          printf 'codeql-matrix=%s\n' '{"include":['"${json}"']}' >>"${GITHUB_OUTPUT}"
         env:
           INPUT_RUST: ${{ inputs.rust }}
           INPUT_CODEGEN_JOB: ${{ inputs.codegen-job }}
@@ -198,6 +229,7 @@ jobs:
       rust-pub-lib: ${{ steps.prepare.outputs.rust-pub-lib }}
       rust-pub-proc-macro: ${{ steps.prepare.outputs.rust-pub-proc-macro }}
       dockerfile: ${{ steps.prepare.outputs.dockerfile }}
+      codeql-matrix: ${{ steps.prepare.outputs.codeql-matrix }}
 
   tidy:
     needs: prepare
@@ -458,15 +490,34 @@ jobs:
       fuzzy_provenance_casts: ${{ inputs.fuzzy_provenance_casts }}
 
   codeql:
+    name: codeql (${{ matrix.language }})
     needs: prepare
     # codeql-action pins default CodeQL bundle version, so the value of running it is limited if
     # there are no code changes.
     if: inputs.codeql && github.event_name != 'schedule'
-    uses: ./.github/workflows/codeql.yml
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.codeql-matrix) }}
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-24.04' }}
+    timeout-minutes: 60
     permissions:
       security-events: write # for github/codeql-action/*
-    with:
-      rust: ${{ inputs.rust }}
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+        with:
+          tool: rust@${{ inputs.rust }}
+          fallback: none
+        if: matrix.language == 'rust'
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        with:
+          category: /language:${{ matrix.language }}
 
   deny:
     needs: prepare

@@ -219,7 +219,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+      - uses: taiki-e/install-action@e3134ec54b36203e18f2d1e80652058bd078dd91 # v2.77.3
         with:
           tool: rust@${{ inputs.rust }}+${{ inputs.target }},parse-changelog
           fallback: none
@@ -568,7 +568,7 @@ jobs:
       id-token: write # for rust-lang/crates-io-auth-action
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+      - uses: taiki-e/install-action@e3134ec54b36203e18f2d1e80652058bd078dd91 # v2.77.3
         with:
           tool: rust@${{ inputs.rust }}+${{ inputs.target }},parse-changelog
           fallback: none
@@ -827,7 +827,7 @@ jobs:
         env:
           REF: refs/tags/${{ needs.prepare.outputs.tag }}
           RELEASE_REV: ${{ needs.release.outputs.rev }}
-      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+      - uses: taiki-e/install-action@e3134ec54b36203e18f2d1e80652058bd078dd91 # v2.77.3
         with:
           tool: rust@${{ inputs.rust }}
           fallback: none

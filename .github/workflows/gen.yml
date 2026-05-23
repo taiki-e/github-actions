@@ -126,17 +126,17 @@ jobs:
           fi
       - uses: taiki-e/github-actions/free-device-space@daf550b807efeb6fcd612a0743fe0803f313f4aa # main # zizmor: ignore[stale-action-refs]
         if: inputs.free-device-space
-      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+      - uses: taiki-e/install-action@e3134ec54b36203e18f2d1e80652058bd078dd91 # v2.77.3
         with:
           tool: rust@${{ inputs.rust }}
           fallback: none
         if: inputs.install-rust || steps.prepare.outputs.rust == 'true'
-      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+      - uses: taiki-e/install-action@e3134ec54b36203e18f2d1e80652058bd078dd91 # v2.77.3
         with:
           tool: cosign
           fallback: none
         if: inputs.install-cosign
-      - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+      - uses: taiki-e/install-action@e3134ec54b36203e18f2d1e80652058bd078dd91 # v2.77.3
         with:
           tool: parse-changelog
           fallback: none

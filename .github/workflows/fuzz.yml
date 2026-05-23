@@ -64,7 +64,7 @@ jobs:
           else
             printf 'FUZZ_MAX_TOTAL_TIME=%s\n' "${FUZZ_MAX_TOTAL_TIME_NORMAL}" >>"${GITHUB_ENV}"
           fi
-      - uses: taiki-e/cache-cargo-install-action@f9eed3e4680f27610dc6d8c67be1b88593f7dade # v3.0.6
+      - uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
           tool: cargo-fuzz
       - name: Cache output
@@ -191,7 +191,7 @@ jobs:
       - run: |
           sudo apt-get -o Acquire::Retries=10 -qq update
           sudo apt-get -o Acquire::Retries=10 -o Dpkg::Use-Pty=0 install -y --no-install-recommends binutils-dev libunwind8-dev
-      - uses: taiki-e/cache-cargo-install-action@f9eed3e4680f27610dc6d8c67be1b88593f7dade # v3.0.6
+      - uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
           # TODO: Pass --no-default-features
           tool: honggfuzz

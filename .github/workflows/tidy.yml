@@ -80,6 +80,14 @@ on:
         required: false
         type: boolean
         default: true
+      codegen:
+        required: false
+        type: boolean
+        default: true
+      codegen-free-device-space:
+        required: false
+        type: boolean
+        default: false
       codegen-workflow:
         required: false
         type: string
@@ -96,13 +104,6 @@ on:
         required: false
         type: boolean
         default: true
-      pr-token-app-client-id:
-        required: false
-        type: string
-        default: Iv23liTXn5nJSj4JzqMb # https://github.com/apps/taiki-e-automated-pr
-    secrets:
-      PR_TOKEN_APP_PRIVATE_KEY:
-        required: false
 
 env:
   CARGO_INCREMENTAL: 0
@@ -181,8 +182,12 @@ jobs:
           if [[ -e tools/gen.sh ]]; then
             job=$(yq -c ".jobs.\"${INPUT_CODEGEN_JOB}\"" "${INPUT_CODEGEN_WORKFLOW}")
             if [[ "${job}" == "null" ]]; then
-              printf '::error::tools/gen.sh is available but '%s' job is not available in %s\n' "${INPUT_CODEGEN_JOB}" "${INPUT_CODEGEN_WORKFLOW}"
-              exit 1
+              if [[ -e tools/ci/gen.sh ]]; then
+                printf '::error::tools/ci/gen.sh is available but '%s' job is not available in %s\n' "${INPUT_CODEGEN_JOB}" "${INPUT_CODEGEN_WORKFLOW}"
+                exit 1
+              else
+                printf 'codegen=true\n' >>"${GITHUB_OUTPUT}"
+              fi
             fi
           elif [[ -e tools/ci/gen.sh ]]; then
             printf '::error::tools/ci/gen.sh is available but tools/gen.sh is not available\n'
@@ -230,6 +235,7 @@ jobs:
       rust-pub-proc-macro: ${{ steps.prepare.outputs.rust-pub-proc-macro }}
       dockerfile: ${{ steps.prepare.outputs.dockerfile }}
       codeql-matrix: ${{ steps.prepare.outputs.codeql-matrix }}
+      codegen: ${{ steps.prepare.outputs.codegen }}
 
   tidy:
     needs: prepare
@@ -540,6 +546,26 @@ jobs:
         uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
         with:
           category: /language:${{ matrix.language }}
+
+  codegen:
+    needs: prepare
+    if: inputs.codegen && needs.prepare.outputs.codegen == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: taiki-e/github-actions/free-device-space@daf550b807efeb6fcd612a0743fe0803f313f4aa # main # zizmor: ignore[stale-action-refs]
+        if: inputs.codegen-free-device-space
+      - uses: taiki-e/install-action@e3134ec54b36203e18f2d1e80652058bd078dd91 # v2.77.3
+        with:
+          tool: rust@${{ inputs.rust }}
+          fallback: none
+        if: needs.prepare.outputs.rust == 'true'
+      - run: bash "${SCRIPT}"
+        env:
+          SCRIPT: tools/gen.sh
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: git add -N . && git -c color.ui=always diff --exit-code
 
   docs:
     needs: prepare

@@ -122,6 +122,14 @@ jobs:
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
           fi
+          if [[ -e "${COMMIT_SCRIPT}" ]]; then
+            printf 'commit=true\n' >>"${GITHUB_OUTPUT}"
+          elif [[ "${AUTOMERGE}" == 'true' ]]; then
+            exit 1
+          fi
+        env:
+          COMMIT_SCRIPT: ${{ inputs.commit-script }}
+          AUTOMERGE: ${{ inputs.automerge }}
       - uses: taiki-e/github-actions/free-device-space@daf550b807efeb6fcd612a0743fe0803f313f4aa # main # zizmor: ignore[stale-action-refs]
         if: inputs.free-device-space
       - uses: taiki-e/install-action@e3134ec54b36203e18f2d1e80652058bd078dd91 # v2.77.3
@@ -139,34 +147,28 @@ jobs:
           tool: parse-changelog
           fallback: none
         if: inputs.install-parse-changelog
-      - id: run
-        run: |
-          bash "${SCRIPT}"
-          if [[ -e "${COMMIT_SCRIPT}" ]]; then
-            printf 'commit=true\n' >>"${GITHUB_OUTPUT}"
-          fi
+      - run: bash "${SCRIPT}"
         env:
           SCRIPT: ${{ inputs.script }}
-          COMMIT_SCRIPT: ${{ inputs.commit-script }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Handle diff
         id: diff
         run: bash "${COMMIT_SCRIPT}"
         env:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
-        if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
       - uses: taiki-e/github-actions/push@daf550b807efeb6fcd612a0743fe0803f313f4aa # main # zizmor: ignore[stale-action-refs]
         with:
           ref: refs/heads/${{ inputs.branch }}
           force: true
-        if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
+        if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: pr-token
         with:
           client-id: ${{ inputs.pr-token-app-client-id }}
           private-key: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] # TODO
-        if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
+        if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Create or re-open PR
         run: |
           if ! gh pr create --head taiki-e:"${BRANCH:?}" --title "${TITLE:?}" --body "${BODY}" 2>&1 | tee -- /tmp/create.log; then
@@ -188,7 +190,7 @@ jobs:
           BRANCH: ${{ inputs.branch }}
           # Note that if we use secrets.GITHUB_TOKEN, the opened PR cannot trigger workflows.
           GITHUB_TOKEN: ${{ steps.pr-token.outputs.token }} # zizmor: ignore[secrets-outside-env] # TODO
-        if: (inputs.automerge || steps.run.outputs.commit == 'true') && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
+        if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Enable auto-merge and approve for auto-generated PR
         run: |
           gh pr merge --rebase --auto "${BRANCH}"

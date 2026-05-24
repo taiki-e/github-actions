@@ -151,8 +151,8 @@ jobs:
           python3 -m venv ~/venv
           ~/venv/bin/pip --version
           # --uploaded-prior-to with duration in days requires pip 26.1.
-          ~/venv/bin/pip install --upgrade pip
-          ~/venv/bin/pip install --uploaded-prior-to=P14D yq
+          ~/venv/bin/pip install --no-cache-dir --upgrade pip
+          ~/venv/bin/pip install --no-cache-dir --uploaded-prior-to=P14D yq
           yq() { ~/venv/bin/yq "$@"; }
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"

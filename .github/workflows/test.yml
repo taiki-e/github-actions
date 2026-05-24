@@ -67,6 +67,9 @@ on:
       no-std-args:
         required: false
         type: string
+      additional-no-std-crates:
+        required: false
+        type: string
       minimal-versions:
         required: false
         type: boolean
@@ -182,11 +185,18 @@ jobs:
             add_matrix "${target}" "${last}"
           done
           printf 'matrix=%s\n' "{\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
+          additional_no_std_crates=''
+          if [[ -n "${ADDITIONAL_NO_STD_CRATES}" ]]; then
+            additional_no_std_crates=$(normalize_comma_or_space_separated "${ADDITIONAL_NO_STD_CRATES}")
+          fi
+          printf 'additional-no-std-crates=%s\n' "${additional_no_std_crates}" >>"${GITHUB_OUTPUT}"
         env:
           INPUT_RUST: ${{ inputs.rust }}
           INPUT_TARGET: ${{ inputs.target }}
+          ADDITIONAL_NO_STD_CRATES: ${{ inputs.additional-no-std-crates }}
     outputs:
       matrix: ${{ steps.prepare.outputs.matrix }}
+      additional-no-std-crates: ${{ steps.prepare.outputs.additional-no-std-crates }}
 
   test:
     needs: prepare
@@ -284,6 +294,18 @@ jobs:
           OPTIONAL_DEPS: ${{ inputs.optional-deps }}
           TARGET: ${{ inputs.no-std-target }}
         if: inputs.no-std && steps.prepare.outputs.no-std == 'true' && matrix.target == ''
+      - run: |
+          while IFS= read -rd,; do
+            (
+              set -x
+              cargo build --manifest-path "${REPLY}"/Cargo.toml --target "${TARGET}" ${ARGS}
+            )
+          done <<<"${CRATES}"
+        env:
+          ARGS: ${{ inputs.no-std-args }}
+          TARGET: ${{ inputs.no-std-target }}
+          CRATES: ${{ needs.prepare.outputs.additional-no-std-crates }}
+        if: inputs.no-std && steps.prepare.outputs.no-std == 'true' && matrix.target == '' && needs.prepare.outputs.additional-no-std-crates != ''
       - run: cargo minimal-versions build --workspace --no-private --detach-path-deps=skip-exact ${FEATURES} ${TARGET:-} ${BUILD_STD:-} ${ARGS}
         env:
           ARGS: ${{ inputs.minimal-versions-args }}

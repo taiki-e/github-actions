@@ -3,6 +3,8 @@
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
 #
+# Note: We also call this workflow from rust-test.yml.
+#
 # Usage:
 #
 # ```yaml
@@ -55,6 +57,7 @@ defaults:
 
 jobs:
   prepare:
+    name: release-dry-run (prepare)
     runs-on: ubuntu-slim
     timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
     steps:
@@ -117,6 +120,7 @@ jobs:
       bin: ${{ steps.prepare.outputs.bin }}
 
   build:
+    name: release-dry-run (${{ matrix.target }})
     needs: prepare
     strategy:
       fail-fast: false

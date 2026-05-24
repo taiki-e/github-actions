@@ -1,4 +1,4 @@
-# Run `cargo test`, `cargo careful test`, `cargo hack build --feature-powerset`, and `cargo minimal-versions build`.
+# Run various builds/tests for Rust code.
 #
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
@@ -42,6 +42,11 @@ on:
         required: false
         type: boolean
         default: false
+      doctest-nightly-only:
+        required: false
+        type: boolean
+        default: false
+      # cargo-careful-specific
       careful:
         required: false
         type: boolean
@@ -49,13 +54,11 @@ on:
       careful-args:
         required: false
         type: string
-      doctest-nightly-only:
-        required: false
-        type: boolean
-        default: false
+      # build-specific
       build-args:
         required: false
         type: string
+      # no-std-build-specific
       no-std:
         required: false
         type: boolean
@@ -70,6 +73,7 @@ on:
       additional-no-std-crates:
         required: false
         type: string
+      # cargo-minimal-versions-specific
       minimal-versions:
         required: false
         type: boolean
@@ -84,6 +88,58 @@ on:
       direct-minimal-versions-args:
         required: false
         type: string
+      # fuzzing-specific
+      fuzz:
+        required: false
+        type: boolean
+        default: true
+      fuzz-rust:
+        required: false
+        type: string
+        default: nightly
+      # miri-specific
+      miri:
+        required: false
+        type: boolean
+        default: true
+      miri-rust:
+        required: false
+        type: string
+        default: nightly
+      miri-target:
+        required: false
+        type: string
+      miri-args:
+        required: false
+        type: string
+      miri-all-features:
+        required: false
+        type: boolean
+        default: true
+      miriflags:
+        required: false
+        type: string
+        default: -Zmiri-strict-provenance -Zmiri-symbolic-alignment-check -Zmiri-disable-isolation
+      # msrv-specific
+      msrv:
+        required: false
+        type: boolean
+        default: true
+      msrv-target:
+        required: false
+        type: string
+      msrv-args:
+        required: false
+        type: string
+      msrv-all-features:
+        required: false
+        type: boolean
+        default: true
+      # release-dry-run-specific
+      release-dry-run:
+        required: false
+        type: boolean
+        default: true
 
 env:
   CARGO_INCREMENTAL: 0
@@ -136,7 +192,15 @@ jobs:
           has_bin=''
           # Publishing is unrestricted if null, and forbidden if an empty array.
           for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}"); do
+            job=$(yq -c '.jobs.msrv' .github/workflows/ci.yml)
+            if [[ "${job}" == "null" ]]; then
+              printf 'msrv=true\n' >>"${GITHUB_OUTPUT}"
+            fi
             if jq '.targets[] | .kind[]' <<<"${pkg}" | grep -Fq '"bin"'; then
+              job=$(yq -c '.jobs."release-dry-run"' .github/workflows/ci.yml)
+              if [[ "${job}" == "null" ]]; then
+                printf 'release-dry-run=true\n' >>"${GITHUB_OUTPUT}"
+              fi
               has_bin=1
               break
             fi
@@ -190,19 +254,33 @@ jobs:
             additional_no_std_crates=$(normalize_comma_or_space_separated "${ADDITIONAL_NO_STD_CRATES}")
           fi
           printf 'additional-no-std-crates=%s\n' "${additional_no_std_crates}" >>"${GITHUB_OUTPUT}"
+          job=$(yq -c '.jobs.miri' .github/workflows/ci.yml)
+          if [[ "${job}" == "null" ]]; then
+            printf 'miri=true\n' >>"${GITHUB_OUTPUT}"
+          fi
+          if [[ -e fuzz ]]; then
+            job=$(yq -c '.jobs.fuzz' .github/workflows/ci.yml)
+            if [[ "${job}" == "null" ]]; then
+              printf 'fuzz=true\n' >>"${GITHUB_OUTPUT}"
+            fi
+          fi
         env:
           INPUT_RUST: ${{ inputs.rust }}
           INPUT_TARGET: ${{ inputs.target }}
           ADDITIONAL_NO_STD_CRATES: ${{ inputs.additional-no-std-crates }}
     outputs:
-      matrix: ${{ steps.prepare.outputs.matrix }}
+      test-matrix: ${{ steps.prepare.outputs.matrix }}
       additional-no-std-crates: ${{ steps.prepare.outputs.additional-no-std-crates }}
+      fuzz: ${{ steps.prepare.outputs.fuzz }}
+      miri: ${{ steps.prepare.outputs.miri }}
+      msrv: ${{ steps.prepare.outputs.msrv }}
+      release-dry-run: ${{ steps.prepare.outputs.release-dry-run }}
 
   test:
     needs: prepare
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.prepare.outputs.test-matrix) }}
     runs-on: ${{ matrix.os || 'ubuntu-24.04' }}
     timeout-minutes: 60
     steps:
@@ -279,7 +357,7 @@ jobs:
         if: inputs.test-fat-lto
       - run: cargo careful test --all ${FEATURES} ${TARGET:-} ${DOCTEST_XCOMPILE:-} ${ARGS}
         env:
-          ARGS: ${{ inputs.careful-args }}
+          ARGS: ${{ inputs.careful-args || inputs.test-args }}
           FEATURES: ${{ inputs.features }}
           RUSTDOCFLAGS: ${{ env.RUSTDOCFLAGS }} -Z randomize-layout
           RUSTFLAGS: ${{ env.RUSTFLAGS }} -Z randomize-layout
@@ -316,3 +394,35 @@ jobs:
           ARGS: ${{ inputs.direct-minimal-versions-args }}
           FEATURES: ${{ inputs.features }}
         if: inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true'
+
+  fuzz:
+    needs: prepare
+    if: inputs.fuzz && needs.prepare.outputs.fuzz == 'true'
+    uses: ./.github/workflows/rust-fuzz.yml
+    with:
+      rust: ${{ inputs.fuzz-rust }}
+
+  miri:
+    needs: prepare
+    if: inputs.miri && needs.prepare.outputs.miri == 'true'
+    uses: ./.github/workflows/rust-miri.yml
+    with:
+      rust: ${{ inputs.miri-rust }}
+      target: ${{ inputs.miri-target }}
+      args: ${{ inputs.miri-args || inputs.test-args }}
+      all-features: ${{ inputs.miri-all-features }}
+      miriflags: ${{ inputs.miriflags }}
+
+  msrv:
+    needs: prepare
+    if: inputs.msrv && needs.prepare.outputs.msrv == 'true'
+    uses: ./.github/workflows/rust-msrv.yml
+    with:
+      target: ${{ inputs.msrv-target }}
+      args: ${{ inputs.msrv-args }}
+      all-features: ${{ inputs.msrv-all-features }}
+
+  release-dry-run:
+    needs: prepare
+    if: inputs.release-dry-run && needs.prepare.outputs.release-dry-run == 'true'
+    uses: ./.github/workflows/rust-release-dry-run.yml

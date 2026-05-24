@@ -3,6 +3,8 @@
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
 #
+# Note: We also call this workflow from rust-test.yml.
+#
 # Usage:
 #
 # ```yaml
@@ -53,6 +55,7 @@ defaults:
 
 jobs:
   prepare:
+    name: msrv (prepare)
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -124,6 +127,7 @@ jobs:
       windows-target: ${{ steps.prepare.outputs.windows-target }}
 
   build:
+    name: msrv (${{ matrix.os }})
     needs: prepare
     strategy:
       fail-fast: false

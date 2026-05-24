@@ -3,6 +3,8 @@
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
 #
+# tidy.yml has similar version of this that doesn't open a PR.
+#
 # Usage:
 #
 # ```yaml

@@ -16,16 +16,16 @@ supposed to only be used in infra managed by us.
 ## Reusable workflows
 
 - [**action-release**](.github/workflows/action-release.yml): Create and push the release commit and tag, and create GitHub release.
-- [**check-external-types**](.github/workflows/check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
-- [**clippy**](.github/workflows/clippy.yml): Run `cargo clippy` and apply clippy for doctest.
-- [**docs**](.github/workflows/docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
-- [**fuzz**](.github/workflows/fuzz.yml): Run fuzzing with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`.
 - [**gen**](.github/workflows/gen.yml): Run code generator and open PR if new change available.
-- [**miri**](.github/workflows/miri.yml): Run `cargo miri test` in strict mode.
-- [**msrv**](.github/workflows/msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).
-- [**release-dry-run**](.github/workflows/release-dry-run.yml): Build Rust binaries based on release workflow.
+- [**rust-check-external-types**](.github/workflows/rust-check-external-types.yml): Run `cargo check-external-types` in a way that respects the docs.rs metadata.
+- [**rust-clippy**](.github/workflows/rust-clippy.yml): Run `cargo clippy` and apply clippy for doctest.
+- [**rust-docs**](.github/workflows/rust-docs.yml): Run `cargo doc` in a way that is as similar to docs.rs as possible.
+- [**rust-fuzz**](.github/workflows/rust-fuzz.yml): Run fuzzing with `cargo fuzz`, `cargo afl`, and `cargo hfuzz`.
+- [**rust-miri**](.github/workflows/rust-miri.yml): Run `cargo miri test` in strict mode.
+- [**rust-msrv**](.github/workflows/rust-msrv.yml): Run MSRV (minimum supported Rust version) check in [a pedantic, time-consuming but highly accurate way](https://github.com/taiki-e/cargo-hack/issues/93).
 - [**rust-release**](.github/workflows/rust-release.yml): Create and push the release commit and tag, publish crates, create GitHub release, and optionally upload binaries.
-- [**test**](.github/workflows/test.yml): Run `cargo test`, `cargo careful test`, `cargo hack build --feature-powerset`, and `cargo minimal-versions build`.
+- [**rust-release-dry-run**](.github/workflows/release-dry-run.yml): Build Rust binaries based on release workflow.
+- [**rust-test**](.github/workflows/test.yml): Run `cargo test`, `cargo careful test`, `cargo hack build --feature-powerset`, and `cargo minimal-versions build`.
 - [**tidy**](.github/workflows/tidy.yml): Run various checks.
 
 ## Moved or removed actions

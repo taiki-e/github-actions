@@ -7,7 +7,7 @@
 #
 # ```yaml
 #   miri:
-#     uses: taiki-e/github-actions/.github/workflows/miri.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/rust-miri.yml@main
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.

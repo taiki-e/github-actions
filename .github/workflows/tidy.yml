@@ -493,7 +493,7 @@ jobs:
   check-external-types:
     needs: prepare
     if: inputs.check-external-types && needs.prepare.outputs.rust-pub-lib == 'true'
-    uses: ./.github/workflows/check-external-types.yml
+    uses: ./.github/workflows/rust-check-external-types.yml
     with:
       rust: ${{ inputs.check-external-types-rust }}
       target: ${{ inputs.check-external-types-target }}
@@ -502,7 +502,7 @@ jobs:
   clippy:
     needs: prepare
     if: inputs.clippy && needs.prepare.outputs.rust == 'true'
-    uses: ./.github/workflows/clippy.yml
+    uses: ./.github/workflows/rust-clippy.yml
     with:
       rust: ${{ inputs.rust }}
       target: ${{ inputs.clippy-target }}
@@ -544,7 +544,7 @@ jobs:
   docs:
     needs: prepare
     if: inputs.docs && (needs.prepare.outputs.rust-pub-lib == 'true' || needs.prepare.outputs.rust-pub-proc-macro == 'true')
-    uses: ./.github/workflows/docs.yml
+    uses: ./.github/workflows/rust-docs.yml
     with:
       rust: ${{ inputs.rust }}
       target: ${{ inputs.docs-target }}

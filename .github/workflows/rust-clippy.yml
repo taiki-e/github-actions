@@ -9,7 +9,7 @@
 #
 # ```yaml
 #   clippy:
-#     uses: taiki-e/github-actions/.github/workflows/clippy.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/rust-clippy.yml@main
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.

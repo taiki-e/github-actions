@@ -3,8 +3,6 @@
 # There is no stability guarantee for this workflow, since it's supposed to only be
 # used in infra managed by us.
 #
-# Note: We also call this workflow from tidy.yml.
-#
 # Usage:
 #
 # ```yaml

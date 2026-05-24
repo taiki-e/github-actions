@@ -7,7 +7,7 @@
 #
 # ```yaml
 #   test:
-#     uses: taiki-e/github-actions/.github/workflows/test.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/rust-test.yml@main
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.

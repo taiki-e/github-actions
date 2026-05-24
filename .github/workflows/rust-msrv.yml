@@ -7,7 +7,7 @@
 #
 # ```yaml
 #   msrv:
-#     uses: taiki-e/github-actions/.github/workflows/msrv.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/rust-msrv.yml@main
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.
@@ -103,6 +103,7 @@ jobs:
             esac
           done < <(normalize_comma_or_space_separated "${INPUT_TARGET}")
           matrix=''
+          # TODO: Hide default ubuntu runner name from matrix
           [[ -z "${linux_target}" ]] || matrix+=',"ubuntu-24.04"'
           [[ -z "${apple_target}" ]] || matrix+=',"macos-latest"'
           [[ -z "${windows_target}" ]] || matrix+=',"windows-latest"'

@@ -7,7 +7,7 @@
 #
 # ```yaml
 #   release-dry-run:
-#     uses: taiki-e/github-actions/.github/workflows/release-dry-run.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/rust-release-dry-run.yml@main
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.

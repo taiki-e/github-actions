@@ -7,7 +7,7 @@
 #
 # ```yaml
 #   fuzz:
-#     uses: taiki-e/github-actions/.github/workflows/fuzz.yml@main
+#     uses: taiki-e/github-actions/.github/workflows/rust-fuzz.yml@main
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.

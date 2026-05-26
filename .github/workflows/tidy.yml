@@ -182,7 +182,7 @@ jobs:
             job=$(yq -c '.jobs.codegen' .github/workflows/ci.yml)
             if [[ "${job}" == "null" ]]; then
               if [[ -e tools/ci/gen.sh ]]; then
-                printf '::error::tools/ci/gen.sh is available but '%s' job is not available in %s\n' "${INPUT_CODEGEN_JOB}" "${INPUT_CODEGEN_WORKFLOW}"
+                printf '::error::tools/ci/gen.sh is available but codegen job is not available in .github/workflows/ci.yml\n'
                 exit 1
               else
                 printf 'codegen=true\n' >>"${GITHUB_OUTPUT}"

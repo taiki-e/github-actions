@@ -4,8 +4,8 @@ description: GitHub Action for installing Rust toolchain
 inputs:
   toolchain:
     description: Default toolchain to install
-    required: true
-    # default: #publish:toolchain
+    required: false
+    default: beta
   component:
     description: Components to add (comma-separated)
     required: false

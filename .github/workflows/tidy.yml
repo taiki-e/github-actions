@@ -240,10 +240,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+      - uses: taiki-e/install-action@e49978b799e49ff429d162b7a30601a569ab6538 # v2.81.1
         with:
-          # cargo-no-dev-deps is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
-          tool: rust@${{ inputs.rust }},cargo-deny,cargo-no-dev-deps
+          # cargo-hack is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
+          tool: rust@${{ inputs.rust }},cargo-deny,cargo-hack
           fallback: none
         if: inputs.deny && needs.prepare.outputs.rust-pub == 'true'
       - run: cat -- tools/.tidy-check-license-headers
@@ -262,7 +262,7 @@ jobs:
           fi
           (
             set -x
-            cargo no-dev-deps --no-private deny "${args[@]}" check
+            cargo hack --workspace-behavior=cargo --no-private --no-dev-deps deny "${args[@]}" check
           )
         env:
           INPUT_ARGS: ${{ inputs.deny-args }}

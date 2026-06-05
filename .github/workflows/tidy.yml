@@ -46,6 +46,10 @@ on:
         required: false
         type: boolean
         default: true
+      lossy_provenance_casts:
+        required: false
+        type: boolean
+        default: true
       # cargo-check-external-types-specific
       check-external-types:
         required: false
@@ -513,6 +517,7 @@ jobs:
       doctest: ${{ inputs.clippy-doctest }}
       unqualified_local_imports: ${{ inputs.unqualified_local_imports }}
       fuzzy_provenance_casts: ${{ inputs.fuzzy_provenance_casts }}
+      lossy_provenance_casts: ${{ inputs.lossy_provenance_casts }}
 
   codeql:
     name: codeql (${{ matrix.language }})

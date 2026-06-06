@@ -133,8 +133,8 @@ defaults:
 
 jobs:
   prepare:
-    runs-on: ubuntu-slim
-    timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Prepare
@@ -152,21 +152,9 @@ jobs:
             done
             "$@"
           }
-          python3 -m venv ~/venv
-          ~/venv/bin/pip --version
-          # --uploaded-prior-to with duration in days requires pip 26.1.
-          ~/venv/bin/pip install --no-cache-dir --upgrade pip
-          ~/venv/bin/pip install --no-cache-dir --uploaded-prior-to=P14D yq
-          yq() { ~/venv/bin/yq "$@"; }
+          # Note: install python yq when doing check other than non-null check.
           if [[ -n "$(git ls-files '*.rs')" ]]; then
             printf 'rust=true\n' >>"${GITHUB_OUTPUT}"
-            if ! type -P rustup >/dev/null; then
-              retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 -o rustup-init https://sh.rustup.rs
-              chmod +x ./rustup-init
-              retry ./rustup-init -y --default-toolchain "${INPUT_RUST}" --no-modify-path --profile minimal
-              rm -- ./rustup-init
-              export PATH="${HOME}/.cargo/bin:${PATH}"
-            fi
             metadata=$(cargo metadata --format-version=1 --no-deps)
             # Publishing is unrestricted if null, and forbidden if an empty array.
             if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}")" ]]; then

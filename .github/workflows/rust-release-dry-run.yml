@@ -59,7 +59,7 @@ jobs:
   prepare:
     name: release-dry-run (prepare)
     runs-on: ubuntu-slim
-    timeout-minutes: 15 # Max execution time of ubuntu-slim runner.
+    timeout-minutes: 5
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Prepare

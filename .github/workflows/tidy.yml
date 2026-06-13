@@ -58,7 +58,8 @@ on:
       check-external-types-rust:
         required: false
         type: string
-        default: nightly-2025-10-18
+        # NB: Sync with rust-check-external-types.yml
+        default: nightly-2026-06-12
       check-external-types-target:
         required: false
         type: string

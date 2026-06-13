@@ -22,7 +22,8 @@ on:
       rust:
         required: false
         type: string
-        default: nightly-2025-10-18
+        # NB: Sync with tidy.yml
+        default: nightly-2026-06-12
       target:
         required: false
         type: string
@@ -65,7 +66,7 @@ jobs:
           fallback: none
       - uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
         with:
-          tool: cargo-check-external-types@0.4.0
+          tool: cargo-check-external-types@0.5.0
       # Refs:
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/crates/metadata/lib.rs
       # - https://github.com/rust-lang/docs.rs/blob/HEAD/src/docbuilder/rustwide_builder.rs

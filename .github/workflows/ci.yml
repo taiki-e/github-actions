@@ -33,16 +33,18 @@ jobs:
       matrix:
         os:
           # NB: Sync list with https://github.com/taiki-e/checkout-action/blob/HEAD/.github/workflows/ci.yml
-          - ubuntu-22.04
-          - ubuntu-22.04-arm
+          - ubuntu-26.04
+          - ubuntu-26.04-arm
           - ubuntu-24.04
           - ubuntu-24.04-arm
+          - ubuntu-22.04
+          - ubuntu-22.04-arm
           - ubuntu-slim
+          - macos-26
           - macos-15
           - macos-15-intel
-          - macos-26
-          - windows-2022
           - windows-2025
+          - windows-2022
           - windows-11-arm
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60

@@ -310,7 +310,7 @@ jobs:
             '^- update$'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: inputs.ruleset && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: inputs.ruleset && github.event_name == 'schedule'
       - name: Ensure all tags are contained in protected branches
         run: |
           IFS=$'\n\t'
@@ -441,7 +441,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RULE_ID1: ${{ steps.ruleset.outputs.branch-additional }}
           RULE_ID2: ${{ steps.ruleset.outputs.branch }}
-        if: inputs.ruleset && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: inputs.ruleset && github.event_name == 'schedule'
       - name: Ensure all releases are immutable
         run: |
           retry() {
@@ -483,7 +483,7 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: inputs.immutable-release && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: inputs.immutable-release && github.event_name == 'schedule'
       - run: git add -N . && git -c color.ui=always diff --exit-code
 
   check-external-types:

@@ -42,11 +42,7 @@ on:
         required: false
         type: boolean
         default: true
-      fuzzy_provenance_casts:
-        required: false
-        type: boolean
-        default: true
-      lossy_provenance_casts:
+      implicit_provenance_casts:
         required: false
         type: boolean
         default: true
@@ -505,8 +501,7 @@ jobs:
       args: ${{ inputs.clippy-args }}
       doctest: ${{ inputs.clippy-doctest }}
       unqualified_local_imports: ${{ inputs.unqualified_local_imports }}
-      fuzzy_provenance_casts: ${{ inputs.fuzzy_provenance_casts }}
-      lossy_provenance_casts: ${{ inputs.lossy_provenance_casts }}
+      implicit_provenance_casts: ${{ inputs.implicit_provenance_casts }}
 
   codeql:
     name: codeql (${{ matrix.language }})

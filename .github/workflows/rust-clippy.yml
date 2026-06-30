@@ -37,11 +37,7 @@ on:
         required: false
         type: boolean
         default: true
-      fuzzy_provenance_casts:
-        required: false
-        type: boolean
-        default: true
-      lossy_provenance_casts:
+      implicit_provenance_casts:
         required: false
         type: boolean
         default: true
@@ -152,13 +148,8 @@ jobs:
             export RUSTFLAGS="${RUSTFLAGS} -Z crate-attr=feature(unqualified_local_imports) -D unqualified_local_imports"
           fi
           strict_provenance_lints=''
-          if [[ "${INPUT_FUZZY_PROVENANCE_CASTS}" != 'false' ]]; then
-            strict_provenance_lints=' -Z crate-attr=feature(strict_provenance_lints) -D fuzzy_provenance_casts'
-            if [[ "${INPUT_LOSSY_PROVENANCE_CASTS}" != 'false' ]]; then
-              strict_provenance_lints+=' -D lossy_provenance_casts'
-            fi
-          elif [[ "${INPUT_LOSSY_PROVENANCE_CASTS}" != 'false' ]]; then
-            strict_provenance_lints=' -Z crate-attr=feature(strict_provenance_lints) -D lossy_provenance_casts'
+          if [[ "${INPUT_IMPLICIT_PROVENANCE_CASTS}" != 'false' ]]; then
+            strict_provenance_lints=' -Z crate-attr=feature(strict_provenance_lints) -D implicit_provenance_casts'
           fi
           if [[ -n ${run_host} ]]; then
             # Do not pass --target for the target that same as host as RUSTFLAGS is not applied for host when --target option passed.
@@ -264,5 +255,4 @@ jobs:
           INPUT_TARGET: ${{ inputs.target }}
           INPUT_DOCTEST: ${{ inputs.doctest }}
           INPUT_UNQUALIFIED_LOCAL_IMPORTS: ${{ inputs.unqualified_local_imports }}
-          INPUT_FUZZY_PROVENANCE_CASTS: ${{ inputs.fuzzy_provenance_casts }}
-          INPUT_LOSSY_PROVENANCE_CASTS: ${{ inputs.lossy_provenance_casts }}
+          INPUT_IMPLICIT_PROVENANCE_CASTS: ${{ inputs.implicit_provenance_casts }}

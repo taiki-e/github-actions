@@ -111,7 +111,7 @@ jobs:
           fi
         env:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
-      - uses: taiki-e/github-actions/free-device-space@daf550b807efeb6fcd612a0743fe0803f313f4aa # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/free-device-space@e0291c01c2cc70f9de01fe6906fef81cd4a79e2d # main # zizmor: ignore[stale-action-refs]
         if: inputs.free-device-space
       - uses: taiki-e/install-action@b8cecb83565409bcc297b2df6e77f030b2a468d5 # v2.82.0
         with:
@@ -139,7 +139,7 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
         if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
-      - uses: taiki-e/github-actions/push@daf550b807efeb6fcd612a0743fe0803f313f4aa # main # zizmor: ignore[stale-action-refs]
+      - uses: taiki-e/github-actions/push@e0291c01c2cc70f9de01fe6906fef81cd4a79e2d # main # zizmor: ignore[stale-action-refs]
         with:
           ref: refs/heads/${{ inputs.branch }}
           force: true

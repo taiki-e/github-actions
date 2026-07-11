@@ -14,7 +14,7 @@ bail() {
   exit 1
 }
 
-npx() { command npx --min-release-age=14 --ignore-scripts=true --allow-git=none --engine-strict=true --strict-peer-deps=true "$@"; }
+npx() { command npx --min-release-age=14 --ignore-scripts=true --allow-git=none --allow-remote=none --engine-strict=true --strict-peer-deps=true "$@"; }
 
 case "$1" in
   clean)

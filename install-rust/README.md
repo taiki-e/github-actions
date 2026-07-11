@@ -29,4 +29,5 @@ Equivalent to:
 - uses: taiki-e/install-action@v2
   with:
     tool: rust@stable + rustfmt + clippy + x86_64-unknown-linux-musl
+    fallback: none
 ```

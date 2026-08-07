@@ -333,7 +333,7 @@ jobs:
             ${{ (inputs.minimal-versions && steps.prepare.outputs.minimal-versions == 'true' || inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true') && 'cargo-minimal-versions' || '' }}
             ${{ inputs.careful && startsWith(matrix.rust, 'nightly') && !(endsWith(matrix.rust, 'i686-pc-windows-gnu') || matrix.target == 'i686-pc-windows-gnu') && !(startsWith(matrix.os, 'ubuntu') && contains(matrix.os, '-arm')) && 'cargo-careful' || '' }}
           fallback: none
-      - uses: taiki-e/setup-cross-toolchain-action@3d9770ce98eb7dbcf378563182a5e8031165f75b # v1.41.0
+      - uses: taiki-e/setup-cross-toolchain-action@12b7ad4acfa95a1476779d6c06699b96ec1691f8 # v1.42.0
         with:
           target: ${{ matrix.target }}
         if: matrix.target != ''

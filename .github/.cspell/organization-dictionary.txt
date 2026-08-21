@@ -51,6 +51,7 @@ nuttx
 nvptx
 ohos
 openwrt
+pauthtest
 qurt
 relibc
 riscv

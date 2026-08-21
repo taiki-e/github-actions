@@ -111,7 +111,7 @@ jobs:
           fi
         env:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
-      - uses: taiki-e/github-actions/free-device-space@e6a1170cbd07eb898017958967912976fce18f2d # 2026.7.3
+      - uses: taiki-e/github-actions/free-device-space@ae8aa690261a62ad55772b3d73e281668f38a7e4 # 2026.7.10
         if: inputs.free-device-space
       - uses: taiki-e/install-action@6c6fd71fe4fb72c3697d269963d0e15df8adedad # v2.85.10
         with:

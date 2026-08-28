@@ -139,7 +139,7 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
         if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
-      - uses: taiki-e/github-actions/push@ae8aa690261a62ad55772b3d73e281668f38a7e4 # 2026.7.10
+      - uses: taiki-e/github-actions/push@dc24bff2366e8ddeea5e0e4168df3d6f4b93f596 # 2026.8.8
         with:
           ref: refs/heads/${{ inputs.branch }}
           force: true

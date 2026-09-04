@@ -113,17 +113,17 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
       - uses: taiki-e/github-actions/free-device-space@dc24bff2366e8ddeea5e0e4168df3d6f4b93f596 # 2026.8.8
         if: inputs.free-device-space
-      - uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2.85.13
+      - uses: taiki-e/install-action@ba47c86ac325773530516bb756137ac718732518 # v2.86.5
         with:
           tool: rust@${{ inputs.rust }}
           fallback: none
         if: inputs.install-rust || steps.prepare.outputs.rust == 'true'
-      - uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2.85.13
+      - uses: taiki-e/install-action@ba47c86ac325773530516bb756137ac718732518 # v2.86.5
         with:
           tool: cosign
           fallback: none
         if: inputs.install-cosign
-      - uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2.85.13
+      - uses: taiki-e/install-action@ba47c86ac325773530516bb756137ac718732518 # v2.86.5
         with:
           tool: parse-changelog
           fallback: none

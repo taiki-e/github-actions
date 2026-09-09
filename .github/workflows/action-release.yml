@@ -433,6 +433,7 @@ jobs:
         with:
           client-id: ${{ secrets.PUSH_TOKEN_APP_CLIENT_ID }}
           private-key: ${{ secrets.PUSH_TOKEN_APP_PRIVATE_KEY }}
+          permission-contents: write
       - uses: taiki-e/github-actions/push@dc24bff2366e8ddeea5e0e4168df3d6f4b93f596 # 2026.8.8
         with:
           ref: HEAD,${{ steps.commit.outputs.refs }}${{ steps.commit.outputs.additional-refs }}

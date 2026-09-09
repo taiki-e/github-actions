@@ -149,6 +149,7 @@ jobs:
         with:
           client-id: ${{ inputs.pr-token-app-client-id }}
           private-key: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] # TODO
+          permission-pull-requests: write
         if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - name: Create or re-open PR
         run: |

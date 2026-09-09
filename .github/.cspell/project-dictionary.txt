@@ -3,9 +3,7 @@ acvf
 ASKPASS
 binfmt
 BUILDKIT
-buildkitd
 buildx
-CDPATH
 chromedriver
 cmdline
 cmin

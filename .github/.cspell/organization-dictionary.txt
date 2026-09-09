@@ -116,6 +116,7 @@ rfold
 rlib
 rposition
 rsplit
+rsplitn
 rustdocflags
 rustflags
 rustlib

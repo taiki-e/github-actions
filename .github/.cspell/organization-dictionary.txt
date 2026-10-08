@@ -30,6 +30,7 @@ gnuspe
 gnutsan
 gnux
 helenos
+hyperlight
 illumos
 imac
 imafc

@@ -324,7 +324,7 @@ jobs:
         with:
           tool: cargo-careful
         if: inputs.careful && startsWith(matrix.rust, 'nightly') && startsWith(matrix.os, 'ubuntu') && contains(matrix.os, '-arm')
-      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         with:
           # Skip cargo-careful on i686-pc-windows-gnu because cannot find cannot find crt2.o/rsbegin.o/rsend.o when building std
           tool: |

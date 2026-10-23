@@ -106,13 +106,13 @@ jobs:
         working-directory: fuzz
         if: always()
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: libfuzzer-artifacts
           path: libfuzzer-artifacts.tar.xz
         if: always() && steps.archive.outputs.has-artifacts == 'true'
       - name: Upload corpus
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: libfuzzer-corpus
           path: libfuzzer-corpus.tar.xz
@@ -170,7 +170,7 @@ jobs:
         working-directory: fuzz
         if: always()
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: afl-artifacts
           path: afl-artifacts.tar.xz
@@ -237,7 +237,7 @@ jobs:
         working-directory: fuzz
         if: failure()
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: honggfuzz-artifacts
           path: honggfuzz-artifacts.tar.xz

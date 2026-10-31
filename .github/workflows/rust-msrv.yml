@@ -92,10 +92,13 @@ jobs:
           apple_target=''
           windows_target=''
           if [[ -z "${INPUT_TARGET}" ]]; then
+            # shellcheck disable=SC2046
             if [[ -n "${has_bin}" ]]; then
               INPUT_TARGET=x86_64-unknown-linux-gnu,aarch64-apple-darwin,x86_64-pc-windows-msvc
-            else
+            elif { cargo tree --target x86_64-pc-windows-msvc | grep -F windows; } || grep -Fq windows $(git ls-files '*.rs'); then
               INPUT_TARGET=x86_64-unknown-linux-gnu,x86_64-pc-windows-msvc
+            else
+              INPUT_TARGET=x86_64-unknown-linux-gnu
             fi
           fi
           while IFS= read -rd,; do

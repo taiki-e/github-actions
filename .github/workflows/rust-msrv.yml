@@ -178,7 +178,7 @@ jobs:
           fi
           (
             set -x
-            cargo hack build --workspace --no-private --no-dev-deps --version-range "${version_range}" ${ALL_FEATURES:-} "${args[@]}"
+            cargo hack build --workspace --no-private --no-dev-deps --clean-per-version --version-range "${version_range}" ${ALL_FEATURES:-} "${args[@]}"
           )
         env:
           INPUT_ARGS: ${{ inputs.args }}

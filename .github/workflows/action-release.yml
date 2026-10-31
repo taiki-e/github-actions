@@ -131,6 +131,8 @@ jobs:
           fallback: none
       - id: check
         run: |
+          # Merge stderr into stdout to preserve log order.
+          exec 2>&1
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           retry() {

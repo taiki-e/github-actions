@@ -34,6 +34,7 @@ rsbegin
 rsend
 sessionmanagerplugin
 shortstat
+textconv
 TOCTOU
 TZDIR
 venv

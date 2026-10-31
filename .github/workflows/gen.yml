@@ -96,6 +96,7 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write # for creating branch for pr / gh pr merge --rebase --auto
+      pull-requests: read # for gh pr list
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Prepare
@@ -139,11 +140,6 @@ jobs:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
         if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main')
       - run: git add -N . && git -c color.ui=always diff --exit-code
-      - uses: taiki-e/github-actions/push@04a42ca09aaeb9b6c0bce43c23fb9e13eb197d85 # 2026.9.9
-        with:
-          ref: refs/heads/${{ inputs.branch }}
-          force: true
-        if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
       - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: pr-token
         with:
@@ -151,6 +147,36 @@ jobs:
           private-key: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] # TODO
           permission-pull-requests: write
         if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
+      - name: Compare with existing PR
+        id: check-pr
+        run: |
+          pr="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state open --base "${BASE_BRANCH}" --head "${BRANCH}" --json baseRefOid,headRefOid,isCrossRepository --jq '.[] | select(.isCrossRepository == false) | [.baseRefOid, .headRefOid] | @tsv')"
+          if [[ -n "${pr}" ]]; then
+            IFS=$'\t' read -r existing_base existing_head <<<"${pr}"
+            merge_base="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${existing_base}...${existing_head}" --jq '.merge_base_commit.sha')"
+            git fetch --no-tags --no-recurse-submodules --depth=1 origin "${merge_base}" "${existing_head}"
+            tmp=$(mktemp -d)
+            trap -- 'rm -rf -- "${tmp:?}"' EXIT
+            diff_args=(--binary --full-index --no-color --no-ext-diff --no-textconv --no-renames --ignore-submodules=none --submodule=short)
+            git diff "${diff_args[@]}" "${GITHUB_SHA}" HEAD -- >"${tmp}/generated.diff"
+            git diff "${diff_args[@]}" "${merge_base}" "${existing_head}" -- >"${tmp}/existing.diff"
+            if cmp -s -- "${tmp}/generated.diff" "${tmp}/existing.diff"; then
+              printf 'info: existing PR has the same diff; skipping update\n'
+              printf 'push=false\n' >>"${GITHUB_OUTPUT}"
+              exit 0
+            fi
+          fi
+          printf 'push=true\n' >>"${GITHUB_OUTPUT}"
+        env:
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          BRANCH: ${{ inputs.branch }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
+      - uses: taiki-e/github-actions/push@04a42ca09aaeb9b6c0bce43c23fb9e13eb197d85 # 2026.9.9
+        with:
+          ref: refs/heads/${{ inputs.branch }}
+          force: true
+        if: steps.check-pr.outputs.push == 'true'
       - name: Create or re-open PR
         run: |
           if ! gh pr create --head taiki-e:"${BRANCH:?}" --title "${TITLE:?}" --body "${BODY}" 2>&1 | tee -- /tmp/create.log; then
@@ -170,4 +196,4 @@ jobs:
           BRANCH: ${{ inputs.branch }}
           # Note that if we use secrets.GITHUB_TOKEN, the opened PR cannot trigger workflows.
           GITHUB_TOKEN: ${{ steps.pr-token.outputs.token }} # zizmor: ignore[secrets-outside-env] # TODO
-        if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
+        if: steps.check-pr.outputs.push == 'true'

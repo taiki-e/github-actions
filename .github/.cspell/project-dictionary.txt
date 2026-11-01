@@ -7,6 +7,7 @@ buildx
 chromedriver
 cmdline
 cmin
+cpufreq
 DYLD
 GCONV
 GETCONF

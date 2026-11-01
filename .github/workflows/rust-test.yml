@@ -399,14 +399,14 @@ jobs:
   fuzz:
     needs: prepare
     if: inputs.fuzz && needs.prepare.outputs.fuzz == 'true'
-    uses: ./.github/workflows/rust-fuzz.yml
+    uses: $/.github/workflows/rust-fuzz.yml
     with:
       rust: ${{ inputs.fuzz-rust }}
 
   miri:
     needs: prepare
     if: inputs.miri && needs.prepare.outputs.miri == 'true'
-    uses: ./.github/workflows/rust-miri.yml
+    uses: $/.github/workflows/rust-miri.yml
     with:
       rust: ${{ inputs.miri-rust }}
       target: ${{ inputs.miri-target }}
@@ -417,7 +417,7 @@ jobs:
   msrv:
     needs: prepare
     if: inputs.msrv && needs.prepare.outputs.msrv == 'true'
-    uses: ./.github/workflows/rust-msrv.yml
+    uses: $/.github/workflows/rust-msrv.yml
     with:
       target: ${{ inputs.msrv-target }}
       args: ${{ inputs.msrv-args }}
@@ -426,4 +426,4 @@ jobs:
   release-dry-run:
     needs: prepare
     if: inputs.release-dry-run && needs.prepare.outputs.release-dry-run == 'true'
-    uses: ./.github/workflows/rust-release-dry-run.yml
+    uses: $/.github/workflows/rust-release-dry-run.yml

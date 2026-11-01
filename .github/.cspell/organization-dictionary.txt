@@ -53,6 +53,7 @@ nvptx
 ohos
 openwrt
 pauthtest
+qtee
 qurt
 relibc
 riscv

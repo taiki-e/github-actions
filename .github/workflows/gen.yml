@@ -12,6 +12,7 @@
 #     uses: taiki-e/github-actions/.github/workflows/gen.yml@main
 #     permissions:
 #       contents: write # for creating branch for pr
+#       pull-requests: read # for gh pr list
 #     secrets:
 #       PR_TOKEN_APP_PRIVATE_KEY: ${{ secrets.PR_TOKEN_APP_PRIVATE_KEY }}
 # ```

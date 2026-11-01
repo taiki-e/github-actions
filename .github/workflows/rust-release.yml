@@ -6,6 +6,8 @@
 # Note: This uses token-based publish for initial publish which Trusted Publishing doesn't work.
 # Otherwise Trusted Publishing is used.
 #
+# TODO: update doc to reflect PAT -> GitHub App change
+#
 # Setup (common):
 #
 # 1. Visit https://github.com/settings/personal-access-tokens/new

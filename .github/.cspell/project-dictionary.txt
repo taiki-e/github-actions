@@ -7,11 +7,14 @@ buildx
 chromedriver
 cmdline
 cmin
+consolefonts
+cpan
 cpufreq
 DYLD
 GCONV
 GETCONF
 ghcup
+groff
 hfuzz
 honggfuzz
 hostedtoolcache
@@ -19,6 +22,7 @@ HWCAP
 kotlinc
 libexec
 libfuzzer
+lintian
 linuxbrew
 LOCALDOMAIN
 localedata
@@ -35,11 +39,12 @@ rsbegin
 rsend
 sessionmanagerplugin
 shortstat
+tcltk
 textconv
 TOCTOU
 TZDIR
 venv
-venvs
 waagent
 xhtm
 xscale
+zoneinfo

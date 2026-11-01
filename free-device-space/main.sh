@@ -19,103 +19,121 @@ case "$(uname -s)" in
     # sometimes takes a more long time.
     # https://github.com/actions/runner-images/issues/1939
     dirs+=(
-      # Last checked 2025-12-12 (ubuntu-24.04)
-      /home/linuxbrew # 184M
-      # /home/packer/.nvm # 3.2M
-      # /home/runner/.nvm # 3.2M
-      # /home/runner/actions-runner # 1.4G
-      # /home/runner/work # 1.1M
-      # /opt/actionarchivecache # 244M
+      # Last checked 2026-10-31 (ubuntu-24.04)
+      /home/linuxbrew # 217M
+      # /home/packer/.cache # 191M
+      # /home/packer/.cpan # 45M
+      # /home/packer/.nvm # 2.0M
+      # /home/runner/.nvm # 2.0M
+      # /home/runner/actions-runner # 163M
+      # /home/runner/work # 1.3M
+      # /opt/actionarchivecache # 273M
       /opt/az            # 668M
-      /opt/google/chrome # 375M
-      # /opt/hca # 14M
-      /opt/hostedtoolcache/CodeQL # 1.7G
-      # /opt/hostedtoolcache/PyPy # 520M
-      # /opt/hostedtoolcache/Python # 1.9G
-      # /opt/hostedtoolcache/node # 574M
-      /opt/microsoft/msedge # 608M
-      /opt/pipx             # 514M
-      /opt/pipx/shared      # 13M
-      /opt/pipx/venvs       # 502M
-      # /opt/runner-cache # 429M
+      /opt/google/chrome # 446M
+      # /opt/hca # 32M
+      # /opt/hostedtoolcache/agentic-workflow-firewall-js # 5.4M
+      /opt/hostedtoolcache/CodeQL      # 1.4G
+      /opt/hostedtoolcache/copilot-cli # 188M
+      # /opt/hostedtoolcache/node # 411M
+      # /opt/hostedtoolcache/PyPy # 524M
+      # /opt/hostedtoolcache/Python # 1.7G
+      /opt/microsoft/msedge # 673M
+      /opt/pipx             # 503M
+      # /opt/primer # 14M
+      # /opt/runner-cache # 1.1G
       # /usr/include/python3.* # 1.7M
       # /usr/lib/apache2 # 4.3M
-      /usr/lib/aspell # 1.7M
-      # /usr/lib/cgi-bin # 5.5M
-      /usr/lib/firefox          # 275M
-      /usr/lib/google-cloud-sdk # 1008M
-      # /usr/lib/linux-azure-*-tools-* # 14M
+      /usr/lib/aspell           # 1.7M
+      /usr/lib/firefox          # 308M
+      /usr/lib/google-cloud-sdk # 846M
+      # /usr/lib/linux-azure-*-tools-* # 41M
+      # /usr/lib/modules # 148M
       /usr/lib/mysql      # 5.5M
       /usr/lib/podman     # 8.2M
       /usr/lib/postgresql # 44M
-      # /usr/lib/python3 # 259M
+      # /usr/lib/python3 # 264M
       # /usr/lib/python3.* # 54M
+      # /usr/lib/shim # 4.7M
+      # /usr/libexec/docker # 138M
       /usr/libexec/podman    # 5.4M
-      /usr/local/.ghcup      # 6.4G
-      /usr/local/aws-cli     # 240M
-      /usr/local/aws-sam-cli # 266M
+      /usr/local/.ghcup      # 3.7G
+      /usr/local/aws-cli     # 275M
+      /usr/local/aws-sam-cli # 201M
       # /usr/local/doc # 51M
-      /usr/local/julia*      # 1015M
+      /usr/local/julia*      # 1.1G
       /usr/local/lib/android # 12G
-      # /usr/local/lib/python3.* # 1.5M
-      # /usr/local/lib/node_modules # 486M
+      # /usr/local/lib/node_modules # 476M
+      # /usr/local/lib/python3.* # 3.6M
       /usr/local/man                        # 4.1M
-      /usr/local/n                          # 167M
-      /usr/local/sessionmanagerplugin       # 13M
-      /usr/local/share/chromedriver-linux64 # 19M
-      /usr/local/share/chromium             # 619M
-      /usr/local/share/edge_driver          # 34M
-      /usr/local/share/gecko_driver         # 5.9M
-      # /usr/local/share/vcpkg # 182M
+      /usr/local/n                          # 203M
+      /usr/local/sessionmanagerplugin       # 11M
+      /usr/local/share/chromedriver-linux64 # 24M
+      /usr/local/share/chromium             # 672M
+      # /usr/local/share/cmake-* # 21M
+      /usr/local/share/edge_driver  # 31M
+      /usr/local/share/gecko_driver # 5.8M
+      # /usr/local/share/vcpkg # 210M
       # /usr/share/apache2 # 1.7M
-      /usr/share/az_* # 496M
+      # /usr/share/autoconf # 1.9M
+      # /usr/share/automake-* # 1.1M
+      /usr/share/az_* # 584M
       # /usr/share/bash-completion # 3.3M
-      # /usr/share/doc # 60M
-      # /usr/share/fonts # 36M
-      /usr/share/google-cloud-sdk # 1.5M
-      # /usr/share/i18n # 17M
+      # /usr/share/consolefonts # 2.7M
+      # /usr/share/dbus-1 # 1.1M
+      # /usr/share/doc # 59M
+      /usr/share/google-cloud-sdk # 1.8M
+      # /usr/share/groff # 2.0M
+      # /usr/share/gtk-* # 3.9M
+      # /usr/share/i18n # 16M
       # /usr/share/icons # 47M
       # /usr/share/info # 2.2M
-      # /usr/share/locale # 63M
-      /usr/share/man        # 108M
-      /usr/share/mecab      # 52M
-      /usr/share/miniconda  # 802M
+      # /usr/share/lintian # 1.6M
+      # /usr/share/locale # 67M
+      /usr/share/man   # 36M
+      /usr/share/mecab # 52M
+      # /usr/share/mime # 6.4M
+      /usr/share/miniconda  # 1.2G
       /usr/share/mysql      # 9.5M
       /usr/share/postgresql # 3.8M
       # /usr/share/python-babel-localedata # 31M
       # /usr/share/python-wheels # 2.5M
+      /usr/share/swift # 3.5G
       # /usr/share/swig* # 5.2M
+      # /usr/share/tcltk # 3.8M
       /usr/share/vim # 42M
-      # /usr/src/linux-headers-*-azure # 29M
-      # /usr/src/linux-azure-*-headers-* # 130M
+      # /usr/share/X11 # 5.9M
+      # /usr/share/zoneinfo # 3.9M
+      # /usr/src/linux-azure-*-headers-* # 140M
+      # /usr/src/linux-headers-*-azure # 31M
       # /var/backups # 1.4M
-      # /var/cache # 22M
+      # /var/cache # 15M
+      # /var/lib/docker # 2.5G
       /var/lib/mecab      # 91M
       /var/lib/mysql      # 180M
       /var/lib/postgresql # 39M
-      # /var/lib/waagent # 20M
-      # /var/log # 32M
+      # /var/lib/ubuntu-advantage # 6.9M
+      # /var/lib/waagent # 1.6M
+      # /var/log # 33M
     )
     # CLI languages
     dirs+=(
-      /home/packer/.dotnet        # 58M
-      /home/runner/.dotnet        # 58M
-      /opt/microsoft/powershell   # 178M
-      /usr/local/share/powershell # 1.3G
-      /usr/share/dotnet           # 4.0G
+      /home/packer/.dotnet        # 175M
+      /home/runner/.dotnet        # 175M
+      /opt/microsoft/powershell   # 172M
+      /usr/local/share/powershell # 1.4G
+      /usr/share/dotnet           # 5.8G
     )
     # JVM languages
     dirs+=(
       /usr/lib/jvm              # 1.5G
-      /usr/share/apache-maven-* # 11M
-      /usr/share/gradle-*       # 144M
-      /usr/share/java           # 46M
-      /usr/share/kotlinc        # 83M
-      /usr/share/swift          # 3.2G
+      /usr/share/apache-maven-* # 12M
+      /usr/share/gradle-*       # 165M
+      /usr/share/java           # 57M
+      /usr/share/kotlinc        # 94M
     )
     # Go
     dirs+=(
-      /opt/hostedtoolcache/go # 1.1G
+      /opt/hostedtoolcache/go # 799M
     )
     # PHP
     dirs+=(
@@ -125,18 +143,18 @@ case "$(uname -s)" in
     )
     # Ruby
     dirs+=(
-      /opt/hostedtoolcache/Ruby # 217M
+      /opt/hostedtoolcache/Ruby # 313M
       /usr/include/ruby-*       # 2.0M
       /usr/lib/ruby             # 23M
       /usr/share/ri             # 56M
-      /var/lib/gems             # 63M
+      /var/lib/gems             # 83M
     )
     # Rust
     dirs+=(
-      # /home/packer/.cargo # 20M
-      # /home/packer/.rustup # 600M
-      # /home/runner/.cargo # 20M
-      # /home/runner/.rustup # 600M
+      # /home/packer/.cargo # 21M
+      # /home/packer/.rustup # 617M
+      # /home/runner/.cargo # 21M
+      # /home/runner/.rustup # 617M
     )
     unused_llvm_versions=()
     if [[ -e /usr/lib/llvm-15 ]]; then
@@ -145,29 +163,32 @@ case "$(uname -s)" in
     if [[ -e /usr/lib/llvm-18 ]]; then
       unused_llvm_versions+=(16 17) # ubuntu-24.04
     fi
+    if [[ -e /usr/lib/llvm-22 ]]; then
+      unused_llvm_versions+=(20 21) # ubuntu-26.04
+    fi
     if [[ ${#unused_llvm_versions[@]} -gt 0 ]]; then
       for v in "${unused_llvm_versions[@]}"; do
         dirs+=(
-          /usr/include/llvm-"${v}" # 26M (16), 27M (17)
-          /usr/lib/llvm-"${v}"     # 588M (16), 584M (17)
+          /usr/include/llvm-"${v}" # 26M (16), 27M (17), 33M (20), 37M (21)
+          /usr/lib/llvm-"${v}"     # 588M (16), 584M (17), 560M (20), 557M (21)
         )
       done
     fi
     ;;
   Darwin)
     # GitHub-hosted macOS runners already have a lot of free space than Ubuntu runners.
-    # However, non-default Xcode take significant space (Last checked 2025-10-11):
-    # 70GiB (macos-12), 44GiB (macos-13), 28GiB (macos-14), 26GiB (macos-15), 27GiB (macos-15-intel), 9GiB (macos-26)
+    # However, non-default Xcode take significant space (Last checked 2026-10-31):
+    # 70GiB (macos-12), 44GiB (macos-13), 28GiB (macos-14), 35GiB (macos-15), 35GiB (macos-15-intel), 26GiB (macos-26)
     dirs+=(
-      # Last checked 2025-12-12 (macos-26)
+      # Last checked 2026-10-31 (macos-26)
       # /Applications/'Python 3.11' # 1.2M
       # /Applications/'Python 3.12' # 1.2M
       # /Applications/'Python 3.13' # 1.2M
       # /Applications/'Python 3.14' # 1.2M
-      /Applications/'Firefox.app'                   # 452M
-      /Applications/'Google Chrome for Testing.app' # 325M
-      /Applications/'Google Chrome.app'             # 637M
-      /Applications/'Microsoft Edge.app'            # 917M
+      /Applications/'Firefox.app'                   # 520M
+      /Applications/'Google Chrome for Testing.app' # 367M
+      /Applications/'Google Chrome.app'             # 730M
+      /Applications/'Microsoft Edge.app'            # 924M
     )
     default_xcode=$(xcode-select --print-path | grep -Eo 'Xcode_[0-9]+(\.[0-9]+(\.[0-9]+)?)?\.app' | grep -Eo 'Xcode_[0-9]+(\.[0-9]+)?')
     for dir in /Applications/Xcode_*.app; do

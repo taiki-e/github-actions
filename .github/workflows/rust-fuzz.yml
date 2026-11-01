@@ -150,7 +150,6 @@ jobs:
         run: |
           ulimit -S -c unlimited
           sudo tee -- /proc/sys/kernel/core_pattern >/dev/null <<<core
-          sudo tee -- /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null <<<performance
           # shellcheck disable=SC2010
           for target in $(ls | grep -E '\.rs$' | sed -E 's/\.rs$//'); do
             cargo afl fuzz -i "seeds/${target}" -o "out/${target}" -V "${FUZZ_MAX_TOTAL_TIME}" "target/release/${target}"

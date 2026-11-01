@@ -23,6 +23,18 @@ on:
         required: false
         type: string
         default: nightly
+      libfuzzer:
+        required: false
+        type: boolean
+        default: true
+      afl:
+        required: false
+        type: boolean
+        default: true
+      honggfuzz:
+        required: false
+        type: boolean
+        default: true
 
 env:
   CARGO_INCREMENTAL: 0
@@ -52,6 +64,7 @@ defaults:
 jobs:
   libfuzzer:
     name: fuzz (libfuzzer)
+    if: inputs.libfuzzer
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
@@ -120,6 +133,7 @@ jobs:
 
   afl:
     name: fuzz (afl)
+    if: inputs.afl
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
@@ -178,6 +192,7 @@ jobs:
 
   honggfuzz:
     name: fuzz (honggfuzz)
+    if: inputs.honggfuzz
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:

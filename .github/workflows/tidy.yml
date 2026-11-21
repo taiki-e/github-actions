@@ -345,7 +345,7 @@ jobs:
           while IFS= read -r tag; do
             printf 'info: checking %s...\n' "${tag}"
             # Refs: https://github.com/zizmorcore/zizmor/blob/v1.23.1/crates/zizmor/src/audit/impostor_commit.rs
-            commit=$(git show refs/tags/"${tag}" --name-only --no-color | grep -E '^commit' | cut -d' ' -f2)
+            commit=$(git rev-parse --verify "refs/tags/${tag}^{commit}")
             ok=''
             code=''
             if [[ -z "${rate_limit}" ]]; then

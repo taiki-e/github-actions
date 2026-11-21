@@ -164,9 +164,31 @@ jobs:
         run: |
           ulimit -S -c unlimited
           sudo tee -- /proc/sys/kernel/core_pattern >/dev/null <<<core
+          # Keep the restored queue available while starting fresh AFL++ sessions.
+          scratch="$(mktemp -d -- "${RUNNER_TEMP}/afl.XXXXXX")"
+          trap -- 'rm -rf -- "${scratch:?}"' EXIT
+          if [[ -d out ]]; then
+            mv -- out "${scratch}/previous-out"
+          fi
+          mkdir -- out
+          shopt -s nullglob
           # shellcheck disable=SC2010
           for target in $(ls | grep -E '\.rs$' | sed -E 's/\.rs$//'); do
-            cargo afl fuzz -i "seeds/${target}" -o "out/${target}" -V "${FUZZ_MAX_TOTAL_TIME}" "target/release/${target}"
+            input="seeds/${target}"
+            queue="${scratch}/previous-out/${target}/default/queue"
+            if [[ -d "${queue}" ]]; then
+              input="$(mktemp -d -- "${scratch}/seeds.XXXXXX")"
+              cp -R -- "seeds/${target}/." "${input}/seeds"
+              index=0
+              for testcase in "${queue}"/*; do
+                if [[ -f "${testcase}" && ! -L "${testcase}" ]]; then
+                  # AFL++ interprets names starting with id: as session state.
+                  cp -- "${testcase}" "${input}/cached-$((++index))"
+                fi
+              done
+            fi
+            AFL_CRASHING_SEEDS_AS_NEW_CRASH=1 \
+              cargo afl fuzz -i "${input}" -o "out/${target}" -V "${FUZZ_MAX_TOTAL_TIME}" "target/release/${target}"
             rmdir -- "out/${target}/default/crashes" 2>/dev/null || true
             rmdir -- "out/${target}/default/hangs" 2>/dev/null || true
             if [[ -d "out/${target}/default/crashes" ]] || [[ -d "out/${target}/default/hangs" ]]; then

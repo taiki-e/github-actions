@@ -25,10 +25,22 @@ on:
       args:
         required: false
         type: string
+      workspace:
+        required: false
+        type: boolean
+        default: true
+      no-private:
+        required: false
+        type: boolean
+        default: true
       all-features:
         required: false
         type: boolean
         default: true
+      linux-free-device-space:
+        required: false
+        type: boolean
+        default: false
 
 env:
   CARGO_INCREMENTAL: 0
@@ -140,6 +152,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: taiki-e/github-actions/free-device-space@07c8b42e7ad077d40127201ac62770c6eb31893e # 2026.11.1
+        if: (startsWith(matrix.os, 'ubuntu') || matrix.os == '') && inputs.linux-free-device-space
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
         with:
           tool: cargo-hack
@@ -155,6 +168,12 @@ jobs:
           args=()
           if [[ "${GITHUB_EVENT_NAME}" == 'pull_request' ]]; then
             args+=(--version-step 2)
+          fi
+          if [[ "${INPUT_WORKSPACE}" == 'true' ]]; then
+            args+=(--workspace)
+          fi
+          if [[ "${INPUT_NO_PRIVATE}" == 'true' ]]; then
+            args+=(--no-private)
           fi
           version_range='..'
           case "${OS}" in
@@ -181,10 +200,12 @@ jobs:
           fi
           (
             set -x
-            cargo hack build --workspace --no-private --no-dev-deps --clean-per-version --version-range "${version_range}" ${ALL_FEATURES:-} "${args[@]}"
+            cargo hack build --no-dev-deps --clean-per-version --version-range "${version_range}" ${ALL_FEATURES:-} "${args[@]}"
           )
         env:
           INPUT_ARGS: ${{ inputs.args }}
+          INPUT_WORKSPACE: ${{ inputs.workspace }}
+          INPUT_NO_PRIVATE: ${{ inputs.no-private }}
           OS: ${{ matrix.os }}
           LOWEST_MSRV: ${{ needs.prepare.outputs.lowest-msrv }}
           LINUX_TARGET: ${{ needs.prepare.outputs.linux-target }}

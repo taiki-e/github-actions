@@ -198,8 +198,8 @@ case "$(uname -s)" in
     done
     ;;
   MINGW* | MSYS* | CYGWIN* | Windows_NT)
-    # GitHub-hosted Windows runners have a lot of free space in C drive,
-    # but D drive which is used as a workspace has only 14GB of free space.
+    # GitHub-hosted Windows runners have a lot of free space in the drive for RUNNER_TEMP,
+    # but the drive for / which is used as a workspace has only 14GB of free space.
     # https://github.com/actions/runner-images/issues/1341
     exit 0
     ;;

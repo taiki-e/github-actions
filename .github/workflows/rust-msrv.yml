@@ -166,7 +166,8 @@ jobs:
           IFS=$'\n\t'
           trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
           args=()
-          if [[ "${GITHUB_EVENT_NAME}" == 'pull_request' ]]; then
+          # macOS and Windows runners are slow.
+          if [[ "${GITHUB_EVENT_NAME}" == 'pull_request' ]] || [[ "${OS}" == 'macos'* ]] || [[ "${OS}" == 'windows'* ]]; then
             args+=(--version-step 2)
           fi
           if [[ "${INPUT_WORKSPACE}" == 'true' ]]; then
@@ -198,6 +199,7 @@ jobs:
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
             done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
+          # TODO: add --clean-toolchain-per-version to cargo-hack
           (
             set -x
             cargo hack build --no-dev-deps --clean-per-version --version-range "${version_range}" ${ALL_FEATURES:-} "${args[@]}"

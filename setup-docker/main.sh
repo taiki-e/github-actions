@@ -196,32 +196,34 @@ case "${INPUT_QEMU}" in
       # https://hub.docker.com/r/polyarch/debian-ports/tags
       case "${arch}" in
         386)
-          if [[ "${host_arch}" != 'x86_64' ]]; then
-            qemu_arch+=(i386)
-          fi
+          [[ "${host_arch}" != 'x86_64' ]] || continue
+          arch=i386
           ;;
         amd64)
-          if [[ "${host_arch}" != 'x86_64' ]]; then
-            qemu_arch+=(x86_64)
-          fi
+          [[ "${host_arch}" != 'x86_64' ]] || continue
+          arch=x86_64
           ;;
         arm64*)
-          if [[ "${host_arch}" != 'aarch64' ]]; then
-            qemu_arch+=(aarch64)
-          fi
+          [[ "${host_arch}" != 'aarch64' ]] || continue
+          arch=aarch64
           ;;
         arm*)
-          if [[ "${host_arch}" != 'aarch64' ]]; then
-            qemu_arch+=(arm)
-          fi
+          [[ "${host_arch}" != 'aarch64' ]] || continue
+          arch=arm
           ;;
-        loong64) qemu_arch+=(loongarch64) ;;
-        mipsle) qemu_arch+=(mipsel) ;;
-        mips64le) qemu_arch+=(mips64el) ;;
-        sparc) qemu_arch+=(sparc32plus) ;;
-        m68k | mips | mips64 | ppc | ppc64 | ppc64le | riscv64 | s390x | sparc64) qemu_arch+=("${arch}") ;;
+        loong64) arch=loongarch64 ;;
+        mipsle) arch=mipsel ;;
+        mips64le) arch=mips64el ;;
+        sparc) arch=sparc32plus ;;
+        m68k | mips | mips64 | ppc | ppc64 | ppc64le | riscv64 | s390x | sparc64) ;;
         *) bail "unrecognized docker arch '${arch}'" ;;
       esac
+      for selected_arch in "${qemu_arch[@]}"; do
+        if [[ "${arch}" == "${selected_arch}" ]]; then
+          continue 2 # Avoid duplicate registration.
+        fi
+      done
+      qemu_arch+=("${arch}")
     done < <(normalize_comma_or_space_separated "${INPUT_QEMU}")
     if [[ ${#qemu_arch[@]} -gt 0 ]]; then
       install_qemu

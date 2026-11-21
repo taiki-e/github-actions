@@ -21,12 +21,15 @@ case "$1" in
     cd -- "$(dirname -- "$0")"/..
     dictionary=.github/.cspell/organization-dictionary.txt
     grep_args=()
-    for word in $(grep -Ev '^//' "${dictionary}" || true); do
-      [[ -n "${word}" ]] || continue
-      if npx -y cspell trace "${word}" | grep -Fv "${dictionary}" | grep -Eq "^${word} \\* [^ ]+\*"; then
+    while IFS= read -r word; do
+      case "${word}" in
+        '' | '#'* | '//'*) continue ;;
+      esac
+      trace=$(npx -y cspell trace "${word}" </dev/null)
+      if grep -Fv -e "${dictionary}" <<<"${trace}" | grep -Eq "^${word} \\* [^ ]+\*"; then
         grep_args+=(-e "^${word}$")
       fi
-    done
+    done <<<"$(<"${dictionary}")"
     if [[ ${#grep_args[@]} -gt 0 ]]; then
       printf 'info: %s\n' "removing needless words from ${dictionary}"
       res=$(grep -Ev "${grep_args[@]}" "${dictionary}")

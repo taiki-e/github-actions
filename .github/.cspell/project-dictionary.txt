@@ -9,6 +9,7 @@ cmdline
 cmin
 consolefonts
 cpan
+CPUFREQ
 DYLD
 GCONV
 GETCONF

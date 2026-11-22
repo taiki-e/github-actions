@@ -172,6 +172,8 @@ jobs:
           fi
           mkdir -- out
           shopt -s nullglob
+          # The governor on GitHub-hosted runners may be unavailable or unsuitable for AFL++.
+          export AFL_SKIP_CPUFREQ=1
           # shellcheck disable=SC2010
           for target in $(ls | grep -E '\.rs$' | sed -E 's/\.rs$//'); do
             input="seeds/${target}"

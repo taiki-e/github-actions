@@ -159,11 +159,13 @@ jobs:
             # Publishing is unrestricted if null, and forbidden if an empty array.
             if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [])' <<<"${metadata}")" ]]; then
               printf 'rust-pub=true\n' >>"${GITHUB_OUTPUT}"
-              if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and .targets[].kind[] == "lib")' <<<"${metadata}")" ]]; then
+              # NB: Sync with rust-check-external-types.yml.
+              if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and any(.targets[].kind[]; . == "lib"))' <<<"${metadata}")" ]]; then
                 printf 'rust-pub-lib=true\n' >>"${GITHUB_OUTPUT}"
               fi
-              if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and .targets[].kind[] == "proc-macro")' <<<"${metadata}")" ]]; then
-                printf 'rust-pub-proc-macro=true\n' >>"${GITHUB_OUTPUT}"
+              # NB: Sync with rust-docs.yml.
+              if [[ -n "$(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and any(.targets[].kind[]; IN("lib", "rlib", "dylib", "cdylib", "staticlib", "proc-macro")))' <<<"${metadata}")" ]]; then
+                printf 'rust-pub-doc=true\n' >>"${GITHUB_OUTPUT}"
               fi
             fi
           fi
@@ -190,7 +192,7 @@ jobs:
       rust: ${{ steps.prepare.outputs.rust }}
       rust-pub: ${{ steps.prepare.outputs.rust-pub }}
       rust-pub-lib: ${{ steps.prepare.outputs.rust-pub-lib }}
-      rust-pub-proc-macro: ${{ steps.prepare.outputs.rust-pub-proc-macro }}
+      rust-pub-doc: ${{ steps.prepare.outputs.rust-pub-doc }}
       dockerfile: ${{ steps.prepare.outputs.dockerfile }}
       codegen: ${{ steps.prepare.outputs.codegen }}
 
@@ -506,7 +508,7 @@ jobs:
 
   docs:
     needs: prepare
-    if: inputs.docs && (needs.prepare.outputs.rust-pub-lib == 'true' || needs.prepare.outputs.rust-pub-proc-macro == 'true')
+    if: inputs.docs && needs.prepare.outputs.rust-pub-doc == 'true'
     uses: $/.github/workflows/rust-docs.yml
     with:
       rust: ${{ inputs.rust }}

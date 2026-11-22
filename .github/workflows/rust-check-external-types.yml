@@ -116,7 +116,9 @@ jobs:
           fi
           # Run cargo check-external-types for public crates with features specified in docs.rs metadata in Cargo.toml.
           # Publishing is unrestricted if null, and forbidden if an empty array.
-          for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and .targets[].kind[] == "lib")' <<<"${metadata}"); do
+          # cargo-check-external-types 0.5.0 requires a target with kind "lib".
+          # NB: Sync with tidy.yml.
+          for pkg in $(jq -c '. as $metadata | .workspace_members[] as $id | $metadata.packages[] | select(.id == $id and .publish != [] and any(.targets[].kind[]; . == "lib"))' <<<"${metadata}"); do
             args=("${base_args[@]}")
             eval "$(jq -r '@sh "MANIFEST_PATH=\(.manifest_path)"' <<<"${pkg}")"
             args+=(--manifest-path "${MANIFEST_PATH}")

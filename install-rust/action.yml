@@ -61,7 +61,7 @@ runs:
         DYLD_FALLBACK_LIBRARY_PATH: ''
         DYLD_VERSIONED_FRAMEWORK_PATH: ''
         DYLD_VERSIONED_LIBRARY_PATH: ''
-    - uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+    - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
       with:
         tool: rust@${{ inputs.toolchain }}${{ steps.pre.outputs.additional }}
         fallback: none

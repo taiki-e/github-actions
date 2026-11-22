@@ -157,9 +157,6 @@ jobs:
         with:
           tool: cargo-hack
           fallback: none
-      - run: |
-          printf 'ALL_FEATURES=--all-features\n' >>"${GITHUB_ENV}"
-        if: inputs.all-features && !contains(inputs.args, '--features') && !contains(inputs.args, '--no-default-features')
       # Make sure this crate can be built with MSRV and all later versions.
       # However, this takes time, so for PR, set the version interval.
       - run: |
@@ -199,15 +196,28 @@ jobs:
               [[ -z "${REPLY}" ]] || args+=("${REPLY}")
             done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
           fi
+          for arg in "${args[@]}"; do
+            case "${arg}" in
+              --) break ;;
+              --features | --features=* | -F | -F?* | --no-default-features | --all-features)
+                INPUT_ALL_FEATURES=false
+                break
+                ;;
+            esac
+          done
+          if [[ "${INPUT_ALL_FEATURES}" == 'true' ]]; then
+            args=(--all-features "${args[@]}")
+          fi
           # TODO: add --clean-toolchain-per-version to cargo-hack
           (
             set -x
-            cargo hack build --no-dev-deps --clean-per-version --version-range "${version_range}" ${ALL_FEATURES:-} "${args[@]}"
+            cargo hack build --no-dev-deps --clean-per-version --version-range "${version_range}" "${args[@]}"
           )
         env:
           INPUT_ARGS: ${{ inputs.args }}
           INPUT_WORKSPACE: ${{ inputs.workspace }}
           INPUT_NO_PRIVATE: ${{ inputs.no-private }}
+          INPUT_ALL_FEATURES: ${{ inputs.all-features }}
           OS: ${{ matrix.os }}
           LOWEST_MSRV: ${{ needs.prepare.outputs.lowest-msrv }}
           LINUX_TARGET: ${{ needs.prepare.outputs.linux-target }}

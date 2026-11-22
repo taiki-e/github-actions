@@ -327,9 +327,15 @@ jobs:
         if: inputs.no-std || inputs.minimal-versions || inputs.direct-minimal-versions
       - name: Prepare for doctest-nightly-only
         run: |
-          if [[ "${INPUT_ARGS}" != *"--test"* ]]; then
-            printf 'TESTS=--tests\n' >>"${GITHUB_ENV}"
-          fi
+          while IFS= read -rd' ' arg; do
+            case "${arg}" in
+              --) break ;;
+              --lib | --bin | --bin=* | --bins | --example | --example=* | --examples | --test | --test=* | --tests | --bench | --bench=* | --benches | --all-targets)
+                exit 0 # doctest is already skipped.
+                ;;
+            esac
+          done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
+          printf 'TESTS=--tests\n' >>"${GITHUB_ENV}"
         env:
           INPUT_ARGS: ${{ inputs.test-args }}
         if: inputs.doctest-nightly-only && !startsWith(matrix.rust, 'nightly')

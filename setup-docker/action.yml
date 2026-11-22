@@ -39,6 +39,7 @@ runs:
       env:
         INPUT_BUILDX: ${{ inputs.buildx }}
         INPUT_QEMU: ${{ inputs.qemu }}
+        RUNNER_ARCH: ${{ runner.arch }}
         # for Linux
         # See "Secure-execution mode" in https://man7.org/linux/man-pages/man8/ld.so.8.html
         LD_AUDIT: ''

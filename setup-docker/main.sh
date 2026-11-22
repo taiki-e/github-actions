@@ -172,14 +172,10 @@ register_binfmt() {
   printf '::endgroup::\n'
 }
 
-host_arch="$(uname -m)"
-case "${host_arch}" in
-  aarch64 | arm64) host_arch=aarch64 ;;
-  xscale | arm | armv*l | loongarch64 | mips | mips64 | ppc | ppc64 | ppc64le | riscv64 | s390x | sun4v)
-    bail "unsupported host arch '${host_arch}'"
-    ;;
-  # Assume x86_64 unless it has a known non-x86_64 uname -m result.
-  *) host_arch=x86_64 ;;
+case "${RUNNER_ARCH}" in
+  X64) host_arch=x86_64 ;;
+  ARM64) host_arch=aarch64 ;;
+  *) bail "unsupported runner.arch '${RUNNER_ARCH}'" ;;
 esac
 
 g retry docker version

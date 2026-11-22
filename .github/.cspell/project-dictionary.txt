@@ -46,5 +46,4 @@ TOCTOU
 TZDIR
 venv
 waagent
-xhtm
 zoneinfo

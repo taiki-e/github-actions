@@ -1,0 +1,84 @@
+# Run CodeQL analysis for a single language.
+#
+# There is no stability guarantee for this workflow, since it's supposed to only be
+# used in infra managed by us.
+#
+# Note: We also call this workflow from tidy.yml and rust-test.yml.
+#
+# Usage:
+#
+# ```yaml
+#   codeql:
+#     uses: taiki-e/github-actions/.github/workflows/codeql.yml@main
+#     with:
+#       language: rust
+#     permissions:
+#       security-events: write # for github/codeql-action/*
+# ```
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        required: true
+        type: string
+      build-mode:
+        required: false
+        type: string
+        default: none
+      rust:
+        required: false
+        type: string
+        default: nightly
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+  # Reusable workflows cannot inherit environment variables.
+  ATOMIC_MAYBE_UNINIT_DENY_WARNINGS: 1
+  CARGO_HACK_DENY_WARNINGS: 1
+  CARGO_LLVM_COV_DENY_WARNINGS: 1
+  CARGO_MINIMAL_VERSIONS_DENY_WARNINGS: 1
+  CARGO_NO_DEV_DEPS_DENY_WARNINGS: 1
+  CONST_FN_DENY_WARNINGS: 1
+  PORTABLE_ATOMIC_DENY_WARNINGS: 1
+  SEMIHOSTING_DENY_WARNINGS: 1
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -CeEuo pipefail {0}
+
+jobs:
+  codeql:
+    name: codeql (${{ inputs.language }})
+    # codeql-action pins default CodeQL bundle version, so the value of running it is limited if
+    # there are no code changes.
+    if: github.event_name != 'schedule'
+    runs-on: ${{ (inputs.language == 'swift' && 'macos-latest') || 'ubuntu-24.04' }}
+    timeout-minutes: 60
+    permissions:
+      security-events: write # for github/codeql-action/*
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: rust@${{ inputs.rust }}
+          fallback: none
+        if: inputs.language == 'rust'
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ inputs.language }}
+          build-mode: ${{ inputs.build-mode }}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: /language:${{ inputs.language }}

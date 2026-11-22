@@ -8,6 +8,8 @@
 # ```yaml
 #   test:
 #     uses: taiki-e/github-actions/.github/workflows/rust-test.yml@main
+#     permissions:
+#       security-events: write # for github/codeql-action/*
 # ```
 #
 # See "on.workflow_call.inputs" below for input options.
@@ -46,6 +48,14 @@ on:
         required: false
         type: boolean
         default: false
+      # CodeQL-specific
+      codeql:
+        required: false
+        type: boolean
+        default: true
+      codeql-rust:
+        required: false
+        type: string
       # cargo-careful-specific
       careful:
         required: false
@@ -398,6 +408,15 @@ jobs:
           ARGS: ${{ inputs.direct-minimal-versions-args }}
           FEATURES: ${{ inputs.features }}
         if: inputs.direct-minimal-versions && steps.prepare.outputs.direct-minimal-versions == 'true'
+
+  codeql:
+    if: inputs.codeql
+    uses: $/.github/workflows/codeql.yml
+    with:
+      language: rust
+      rust: ${{ inputs.codeql-rust || 'nightly' }}
+    permissions:
+      security-events: write # for github/codeql-action/*
 
   fuzz:
     needs: prepare

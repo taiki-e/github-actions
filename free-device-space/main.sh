@@ -10,7 +10,7 @@ trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit w
 )
 
 dirs=()
-case "$(uname -s)" in
+case "${RUNNER_OS}" in
   Linux)
     # GitHub-hosted Ubuntu runners have 14-20GB of free space.
     # There is a tradeoff here between the amount of files deleted and
@@ -175,7 +175,7 @@ case "$(uname -s)" in
       done
     fi
     ;;
-  Darwin)
+  macOS)
     # GitHub-hosted macOS runners already have a lot of free space than Ubuntu runners.
     # However, non-default Xcode take significant space (Last checked 2026-10-31):
     # 70GiB (macos-12), 44GiB (macos-13), 28GiB (macos-14), 35GiB (macos-15), 35GiB (macos-15-intel), 26GiB (macos-26)
@@ -197,13 +197,13 @@ case "$(uname -s)" in
       fi
     done
     ;;
-  MINGW* | MSYS* | CYGWIN* | Windows_NT)
+  Windows)
     # GitHub-hosted Windows runners have a lot of free space in the drive for RUNNER_TEMP,
     # but the drive for / which is used as a workspace has only 14GB of free space.
     # https://github.com/actions/runner-images/issues/1341
     exit 0
     ;;
-  *) bail "unrecognized OS type '$(uname -s)'" ;;
+  *) bail "unrecognized runner.os '${RUNNER_OS}'" ;;
 esac
 if [[ ${#dirs[@]} -gt 0 ]]; then
   for dir in "${dirs[@]}"; do

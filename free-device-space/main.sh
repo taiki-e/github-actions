@@ -210,6 +210,14 @@ if [[ ${#dirs[@]} -gt 0 ]]; then
     if [[ ! -d "${dir}" ]]; then
       continue
     fi
+    if [[ "${RUNNER_OS}" == 'Linux' ]]; then
+      filesystem=$(stat -f -c %T -- "${dir}")
+      # On ubuntu-slim, deleting files on OverlayFS creates whiteouts.
+      # https://docs.kernel.org/filesystems/overlayfs.html#whiteouts-and-opaque-directories
+      if [[ "${filesystem}" == 'overlayfs' ]]; then
+        continue
+      fi
+    fi
     (
       set -x
       time sudo find "${dir}" -type f -delete

@@ -181,10 +181,10 @@ jobs:
             ubuntu-*) target="${LINUX_TARGET}" ;;
             macos-*)
               target="${APPLE_TARGET}"
-              case "${LOWEST_MSRV}" in
-                # cannot be compiled on pre-1.54: https://github.com/rust-lang/rust/issues/105167
-                1.? | 1.[1-4]? | 1.5[0-3]) version_range='1.54..' ;;
-              esac
+              # Cannot be compiled on pre-1.54: https://github.com/rust-lang/rust/issues/105167
+              if [[ "${LOWEST_MSRV}" =~ ^1\.([0-9]+)(\.|$) ]] && (( BASH_REMATCH[1] < 54 )); then
+                version_range='1.54..'
+              fi
               ;;
             windows-*) target="${WINDOWS_TARGET}" ;;
             *) exit 1 ;;

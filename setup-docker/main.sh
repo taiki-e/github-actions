@@ -49,13 +49,13 @@ normalize_comma_or_space_separated() {
 # Adapted from https://github.com/taiki-e/setup-cross-toolchain-action
 install_qemu() {
   printf '::group::Instal QEMU\n'
-  local qemu_version=11.1.3
+  local qemu_version=11.1.3-patched.0
   local qemu_hash
   case "${host_arch}" in
-    aarch64) qemu_hash='3d7088e700fb058b89a879e46dea8665c79bf7c2b7a1968084897cc8e002c226' ;;
-    x86_64) qemu_hash='927040bba20c4ecd962bcde32d7ef99fece49b9e735d6a58ad15366a8aed5118' ;;
+    aarch64) qemu_hash='0821f7f4bbd734915ab6da3f4650c1ce885174ed666b85d097745c3b1297b5b3' ;;
+    x86_64) qemu_hash='e00ffbdf774fb85ef275377ccdd661a638de5fa4e5b872ee6f1afb0a2cad7d02' ;;
   esac
-  retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 -o "${tmp}/qemu-user.tar.zst" "https://github.com/taiki-e/qemu/releases/download/patched-${qemu_version}/qemu-user-${host_arch}-linux.tar.zst"
+  retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 -o "${tmp}/qemu-user.tar.zst" "https://github.com/taiki-e/qemu/releases/download/v${qemu_version}/qemu-user-${host_arch}-linux.tar.zst"
   sha256sum -c - >/dev/null <<<"${qemu_hash:?} *${tmp}/qemu-user.tar.zst"
   tar xf "${tmp}/qemu-user.tar.zst" -C "${tmp}"
   for arch in "${qemu_arch[@]}"; do

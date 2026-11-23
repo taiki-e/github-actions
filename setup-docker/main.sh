@@ -4,6 +4,12 @@ set -CeEuo pipefail
 IFS=$'\n\t'
 trap -- 's=$?; printf >&2 "%s\n" "${0##*/}:${LINENO}: \`${BASH_COMMAND}\` exit with ${s}"; exit ${s}' ERR
 
+x() {
+  (
+    set -x
+    "$@"
+  )
+}
 g() {
   IFS=' '
   local cmd="$*"
@@ -39,22 +45,25 @@ normalize_comma_or_space_separated() {
     sed -E 's/ +/,/g; s/^.//' <<<" ${list} "
   fi
 }
+
+# Adapted from https://github.com/taiki-e/setup-cross-toolchain-action
 install_qemu() {
-  qemu_bin_dir=/usr/bin
   printf '::group::Instal QEMU\n'
-  # https://github.com/taiki-e/dockerfiles/pkgs/container/qemu-user
-  local qemu_user_tag='@sha256:06e15011a88c9495e8e2c35d578dc305bd5ede8a5671689ea552d99ad7c6f746' # 10.2
-  retry docker create --name qemu-user "ghcr.io/taiki-e/qemu-user${qemu_user_tag}"
-  mkdir -p -- .setup-docker-action-tmp
+  local qemu_version=11.1.3
+  local qemu_hash
+  case "${host_arch}" in
+    aarch64) qemu_hash='3d7088e700fb058b89a879e46dea8665c79bf7c2b7a1968084897cc8e002c226' ;;
+    x86_64) qemu_hash='927040bba20c4ecd962bcde32d7ef99fece49b9e735d6a58ad15366a8aed5118' ;;
+  esac
+  retry curl --proto '=https' --tlsv1.2 -fsSL --retry 10 -o "${tmp}/qemu-user.tar.zst" "https://github.com/taiki-e/qemu/releases/download/patched-${qemu_version}/qemu-user-${host_arch}-linux.tar.zst"
+  sha256sum -c - >/dev/null <<<"${qemu_hash:?} *${tmp}/qemu-user.tar.zst"
+  tar xf "${tmp}/qemu-user.tar.zst" -C "${tmp}"
   for arch in "${qemu_arch[@]}"; do
-    docker cp -- "qemu-user:/usr/bin/qemu-${arch}" ".setup-docker-action-tmp/qemu-${arch}"
-    sudo mv -- ".setup-docker-action-tmp/qemu-${arch}" "${qemu_bin_dir}"/
+    sudo mv -- "${tmp}/qemu-user/bin/qemu-${arch}" "${qemu_bin_dir}"/
+    x "qemu-${arch}" --version
   done
-  docker rm -f -- qemu-user >/dev/null
-  rm -rf -- ./.setup-docker-action-tmp
   printf '::endgroup::\n'
 }
-# Refs: https://github.com/qemu/qemu/blob/v10.2.0/scripts/qemu-binfmt-conf.sh
 register_binfmt() {
   printf '::group::Register binfmt\n'
   if [[ ! -d /proc/sys/fs/binfmt_misc ]]; then
@@ -177,6 +186,9 @@ case "${RUNNER_ARCH}" in
   ARM64) host_arch=aarch64 ;;
   *) bail "unsupported runner.arch '${RUNNER_ARCH}'" ;;
 esac
+qemu_bin_dir=/usr/local/bin
+tmp=$(mktemp -d)
+trap -- 'rm -rf -- "${tmp:?}"' EXIT
 
 g retry docker version
 

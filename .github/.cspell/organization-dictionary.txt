@@ -157,7 +157,6 @@ hpux
 libunwind
 machdep
 minix
-moreutils
 msan
 noconfirm
 noprofile

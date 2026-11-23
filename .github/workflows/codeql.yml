@@ -10,10 +10,10 @@
 # ```yaml
 #   codeql:
 #     uses: taiki-e/github-actions/.github/workflows/codeql.yml@main
-#     with:
-#       language: rust
 #     permissions:
 #       security-events: write # for github/codeql-action/*
+#     with:
+#       language: rust
 # ```
 
 permissions: {}

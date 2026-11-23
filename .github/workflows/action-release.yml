@@ -438,7 +438,7 @@ jobs:
           client-id: ${{ secrets.PUSH_TOKEN_APP_CLIENT_ID }}
           private-key: ${{ secrets.PUSH_TOKEN_APP_PRIVATE_KEY }}
           permission-contents: write
-      - uses: taiki-e/github-actions/push@a2bc8ad241bd3c7fa2ba3239d7dca7a032a17095 # 2026.11.22
+      - uses: taiki-e/github-actions/push@af422d7af8ef63e0ea0d84510aff17254fef31c2 # 2026.11.23
         with:
           ref: HEAD,${{ steps.commit.outputs.refs }}${{ steps.commit.outputs.additional-refs }}
           # Note that if we use secrets.GITHUB_TOKEN, the pushed commit/tag cannot trigger other workflows.

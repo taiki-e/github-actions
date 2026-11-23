@@ -69,7 +69,7 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@a2bc8ad241bd3c7fa2ba3239d7dca7a032a17095 # 2026.11.22
+      - uses: taiki-e/github-actions/free-device-space@af422d7af8ef63e0ea0d84510aff17254fef31c2 # 2026.11.23
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
         with:
           tool: rust@${{ inputs.rust }}
@@ -138,7 +138,7 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@a2bc8ad241bd3c7fa2ba3239d7dca7a032a17095 # 2026.11.22
+      - uses: taiki-e/github-actions/free-device-space@af422d7af8ef63e0ea0d84510aff17254fef31c2 # 2026.11.23
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
         with:
           tool: rust@${{ inputs.rust }}
@@ -221,7 +221,7 @@ jobs:
     timeout-minutes: 180
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: taiki-e/github-actions/free-device-space@a2bc8ad241bd3c7fa2ba3239d7dca7a032a17095 # 2026.11.22
+      - uses: taiki-e/github-actions/free-device-space@af422d7af8ef63e0ea0d84510aff17254fef31c2 # 2026.11.23
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
         with:
           tool: rust@${{ inputs.rust }}

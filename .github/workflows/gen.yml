@@ -113,7 +113,7 @@ jobs:
           fi
         env:
           COMMIT_SCRIPT: ${{ inputs.commit-script }}
-      - uses: taiki-e/github-actions/free-device-space@a2bc8ad241bd3c7fa2ba3239d7dca7a032a17095 # 2026.11.22
+      - uses: taiki-e/github-actions/free-device-space@af422d7af8ef63e0ea0d84510aff17254fef31c2 # 2026.11.23
         if: inputs.free-device-space
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
         with:
@@ -173,7 +173,7 @@ jobs:
           BRANCH: ${{ inputs.branch }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: steps.prepare.outputs.commit == 'true' && github.repository_owner == 'taiki-e' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' && github.ref == 'refs/heads/main') && steps.diff.outputs.success == 'false'
-      - uses: taiki-e/github-actions/push@a2bc8ad241bd3c7fa2ba3239d7dca7a032a17095 # 2026.11.22
+      - uses: taiki-e/github-actions/push@af422d7af8ef63e0ea0d84510aff17254fef31c2 # 2026.11.23
         with:
           ref: refs/heads/${{ inputs.branch }}
           force: true

@@ -112,12 +112,18 @@ jobs:
           done < <(normalize_comma_or_space_separated "${bin_target}")
           printf 'matrix=%s\n' "{\"include\":[${matrix#,}]}" >>"${GITHUB_OUTPUT}"
           printf 'bin=%s\n' "${bin}" >>"${GITHUB_OUTPUT}"
+          locked=false
+          if git cat-file -e HEAD:Cargo.lock 2>/dev/null; then
+            locked=true
+          fi
+          printf 'locked=%s\n' "${locked}" >>"${GITHUB_OUTPUT}"
         env:
           INPUT_JOB: ${{ inputs.job }}
           INPUT_WORKFLOW: ${{ inputs.workflow }}
     outputs:
       matrix: ${{ steps.prepare.outputs.matrix }}
       bin: ${{ steps.prepare.outputs.bin }}
+      locked: ${{ steps.prepare.outputs.locked }}
 
   build:
     name: release-dry-run (${{ matrix.target }})
@@ -152,6 +158,7 @@ jobs:
           dry-run: true
           bin: ${{ needs.prepare.outputs.bin }}
           target: ${{ matrix.target }}
+          locked: ${{ needs.prepare.outputs.locked }}
           tar: all
           zip: windows
           ref: refs/tags/dummy

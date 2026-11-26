@@ -455,12 +455,23 @@ jobs:
             done
           done <<<"${public_packages}"
 
+          locked=false
+          if [[ -n "${BIN}" ]] && git cat-file -e HEAD:Cargo.lock 2>/dev/null; then
+            locked=true
+          fi
+          printf 'locked=%s\n' "${locked}" >>"${GITHUB_OUTPUT}"
+
           (
             set -x
             git show HEAD --shortstat
           )
 
           if [[ -n "${tags}" ]]; then
+            if [[ "${locked}" == 'true' ]]; then
+              # Update the workspace package versions in the lockfile before committing the release.
+              cargo update --workspace
+              changed_paths+=(Cargo.lock)
+            fi
             (
               set -x
               git -c color.ui=always diff "${changed_paths[@]}"
@@ -559,6 +570,7 @@ jobs:
       public-packages: ${{ steps.check.outputs.public-packages }}
       args: ${{ steps.check.outputs.args }}
       matrix: ${{ steps.check.outputs.matrix }}
+      locked: ${{ steps.check.outputs.locked }}
 
   release:
     needs: prepare
@@ -711,6 +723,10 @@ jobs:
           done <<<"${PUBLIC_PACKAGES}"
 
           if [[ "${HAS_TAGS}" == "true" ]]; then
+            if [[ "${LOCKED}" == 'true' ]]; then
+              cargo update --workspace
+              changed_paths+=(Cargo.lock)
+            fi
             # Create a release commit.
             (
               set -x
@@ -732,6 +748,7 @@ jobs:
           PUBLIC_PACKAGES: ${{ needs.prepare.outputs.public-packages }}
           RELEASE_DATE: ${{ needs.prepare.outputs.release-date }}
           HAS_TAGS: ${{ needs.prepare.outputs.has-tags }}
+          LOCKED: ${{ needs.prepare.outputs.locked }}
           TAG: ${{ needs.prepare.outputs.tag }}
           CHANGELOG: ${{ inputs.changelog }}
           BRANCH: ${{ inputs.branch }}
@@ -854,6 +871,7 @@ jobs:
         with:
           bin: ${{ inputs.bin }}
           target: ${{ matrix.target }}
+          locked: ${{ needs.prepare.outputs.locked }}
           tar: all
           zip: windows
           ref: refs/tags/${{ needs.prepare.outputs.tag }}

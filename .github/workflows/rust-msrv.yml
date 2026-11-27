@@ -153,7 +153,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: taiki-e/github-actions/free-device-space@af422d7af8ef63e0ea0d84510aff17254fef31c2 # 2026.11.23
         if: (startsWith(matrix.os, 'ubuntu') || matrix.os == '') && inputs.linux-free-device-space
-      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+      - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: cargo-hack
           fallback: none

@@ -283,8 +283,16 @@ jobs:
           printf 'rev: %s\n' "${rev}"
           printf 'rev=%s\n' "${rev}" >>"${GITHUB_OUTPUT}"
 
+          locked=false
+          metadata_args=(--format-version=1 --no-deps)
+          if git cat-file -e HEAD:Cargo.lock 2>/dev/null; then
+            locked=true
+            metadata_args+=(--locked)
+          fi
+          printf 'locked=%s\n' "${locked}" >>"${GITHUB_OUTPUT}"
+
           # Get the previous version.
-          metadata=$(cargo metadata --format-version=1 --no-deps)
+          metadata=$(cargo metadata "${metadata_args[@]}")
           prev_version=''
           public_packages=''
           # Publishing is unrestricted if null, and forbidden if an empty array.
@@ -455,12 +463,6 @@ jobs:
             done
           done <<<"${public_packages}"
 
-          locked=false
-          if [[ -n "${BIN}" ]] && git cat-file -e HEAD:Cargo.lock 2>/dev/null; then
-            locked=true
-          fi
-          printf 'locked=%s\n' "${locked}" >>"${GITHUB_OUTPUT}"
-
           (
             set -x
             git show HEAD --shortstat
@@ -468,7 +470,7 @@ jobs:
 
           if [[ -n "${tags}" ]]; then
             if [[ "${locked}" == 'true' ]]; then
-              # Update the workspace package versions in the lockfile before committing the release.
+              # Reflect version bumps of the workspace packages above to lockfile before committing the release.
               cargo update --workspace
               changed_paths+=(Cargo.lock)
             fi
@@ -510,6 +512,9 @@ jobs:
             while IFS= read -rd' '; do
               [[ -z "${REPLY}" ]] || args+="${REPLY},"
             done <<<"${INPUT_ARGS//[$'\r\n\t']/ } " # Normalize whitespace characters into space.
+          fi
+          if [[ "${locked}" == 'true' && ",${args}" != *,--locked,* ]]; then
+            args="--locked,${args}"
           fi
           printf 'args=%s\n' "${args}" >>"${GITHUB_OUTPUT}"
 
@@ -724,6 +729,7 @@ jobs:
 
           if [[ "${HAS_TAGS}" == "true" ]]; then
             if [[ "${LOCKED}" == 'true' ]]; then
+              # Reflect version bumps of the workspace packages above to lockfile before committing the release.
               cargo update --workspace
               changed_paths+=(Cargo.lock)
             fi

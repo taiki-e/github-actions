@@ -117,15 +117,6 @@ env:
   RUSTFLAGS: -D warnings
   RUSTDOCFLAGS: -D warnings
   RUSTUP_MAX_RETRIES: 10
-  # Reusable workflows cannot inherit environment variables.
-  ATOMIC_MAYBE_UNINIT_DENY_WARNINGS: 1
-  CARGO_HACK_DENY_WARNINGS: 1
-  CARGO_LLVM_COV_DENY_WARNINGS: 1
-  CARGO_MINIMAL_VERSIONS_DENY_WARNINGS: 1
-  CARGO_NO_DEV_DEPS_DENY_WARNINGS: 1
-  CONST_FN_DENY_WARNINGS: 1
-  PORTABLE_ATOMIC_DENY_WARNINGS: 1
-  SEMIHOSTING_DENY_WARNINGS: 1
 
 defaults:
   run:
@@ -137,6 +128,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: $/set-deny-warnings
       - name: Prepare
         id: prepare
         run: |
@@ -202,6 +194,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: $/set-deny-warnings
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           # cargo-hack is a workaround for https://github.com/EmbarkStudios/cargo-deny/issues/413
@@ -493,6 +486,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: $/set-deny-warnings
       - uses: taiki-e/github-actions/free-device-space@64535e607ea2bc43571fe978adaf5dbe191a1926 # 2026.11.26
         if: inputs.codegen-free-device-space
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3

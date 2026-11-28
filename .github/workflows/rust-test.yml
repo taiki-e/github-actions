@@ -160,15 +160,6 @@ env:
   RUSTFLAGS: -D warnings
   RUSTDOCFLAGS: -D warnings
   RUSTUP_MAX_RETRIES: 10
-  # Reusable workflows cannot inherit environment variables.
-  ATOMIC_MAYBE_UNINIT_DENY_WARNINGS: 1
-  CARGO_HACK_DENY_WARNINGS: 1
-  CARGO_LLVM_COV_DENY_WARNINGS: 1
-  CARGO_MINIMAL_VERSIONS_DENY_WARNINGS: 1
-  CARGO_NO_DEV_DEPS_DENY_WARNINGS: 1
-  CONST_FN_DENY_WARNINGS: 1
-  PORTABLE_ATOMIC_DENY_WARNINGS: 1
-  SEMIHOSTING_DENY_WARNINGS: 1
 
 defaults:
   run:
@@ -180,6 +171,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: $/set-deny-warnings
       - name: Prepare
         id: prepare
         run: |
@@ -299,6 +291,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: $/set-deny-warnings
       - name: Prepare for no-std/minimal-versions/direct-minimal-versions
         id: prepare
         run: |

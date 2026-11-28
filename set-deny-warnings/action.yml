@@ -1,0 +1,12 @@
+name: Set deny warnings
+description: Enable deny-warnings checks for the caller repository
+runs:
+  using: composite
+  steps:
+    - run:
+        | # zizmor: ignore[github-env] # GitHub repository name can only contain ASCII letters, digits, and the characters ., -, and _.
+        prefix=$(LC_ALL=C tr '[:lower:].-' '[:upper:]__' <<<"${GITHUB_REPOSITORY##*/}")
+        printf '%s_DENY_WARNINGS=1\n' "${prefix}" >>"${GITHUB_ENV}"
+      shell: bash
+      env:
+        GITHUB_REPOSITORY: ${{ github.repository }}

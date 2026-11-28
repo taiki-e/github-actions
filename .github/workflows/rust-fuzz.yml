@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: $/set-deny-warnings
-      - uses: taiki-e/github-actions/free-device-space@64535e607ea2bc43571fe978adaf5dbe191a1926 # 2026.11.26
+      - uses: $/free-device-space
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: rust@${{ inputs.rust }}
@@ -131,7 +131,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: $/set-deny-warnings
-      - uses: taiki-e/github-actions/free-device-space@64535e607ea2bc43571fe978adaf5dbe191a1926 # 2026.11.26
+      - uses: $/free-device-space
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: rust@${{ inputs.rust }}
@@ -215,7 +215,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: $/set-deny-warnings
-      - uses: taiki-e/github-actions/free-device-space@64535e607ea2bc43571fe978adaf5dbe191a1926 # 2026.11.26
+      - uses: $/free-device-space
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: rust@${{ inputs.rust }}
